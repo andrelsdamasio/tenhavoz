@@ -112,7 +112,7 @@ export async function startStripeCheckout(formData: FormData) {
           currency: "brl",
           unit_amount: priceCents,
           product_data: {
-            name: `Campanha: ${campaign.title}`,
+            name: "Publicação de campanha — TenhaVoz",
           },
         },
         quantity: 1,
@@ -153,7 +153,7 @@ async function createMercadoPagoPreference(
       items: [
         {
           id: campaign.id,
-          title: `Campanha: ${campaign.title}`,
+          title: "Publicação de campanha — TenhaVoz",
           quantity: 1,
           unit_price: priceCents / 100,
           currency_id: "BRL",
