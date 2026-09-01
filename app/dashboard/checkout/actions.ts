@@ -8,7 +8,12 @@ import { getStripe } from "@/lib/stripe";
 import { getMercadoPagoPreferenceClient } from "@/lib/mercadopago";
 import { getAppSettings } from "@/lib/settings";
 import { isAdminEmail } from "@/lib/admin";
-import { applyCouponDiscount, findUsableCoupon, normalizeCouponCode } from "@/lib/coupons";
+import {
+  applyCouponDiscount,
+  findUsableCoupon,
+  normalizeCouponCode,
+  redeemCoupon,
+} from "@/lib/coupons";
 
 async function getOwnedCampaignOrRedirect(campaignId: string) {
   const supabase = await createClient();
@@ -201,6 +206,35 @@ export async function startMercadoPagoCheckout(formData: FormData) {
 export async function startPixCheckout(formData: FormData) {
   const checkoutUrl = await createMercadoPagoPreference(formData, { pixOnly: true });
   redirect(checkoutUrl);
+}
+
+/**
+ * Publica a campanha sem cobrar nada quando um cupom zera o preço — revalida
+ * o cupom e o preço no servidor antes de publicar (nunca confia no valor
+ * mostrado no cliente), e conta o resgate do cupom como qualquer outro
+ * pagamento confirmado. Se o preço recalculado não for zero (cupom expirou
+ * entre a pré-visualização e o clique, por exemplo), manda a pessoa de volta
+ * pro checkout para escolher uma forma de pagamento.
+ */
+export async function claimFreeCampaign(formData: FormData) {
+  const campaignId = String(formData.get("campaignId") ?? "");
+  const { campaign, priceCents: basePriceCents } = await getOwnedCampaignOrRedirect(campaignId);
+  const { priceCents, couponCode } = await resolvePriceWithCoupon(
+    basePriceCents,
+    String(formData.get("couponCode") ?? "")
+  );
+
+  if (priceCents !== 0) {
+    redirect(`/dashboard/checkout?campaignId=${campaign.id}&couponExpired=1`);
+  }
+
+  const admin = createAdminClient();
+  const { alreadyPublished } = await publishCampaignAfterConfirmedPayment(admin, campaign.id);
+  if (!alreadyPublished && couponCode) {
+    await redeemCoupon(admin, couponCode);
+  }
+
+  redirect("/dashboard?checkout=success");
 }
 
 /**

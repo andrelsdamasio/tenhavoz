@@ -8,9 +8,9 @@ import CouponCheckoutPanel from "@/components/CouponCheckoutPanel";
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ campaignId?: string; canceled?: string }>;
+  searchParams: Promise<{ campaignId?: string; canceled?: string; couponExpired?: string }>;
 }) {
-  const { campaignId, canceled } = await searchParams;
+  const { campaignId, canceled, couponExpired } = await searchParams;
 
   if (!campaignId) {
     redirect("/dashboard");
@@ -59,6 +59,13 @@ export default async function CheckoutPage({
       {canceled && (
         <p className="mb-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
           Pagamento não concluído. Tente novamente quando quiser.
+        </p>
+      )}
+
+      {couponExpired && (
+        <p className="mb-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
+          O cupom não é mais válido — aplique-o de novo ou escolha uma forma
+          de pagamento.
         </p>
       )}
 

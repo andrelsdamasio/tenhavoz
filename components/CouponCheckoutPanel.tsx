@@ -6,6 +6,7 @@ import {
   startStripeCheckout,
   startMercadoPagoCheckout,
   startPixCheckout,
+  claimFreeCampaign,
   publishFreeAsAdmin,
   validateCouponAction,
   type ValidateCouponState,
@@ -56,11 +57,13 @@ export default function CouponCheckoutPanel({
 
   const finalPriceCents = state.discountedPriceCents ?? basePriceCents;
   const hasDiscount = state.appliedCode !== null;
+  const isFree = hasDiscount && finalPriceCents === 0;
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-gray-600">
-        Campanha <strong>{formatBRL(finalPriceCents)}</strong>
+        Campanha{" "}
+        <strong>{isFree ? "Grátis" : formatBRL(finalPriceCents)}</strong>
         {hasDiscount && (
           <>
             {" "}
@@ -94,21 +97,31 @@ export default function CouponCheckoutPanel({
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
       <div className="flex flex-col gap-3">
-        <form action={startPixCheckout}>
-          <input type="hidden" name="campaignId" value={campaignId} />
-          <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
-          <PayButton label="Pagar com Pix" variant="primary" />
-        </form>
-        <form action={startStripeCheckout}>
-          <input type="hidden" name="campaignId" value={campaignId} />
-          <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
-          <PayButton label="Pagar com Stripe" variant="secondary" />
-        </form>
-        <form action={startMercadoPagoCheckout}>
-          <input type="hidden" name="campaignId" value={campaignId} />
-          <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
-          <PayButton label="Pagar com Mercado Pago" variant="secondary" />
-        </form>
+        {isFree ? (
+          <form action={claimFreeCampaign}>
+            <input type="hidden" name="campaignId" value={campaignId} />
+            <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
+            <PayButton label="Publicar campanha gratuitamente" variant="primary" />
+          </form>
+        ) : (
+          <>
+            <form action={startPixCheckout}>
+              <input type="hidden" name="campaignId" value={campaignId} />
+              <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
+              <PayButton label="Pagar com Pix" variant="primary" />
+            </form>
+            <form action={startStripeCheckout}>
+              <input type="hidden" name="campaignId" value={campaignId} />
+              <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
+              <PayButton label="Pagar com Stripe" variant="secondary" />
+            </form>
+            <form action={startMercadoPagoCheckout}>
+              <input type="hidden" name="campaignId" value={campaignId} />
+              <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
+              <PayButton label="Pagar com Mercado Pago" variant="secondary" />
+            </form>
+          </>
+        )}
 
         {isAdmin && (
           <form action={publishFreeAsAdmin}>

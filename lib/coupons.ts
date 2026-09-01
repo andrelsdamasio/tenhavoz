@@ -1,7 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Coupon, Database } from "@/lib/types";
 
-/** Nunca deixa o preço final cair a zero (ou negativo) por causa de um cupom. */
+/**
+ * Piso mínimo para cobranças parcialmente descontadas — evita tentar cobrar
+ * um valor residual de poucos centavos que o Stripe/Mercado Pago podem
+ * rejeitar. Não se aplica quando o desconto zera o preço: um cupom de 100%
+ * (ou de valor fixo maior que o preço) deve resultar em campanha gratuita,
+ * não em R$1.
+ */
 const MIN_PRICE_CENTS = 100;
 
 export function normalizeCouponCode(raw: string): string {
@@ -44,6 +50,7 @@ export function applyCouponDiscount(priceCents: number, coupon: Coupon): number 
       ? Math.round(priceCents * (1 - coupon.discount_value / 100))
       : priceCents - coupon.discount_value;
 
+  if (discounted <= 0) return 0;
   return Math.max(MIN_PRICE_CENTS, discounted);
 }
 
