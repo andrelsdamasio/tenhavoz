@@ -27,7 +27,7 @@ export default function Template4({ campaign, mailtoUrl }: TemplateProps) {
           <h2 className="mb-2 font-semibold text-amber-900">Como participar</h2>
           <ol className="list-inside list-decimal space-y-1 text-sm text-amber-900">
             <li>
-              Clique em <strong>Abrir e-mail pronto</strong>.
+              Clique em <strong>Enviar e-mail agora</strong>.
             </li>
             <li>Seu aplicativo de e-mail abrirá automaticamente.</li>
             <li>Confira a mensagem.</li>
@@ -50,7 +50,7 @@ export default function Template4({ campaign, mailtoUrl }: TemplateProps) {
             mailtoUrl={mailtoUrl}
             className="flex-1 rounded-md bg-[var(--tc-base,#4338ca)] px-6 py-3 text-center font-semibold text-white hover:bg-[var(--tc-dark,#3730a3)]"
           >
-            Abrir e-mail pronto
+            Enviar e-mail agora
           </TrackedMailtoLink>
           {campaign.drive_link && (
             <a

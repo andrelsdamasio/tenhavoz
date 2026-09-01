@@ -26,7 +26,7 @@ export default function Template1({ campaign, mailtoUrl }: TemplateProps) {
           mailtoUrl={mailtoUrl}
           className="rounded-md bg-[var(--tc-base,#111827)] px-6 py-3 text-center font-medium text-white hover:bg-[var(--tc-dark,#374151)]"
         >
-          Enviar meu e-mail agora
+          Enviar e-mail agora
         </TrackedMailtoLink>
         {campaign.drive_link && (
           <a
