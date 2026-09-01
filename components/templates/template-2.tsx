@@ -21,6 +21,13 @@ export default function Template2({ campaign, mailtoUrl }: TemplateProps) {
         <p className="whitespace-pre-wrap text-lg leading-relaxed text-[var(--tc-lighter,#eef2ff)]">
           {campaign.manifest_text}
         </p>
+        <div className="w-full max-w-xl rounded-xl bg-white/10 p-4 text-sm text-[var(--tc-lighter,#eef2ff)]">
+          <p className="mb-1 font-semibold text-white">Como participar</p>
+          <p>
+            Clique no botão abaixo, confira a mensagem que abrir no seu app de
+            e-mail e toque em enviar.
+          </p>
+        </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <TrackedMailtoLink
             campaignId={campaign.id}

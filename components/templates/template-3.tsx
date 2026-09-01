@@ -21,7 +21,17 @@ export default function Template3({ campaign, mailtoUrl }: TemplateProps) {
         <p className="whitespace-pre-wrap leading-relaxed text-gray-700">
           {campaign.manifest_text}
         </p>
-        <div className="mt-8 flex flex-col gap-3 border-t border-gray-100 pt-6 sm:flex-row">
+        <div className="mt-6 rounded-md bg-gray-50 p-4 text-sm text-gray-600">
+          <p className="mb-2 font-medium text-gray-800">Como participar</p>
+          <ol className="list-inside list-decimal space-y-1">
+            <li>
+              Clique em <strong>Enviar e-mail agora</strong>.
+            </li>
+            <li>Confira a mensagem que abrir no seu aplicativo de e-mail.</li>
+            <li>Clique em enviar.</li>
+          </ol>
+        </div>
+        <div className="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-6 sm:flex-row">
           <TrackedMailtoLink
             campaignId={campaign.id}
             mailtoUrl={mailtoUrl}
