@@ -1,0 +1,40 @@
+import TrackedMailtoLink from "@/components/TrackedMailtoLink";
+import type { TemplateProps } from "./types";
+
+/** Template 3: layout tipo "carta" em cartão, com assinatura formal. */
+export default function Template3({ campaign, mailtoUrl }: TemplateProps) {
+  return (
+    <main className="min-h-screen bg-gray-100 px-4 py-16">
+      <div className="mx-auto max-w-xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-600">
+          Manifesto público
+        </p>
+        <h1 className="mb-6 text-2xl font-bold text-gray-900">
+          {campaign.title}
+        </h1>
+        <p className="whitespace-pre-wrap leading-relaxed text-gray-700">
+          {campaign.manifest_text}
+        </p>
+        <div className="mt-8 flex flex-col gap-3 border-t border-gray-100 pt-6 sm:flex-row">
+          <TrackedMailtoLink
+            campaignId={campaign.id}
+            mailtoUrl={mailtoUrl}
+            className="flex-1 rounded-md bg-brand-600 px-6 py-3 text-center font-medium text-white hover:bg-brand-700"
+          >
+            Assinar por e-mail
+          </TrackedMailtoLink>
+          {campaign.drive_link && (
+            <a
+              href={campaign.drive_link}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="flex-1 rounded-md border border-gray-300 px-6 py-3 text-center font-medium text-gray-800 hover:bg-gray-50"
+            >
+              Documentos
+            </a>
+          )}
+        </div>
+      </div>
+    </main>
+  );
+}

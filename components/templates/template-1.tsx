@@ -1,0 +1,35 @@
+import TrackedMailtoLink from "@/components/TrackedMailtoLink";
+import type { TemplateProps } from "./types";
+
+/** Template 1: minimalista, fundo claro, foco no texto. */
+export default function Template1({ campaign, mailtoUrl }: TemplateProps) {
+  return (
+    <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-6 px-6 py-16">
+      <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+        {campaign.title}
+      </h1>
+      <p className="whitespace-pre-wrap text-lg leading-relaxed text-gray-700">
+        {campaign.manifest_text}
+      </p>
+      <div className="flex flex-wrap gap-3 pt-4">
+        <TrackedMailtoLink
+          campaignId={campaign.id}
+          mailtoUrl={mailtoUrl}
+          className="rounded-md bg-gray-900 px-6 py-3 text-center font-medium text-white hover:bg-gray-700"
+        >
+          Enviar meu e-mail agora
+        </TrackedMailtoLink>
+        {campaign.drive_link && (
+          <a
+            href={campaign.drive_link}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="rounded-md border border-gray-300 px-6 py-3 text-center font-medium text-gray-800 hover:bg-gray-100"
+          >
+            Ver material de apoio
+          </a>
+        )}
+      </div>
+    </main>
+  );
+}
