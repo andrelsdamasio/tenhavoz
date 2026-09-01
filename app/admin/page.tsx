@@ -19,6 +19,9 @@ export default async function AdminPage() {
 
   return (
     <div className="mx-auto max-w-xl">
+      <Link href="/dashboard" className="mb-4 inline-block text-sm text-brand-600 hover:underline">
+        ← Minhas campanhas
+      </Link>
       <div className="mb-2 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Configurações</h1>
         <div className="flex gap-4 text-sm">
