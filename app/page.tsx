@@ -58,19 +58,20 @@ export default async function HomePage() {
         </div>
 
         <h1
-          className="animate-fade-in-up text-5xl font-extrabold tracking-tight text-gray-900 sm:text-6xl"
+          className="animate-fade-in-up text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl"
           style={{ animationDelay: "0.1s" }}
         >
-          Dê voz à sua causa
+          Tenha seu próprio link on-line totalmente personalizável em simples
+          passos
         </h1>
-        <p
-          className="animate-fade-in-up mt-5 max-w-xl text-lg text-gray-600"
+        <ul
+          className="animate-fade-in-up mt-6 flex max-w-xl flex-col gap-2 text-lg text-gray-600"
           style={{ animationDelay: "0.2s" }}
         >
-          Crie uma campanha, escolha um template e mobilize pessoas com um
-          clique — cada visitante envia o e-mail pelo próprio app dele, com a
-          mensagem já pronta.
-        </p>
+          <li>Crie seu próprio link para mobilizar a sua causa</li>
+          <li>Multiplique sua campanha apenas disponibilizando seu link</li>
+          <li>Com alguns cliques muitos e-mails serão enviados</li>
+        </ul>
 
         <div
           className="animate-fade-in-up mt-8 flex flex-wrap items-center justify-center gap-3"
