@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signOut } from "../(auth)/actions";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
+import Logo from "@/components/Logo";
 
 export default async function DashboardLayout({
   children,
@@ -18,7 +19,8 @@ export default async function DashboardLayout({
     <div className="min-h-screen">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-          <Link href="/dashboard" className="font-semibold">
+          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+            <Logo className="h-5 w-5 text-brand-600" />
             TenhaVoz
           </Link>
           <nav className="flex items-center gap-4 text-sm">
