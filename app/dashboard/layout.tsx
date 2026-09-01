@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { signOut } from "../(auth)/actions";
 import { createClient } from "@/lib/supabase/server";
-import { isAdminEmail } from "@/lib/admin";
+import { isAdminEmail, getSupportEmail } from "@/lib/admin";
 import Logo from "@/components/Logo";
+
+function buildSupportMailto(userEmail: string | undefined): string {
+  const supportEmail = getSupportEmail();
+  const subject = "Suporte TenhaVoz";
+  const body = `Olá! Preciso de ajuda com a minha conta (${userEmail ?? "e-mail não identificado"}).\n\nDescreva aqui o que está acontecendo:\n`;
+  return `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 export default async function DashboardLayout({
   children,
@@ -35,6 +42,9 @@ export default async function DashboardLayout({
                 Admin
               </Link>
             )}
+            <a href={buildSupportMailto(user?.email)} className="hover:underline">
+              Suporte
+            </a>
             <form action={signOut}>
               <button type="submit" className="text-gray-500 hover:underline">
                 Sair
