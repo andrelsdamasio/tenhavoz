@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listCampaignsForUser } from "@/lib/campaigns";
 import { getCampaignStats } from "@/lib/events";
+import ShareButtons from "@/components/ShareButtons";
 import type { CampaignStatus } from "@/lib/types";
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
@@ -18,10 +19,8 @@ const STATUS_CLASS: Record<CampaignStatus, string> = {
   published: "bg-green-100 text-green-800",
 };
 
-const SITE_HOST = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br").replace(
-  /^https?:\/\//,
-  ""
-);
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br";
+const SITE_HOST = SITE_URL.replace(/^https?:\/\//, "");
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -88,13 +87,20 @@ export default async function DashboardPage() {
                 )}
               </div>
               {campaign.status === "published" && campaign.slug ? (
-                <Link
-                  href={`/p/${campaign.slug}`}
-                  target="_blank"
-                  className="text-sm text-brand-600 hover:underline"
-                >
-                  Ver página pública ↗
-                </Link>
+                <div className="flex flex-col items-end gap-2">
+                  <Link
+                    href={`/p/${campaign.slug}`}
+                    target="_blank"
+                    className="text-sm text-brand-600 hover:underline"
+                  >
+                    Ver página pública ↗
+                  </Link>
+                  <ShareButtons
+                    url={`${SITE_URL}/p/${campaign.slug}`}
+                    title={campaign.title}
+                    className="text-right"
+                  />
+                </div>
               ) : (
                 <Link
                   href={`/dashboard/checkout?campaignId=${campaign.id}`}

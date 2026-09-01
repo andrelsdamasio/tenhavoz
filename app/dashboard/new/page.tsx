@@ -11,7 +11,7 @@ export default async function NewCampaignPage() {
   } = await getAppSettings(supabase);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-5xl">
       <h1 className="mb-6 text-2xl font-semibold">Nova campanha</h1>
       <CampaignForm
         enabledTemplates={enabledTemplates}

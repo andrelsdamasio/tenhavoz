@@ -184,7 +184,10 @@ export default function CampaignForm({
   const bodyOverLimit = bodyLength > manifestCharLimit;
   const bodyOverLimitBlocking = bodyOverLimit && manifestCharLimitEnabled;
 
+  const SelectedTemplate = getTemplateComponent(templateId);
+
   return (
+    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_440px]">
     <form action={formAction} className="flex flex-col gap-6">
       <div>
         <div className="mb-1 flex items-baseline justify-between">
@@ -400,5 +403,29 @@ export default function CampaignForm({
 
       <SubmitButton blocked={bodyOverLimitBlocking} />
     </form>
+
+    <aside className="lg:sticky lg:top-6">
+      <p className="mb-2 text-sm font-medium text-gray-700">
+        Pré-visualização ao vivo
+      </p>
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center gap-1.5 border-b border-gray-200 bg-gray-50 px-3 py-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+          <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+          <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+          <span className="ml-2 truncate text-xs text-gray-500">
+            {SITE_HOST}/p/{slug || "seu-link"}
+          </span>
+        </div>
+        <div className="max-h-[70vh] overflow-y-auto">
+          <SelectedTemplate campaign={previewCampaign} mailtoUrl={preview.url} />
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-gray-500">
+        É assim que a página vai aparecer para quem receber o link — role para
+        ver o resto do conteúdo.
+      </p>
+    </aside>
+    </div>
   );
 }
