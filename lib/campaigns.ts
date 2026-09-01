@@ -82,6 +82,13 @@ export async function listCampaignsForUser(
   return data ?? [];
 }
 
+const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/** Campanhas só podem ser editadas até 24h depois de criadas. */
+export function isCampaignEditable(campaign: Campaign): boolean {
+  return Date.now() - new Date(campaign.created_at).getTime() < EDIT_WINDOW_MS;
+}
+
 export async function getCampaignForOwner(
   supabase: SupabaseClient<Database>,
   campaignId: string
@@ -117,6 +124,62 @@ export async function deleteCampaign(
     .eq("user_id", userId);
 
   if (error) throw error;
+}
+
+export interface UpdateCampaignInput {
+  title: string;
+  manifestText: string;
+  subject: string;
+  recipients: string[];
+  sendMode: SendMode;
+  driveLink: string | null;
+  templateId: TemplateId;
+  slug: string;
+  themeColor?: string | null;
+}
+
+/**
+ * Atualiza uma campanha já existente (rascunho ou publicada), dentro da
+ * janela de edição de 24h checada pelo chamador (`isCampaignEditable`). Ao
+ * contrário de `createDraftCampaign`, um slug já em uso aqui não recebe um
+ * sufixo aleatório automaticamente — a pessoa está escolhendo esse link de
+ * propósito, então preferimos devolver um erro claro a trocar o link por
+ * baixo dos panos.
+ */
+export async function updateCampaign(
+  supabase: SupabaseClient<Database>,
+  campaignId: string,
+  userId: string,
+  input: UpdateCampaignInput
+): Promise<Campaign> {
+  const slug = sanitizeSlug(input.slug || input.title) || sanitizeSlug(input.title);
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .update({
+      title: input.title,
+      manifest_text: input.manifestText,
+      subject: input.subject,
+      recipients: input.recipients,
+      send_mode: input.sendMode,
+      drive_link: input.driveLink,
+      template_id: input.templateId,
+      theme_color: input.themeColor ?? null,
+      slug,
+    })
+    .eq("id", campaignId)
+    .eq("user_id", userId)
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === UNIQUE_VIOLATION) {
+      throw new Error("SLUG_TAKEN");
+    }
+    throw error;
+  }
+
+  return data;
 }
 
 export async function getPublishedCampaignBySlug(

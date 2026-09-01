@@ -7,6 +7,7 @@ import { sanitizeSlug } from "@/lib/slug";
 import { getTemplateComponent } from "@/components/templates";
 import type { Campaign, SendMode, TemplateId } from "@/lib/types";
 import { createCampaignAction, type NewCampaignState } from "@/app/dashboard/new/actions";
+import { updateCampaignAction } from "@/app/dashboard/edit/actions";
 
 const initialState: NewCampaignState = { error: null };
 
@@ -38,7 +39,15 @@ function parseRecipientsPreview(raw: string): string[] {
     .filter((email) => email.length > 0);
 }
 
-function SubmitButton({ blocked }: { blocked: boolean }) {
+function SubmitButton({
+  blocked,
+  pendingLabel,
+  idleLabel,
+}: {
+  blocked: boolean;
+  pendingLabel: string;
+  idleLabel: string;
+}) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -46,7 +55,7 @@ function SubmitButton({ blocked }: { blocked: boolean }) {
       disabled={pending || blocked}
       className="rounded-md bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700 disabled:opacity-60"
     >
-      {pending ? "Salvando..." : "Salvar rascunho e ir para pagamento"}
+      {pending ? pendingLabel : idleLabel}
     </button>
   );
 }
@@ -96,6 +105,8 @@ interface CampaignFormProps {
   manifestCharLimit: number;
   manifestCharLimitEnabled: boolean;
   colorPalette: string[];
+  /** Presente = formulário em modo de edição de uma campanha já existente. */
+  editCampaign?: Campaign;
 }
 
 export default function CampaignForm({
@@ -103,26 +114,42 @@ export default function CampaignForm({
   manifestCharLimit,
   manifestCharLimitEnabled,
   colorPalette,
+  editCampaign,
 }: CampaignFormProps) {
-  const [state, formAction] = useFormState(createCampaignAction, initialState);
+  const isEditing = !!editCampaign;
+  const [state, formAction] = useFormState(
+    isEditing ? updateCampaignAction : createCampaignAction,
+    initialState
+  );
 
   const availableTemplates: TemplateId[] =
     enabledTemplates.length > 0 ? enabledTemplates : [1];
 
-  const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState("");
-  const [manifestText, setManifestText] = useState("");
-  const [recipientsRaw, setRecipientsRaw] = useState("");
-  const [sendMode, setSendMode] = useState<SendMode>("bcc");
-  const [driveLink, setDriveLink] = useState("");
-  const [templateId, setTemplateId] = useState<TemplateId>(availableTemplates[0]!);
-  const [themeColor, setThemeColor] = useState<string | null>(null);
-  const [slug, setSlug] = useState("");
-  const [slugTouched, setSlugTouched] = useState(false);
+  const [title, setTitle] = useState(editCampaign?.title ?? "");
+  const [subject, setSubject] = useState(editCampaign?.subject ?? "");
+  const [manifestText, setManifestText] = useState(editCampaign?.manifest_text ?? "");
+  const [recipientsRaw, setRecipientsRaw] = useState(
+    editCampaign?.recipients.join(", ") ?? ""
+  );
+  const [sendMode, setSendMode] = useState<SendMode>(editCampaign?.send_mode ?? "bcc");
+  const [driveLink, setDriveLink] = useState(editCampaign?.drive_link ?? "");
+  const [templateId, setTemplateId] = useState<TemplateId>(
+    editCampaign?.template_id ?? availableTemplates[0]!
+  );
+  const [themeColor, setThemeColor] = useState<string | null>(
+    editCampaign?.theme_color ?? null
+  );
+  const [slug, setSlug] = useState(editCampaign?.slug ?? "");
+  const [slugTouched, setSlugTouched] = useState(isEditing);
   const [aiTitleLoading, setAiTitleLoading] = useState(false);
   const [aiShortenLoading, setAiShortenLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [mode, setMode] = useState<"basico" | "avancado">("basico");
+  const [mode, setMode] = useState<"basico" | "avancado">(
+    editCampaign &&
+      (editCampaign.drive_link || editCampaign.theme_color || editCampaign.send_mode !== "bcc")
+      ? "avancado"
+      : "basico"
+  );
   const [draftLoaded, setDraftLoaded] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
 
@@ -137,7 +164,12 @@ export default function CampaignForm({
 
   // Restaura um rascunho salvo no navegador (ex: a página recarregou por
   // causa de um novo deploy do site enquanto a pessoa ainda estava digitando).
+  // Não se aplica ao modo de edição — lá os valores já vêm da campanha real.
   useEffect(() => {
+    if (isEditing) {
+      setDraftLoaded(true);
+      return;
+    }
     try {
       const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
       if (raw) {
@@ -169,7 +201,7 @@ export default function CampaignForm({
   // Salva automaticamente o que a pessoa vai digitando, pra não perder nada
   // se a página recarregar antes de terminar.
   useEffect(() => {
-    if (!draftLoaded) return;
+    if (!draftLoaded || isEditing) return;
     try {
       const hasContent = title || subject || manifestText || recipientsRaw || driveLink;
       if (!hasContent) {
@@ -308,6 +340,7 @@ export default function CampaignForm({
   return (
     <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_440px]">
     <form action={formAction} onSubmit={handleFormSubmit} className="flex flex-col gap-6">
+      {isEditing && <input type="hidden" name="campaignId" value={editCampaign.id} />}
       {state.error && (
         <div
           ref={errorRef}
@@ -321,9 +354,11 @@ export default function CampaignForm({
         </div>
       )}
 
-      <p className="text-xs text-gray-400">
-        Rascunho salvo automaticamente neste navegador.
-      </p>
+      {!isEditing && (
+        <p className="text-xs text-gray-400">
+          Rascunho salvo automaticamente neste navegador.
+        </p>
+      )}
 
       <div>
         <div className="mb-1 flex items-baseline justify-between">
@@ -372,8 +407,9 @@ export default function CampaignForm({
           />
         </div>
         <p className="mt-1 text-xs text-gray-500">
-          Fica ativo assim que o pagamento for confirmado. Se esse endereço já
-          estiver em uso, adicionamos um código curto automaticamente.
+          {isEditing && editCampaign.status === "published"
+            ? "Mudar esse endereço muda o link da página que já está no ar — links antigos param de funcionar."
+            : "Fica ativo assim que o pagamento for confirmado. Se esse endereço já estiver em uso, adicionamos um código curto automaticamente."}
         </p>
       </div>
 
@@ -616,7 +652,11 @@ export default function CampaignForm({
 
       {aiError && <p className="text-sm text-red-600">{aiError}</p>}
 
-      <SubmitButton blocked={bodyOverLimitBlocking} />
+      <SubmitButton
+        blocked={bodyOverLimitBlocking}
+        idleLabel={isEditing ? "Salvar alterações" : "Salvar rascunho e ir para pagamento"}
+        pendingLabel="Salvando..."
+      />
     </form>
 
     <aside className="lg:sticky lg:top-6">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { listCampaignsForUser } from "@/lib/campaigns";
+import { listCampaignsForUser, isCampaignEditable } from "@/lib/campaigns";
 import { getCampaignStats } from "@/lib/events";
 import ShareButtons from "@/components/ShareButtons";
 import DeleteCampaignButton from "@/components/DeleteCampaignButton";
@@ -23,7 +23,12 @@ const STATUS_CLASS: Record<CampaignStatus, string> = {
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br";
 const SITE_HOST = SITE_URL.replace(/^https?:\/\//, "");
 
-export default async function DashboardPage() {
+interface PageProps {
+  searchParams: Promise<{ edited?: string; editExpired?: string }>;
+}
+
+export default async function DashboardPage({ searchParams }: PageProps) {
+  const { edited, editExpired } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -55,6 +60,17 @@ export default async function DashboardPage() {
           Nova campanha
         </Link>
       </div>
+
+      {edited === "1" && (
+        <p className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+          Campanha atualizada com sucesso.
+        </p>
+      )}
+      {editExpired === "1" && (
+        <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          O prazo de 24 horas para editar essa campanha já passou.
+        </p>
+      )}
 
       {campaigns.length === 0 ? (
         <p className="text-gray-600">
@@ -109,6 +125,14 @@ export default async function DashboardPage() {
                     className="text-sm text-brand-600 hover:underline"
                   >
                     Pagar e publicar
+                  </Link>
+                )}
+                {isCampaignEditable(campaign) && (
+                  <Link
+                    href={`/dashboard/edit/${campaign.id}`}
+                    className="text-sm text-brand-600 hover:underline"
+                  >
+                    Editar
                   </Link>
                 )}
                 <DeleteCampaignButton
