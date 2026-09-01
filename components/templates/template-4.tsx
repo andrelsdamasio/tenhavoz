@@ -1,5 +1,6 @@
 import TrackedMailtoLink from "@/components/TrackedMailtoLink";
 import CopyFallbackButtons from "@/components/CopyFallbackButtons";
+import { deriveThemeShades, themeShadesToCssVars } from "@/lib/color";
 import type { TemplateProps } from "./types";
 
 /**
@@ -8,10 +9,14 @@ import type { TemplateProps } from "./types";
  * públicas, ofícios a autoridades) — mais formal que os templates 1-3.
  */
 export default function Template4({ campaign, mailtoUrl }: TemplateProps) {
+  const style = campaign.theme_color
+    ? (themeShadesToCssVars(deriveThemeShades(campaign.theme_color)) as React.CSSProperties)
+    : undefined;
+
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-12">
-      <div className="mx-auto max-w-2xl rounded-xl border-2 border-brand-600 bg-white p-8">
-        <h1 className="mb-3 text-3xl font-extrabold text-brand-700 sm:text-4xl">
+    <main style={style} className="min-h-screen bg-gray-50 px-4 py-12">
+      <div className="mx-auto max-w-2xl rounded-xl border-2 border-[var(--tc-base,#4338ca)] bg-white p-8">
+        <h1 className="mb-3 text-3xl font-extrabold text-[var(--tc-dark,#3730a3)] sm:text-4xl">
           {campaign.title}
         </h1>
         <p className="mb-6 whitespace-pre-wrap leading-relaxed text-gray-700">
@@ -43,7 +48,7 @@ export default function Template4({ campaign, mailtoUrl }: TemplateProps) {
           <TrackedMailtoLink
             campaignId={campaign.id}
             mailtoUrl={mailtoUrl}
-            className="flex-1 rounded-md bg-brand-600 px-6 py-3 text-center font-semibold text-white hover:bg-brand-700"
+            className="flex-1 rounded-md bg-[var(--tc-base,#4338ca)] px-6 py-3 text-center font-semibold text-white hover:bg-[var(--tc-dark,#3730a3)]"
           >
             Abrir e-mail pronto
           </TrackedMailtoLink>

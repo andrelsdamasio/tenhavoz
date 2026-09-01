@@ -8,6 +8,7 @@ export default async function NewCampaignPage() {
     enabled_templates: enabledTemplates,
     manifest_char_limit: manifestCharLimit,
     manifest_char_limit_enabled: manifestCharLimitEnabled,
+    template_color_palette: colorPalette,
   } = await getAppSettings(supabase);
 
   return (
@@ -17,6 +18,7 @@ export default async function NewCampaignPage() {
         enabledTemplates={enabledTemplates}
         manifestCharLimit={manifestCharLimit}
         manifestCharLimitEnabled={manifestCharLimitEnabled}
+        colorPalette={colorPalette}
       />
     </div>
   );

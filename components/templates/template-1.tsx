@@ -1,11 +1,19 @@
 import TrackedMailtoLink from "@/components/TrackedMailtoLink";
 import CopyFallbackButtons from "@/components/CopyFallbackButtons";
+import { deriveThemeShades, themeShadesToCssVars } from "@/lib/color";
 import type { TemplateProps } from "./types";
 
 /** Template 1: minimalista, fundo claro, foco no texto. */
 export default function Template1({ campaign, mailtoUrl }: TemplateProps) {
+  const style = campaign.theme_color
+    ? (themeShadesToCssVars(deriveThemeShades(campaign.theme_color)) as React.CSSProperties)
+    : undefined;
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-6 px-6 py-16">
+    <main
+      style={style}
+      className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-6 px-6 py-16"
+    >
       <h1 className="text-3xl font-bold tracking-tight text-gray-900">
         {campaign.title}
       </h1>
@@ -16,7 +24,7 @@ export default function Template1({ campaign, mailtoUrl }: TemplateProps) {
         <TrackedMailtoLink
           campaignId={campaign.id}
           mailtoUrl={mailtoUrl}
-          className="rounded-md bg-gray-900 px-6 py-3 text-center font-medium text-white hover:bg-gray-700"
+          className="rounded-md bg-[var(--tc-base,#111827)] px-6 py-3 text-center font-medium text-white hover:bg-[var(--tc-dark,#374151)]"
         >
           Enviar meu e-mail agora
         </TrackedMailtoLink>

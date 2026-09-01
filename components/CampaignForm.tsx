@@ -79,12 +79,14 @@ interface CampaignFormProps {
   enabledTemplates: TemplateId[];
   manifestCharLimit: number;
   manifestCharLimitEnabled: boolean;
+  colorPalette: string[];
 }
 
 export default function CampaignForm({
   enabledTemplates,
   manifestCharLimit,
   manifestCharLimitEnabled,
+  colorPalette,
 }: CampaignFormProps) {
   const [state, formAction] = useFormState(createCampaignAction, initialState);
 
@@ -98,6 +100,7 @@ export default function CampaignForm({
   const [sendMode, setSendMode] = useState<SendMode>("bcc");
   const [driveLink, setDriveLink] = useState("");
   const [templateId, setTemplateId] = useState<TemplateId>(availableTemplates[0]!);
+  const [themeColor, setThemeColor] = useState<string | null>(null);
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [aiTitleLoading, setAiTitleLoading] = useState(false);
@@ -175,6 +178,7 @@ export default function CampaignForm({
     send_mode: sendMode,
     drive_link: driveLink || null,
     template_id: templateId,
+    theme_color: themeColor,
     slug: null,
     status: "draft",
     created_at: "1970-01-01T00:00:00.000Z",
@@ -377,6 +381,42 @@ export default function CampaignForm({
             />
           ))}
         </div>
+      </div>
+
+      <div>
+        <span className="mb-1 block text-sm font-medium">
+          Cor do template (opcional)
+        </span>
+        <input type="hidden" name="themeColor" value={themeColor ?? ""} />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setThemeColor(null)}
+            className={`flex h-9 w-9 items-center justify-center rounded-full border-2 bg-white text-xs text-gray-400 ${
+              themeColor === null ? "border-brand-600" : "border-gray-200 hover:border-gray-300"
+            }`}
+            aria-label="Cor padrão do template"
+            title="Cor padrão"
+          >
+            ✕
+          </button>
+          {colorPalette.map((color) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => setThemeColor(color)}
+              className={`h-9 w-9 rounded-full border-2 ${
+                themeColor === color ? "border-brand-600" : "border-transparent"
+              }`}
+              style={{ backgroundColor: color }}
+              aria-label={`Usar a cor ${color}`}
+              title={color}
+            />
+          ))}
+        </div>
+        <p className="mt-1 text-xs text-gray-500">
+          Muda a cor de destaque (botão, acentos) do template escolhido acima.
+        </p>
       </div>
 
       <div className="rounded-md border border-gray-200 bg-white p-4">

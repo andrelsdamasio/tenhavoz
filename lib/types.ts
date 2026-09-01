@@ -4,6 +4,7 @@ export type PaymentProvider = "stripe" | "mercadopago";
 export type PaymentStatus = "pending" | "confirmed" | "failed";
 export type TemplateId = 1 | 2 | 3 | 4 | 5;
 export type EventType = "view" | "click";
+export type CouponDiscountType = "percent" | "fixed";
 
 export interface Campaign {
   id: string;
@@ -15,6 +16,8 @@ export interface Campaign {
   send_mode: SendMode;
   drive_link: string | null;
   template_id: TemplateId;
+  /** Cor hex escolhida por quem criou a campanha; null = cor padrão da template. */
+  theme_color: string | null;
   slug: string | null;
   status: CampaignStatus;
   created_at: string;
@@ -28,6 +31,7 @@ export interface Payment {
   provider_payment_id: string;
   status: PaymentStatus;
   amount: number;
+  coupon_code: string | null;
   created_at: string;
 }
 
@@ -44,7 +48,20 @@ export interface AppSettings {
   enabled_templates: TemplateId[];
   manifest_char_limit: number;
   manifest_char_limit_enabled: boolean;
+  template_color_palette: string[];
   updated_at: string;
+}
+
+export interface Coupon {
+  id: string;
+  code: string;
+  discount_type: CouponDiscountType;
+  discount_value: number;
+  max_redemptions: number | null;
+  redemption_count: number;
+  active: boolean;
+  expires_at: string | null;
+  created_at: string;
 }
 
 export interface Database {
@@ -74,6 +91,11 @@ export interface Database {
         Row: AppSettings;
         Insert: Partial<AppSettings>;
         Update: Partial<AppSettings>;
+      };
+      coupons: {
+        Row: Coupon;
+        Insert: Partial<Coupon> & Pick<Coupon, "code" | "discount_type" | "discount_value">;
+        Update: Partial<Coupon>;
       };
     };
   };

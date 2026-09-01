@@ -8,6 +8,7 @@ export interface RecordPaymentInput {
   providerPaymentId: string;
   status: PaymentStatus;
   amount: number;
+  couponCode?: string | null;
 }
 
 /**
@@ -27,6 +28,7 @@ export async function recordPayment(
       provider_payment_id: input.providerPaymentId,
       status: input.status,
       amount: input.amount,
+      coupon_code: input.couponCode ?? null,
     },
     { onConflict: "provider,provider_payment_id" }
   );

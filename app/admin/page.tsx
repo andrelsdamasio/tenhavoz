@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
@@ -18,7 +19,12 @@ export default async function AdminPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="mb-2 text-2xl font-semibold">Configurações</h1>
+      <div className="mb-2 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Configurações</h1>
+        <Link href="/admin/coupons" className="text-sm text-brand-600 hover:underline">
+          Cupons de desconto →
+        </Link>
+      </div>
       <p className="mb-6 text-sm text-gray-600">
         Preço da campanha e templates disponíveis no formulário de criação.
         Mudanças valem para novas campanhas — as já criadas não são afetadas.

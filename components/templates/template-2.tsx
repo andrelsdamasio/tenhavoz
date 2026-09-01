@@ -1,23 +1,31 @@
 import TrackedMailtoLink from "@/components/TrackedMailtoLink";
 import CopyFallbackButtons from "@/components/CopyFallbackButtons";
+import { deriveThemeShades, themeShadesToCssVars } from "@/lib/color";
 import type { TemplateProps } from "./types";
 
 /** Template 2: hero centralizado, fundo em degradê, chamada mais dramática. */
 export default function Template2({ campaign, mailtoUrl }: TemplateProps) {
+  const style = campaign.theme_color
+    ? (themeShadesToCssVars(deriveThemeShades(campaign.theme_color)) as React.CSSProperties)
+    : undefined;
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 text-white">
+    <main
+      style={style}
+      className="min-h-screen bg-gradient-to-br from-[var(--tc-dark,#3730a3)] via-[var(--tc-base,#4338ca)] to-[var(--tc-base,#4f46e5)] text-white"
+    >
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-8 px-6 py-16 text-center">
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
           {campaign.title}
         </h1>
-        <p className="whitespace-pre-wrap text-lg leading-relaxed text-brand-50">
+        <p className="whitespace-pre-wrap text-lg leading-relaxed text-[var(--tc-lighter,#eef2ff)]">
           {campaign.manifest_text}
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
           <TrackedMailtoLink
             campaignId={campaign.id}
             mailtoUrl={mailtoUrl}
-            className="rounded-full bg-white px-8 py-3.5 text-lg font-semibold text-brand-700 shadow-lg hover:bg-brand-50"
+            className="rounded-full bg-white px-8 py-3.5 text-lg font-semibold text-[var(--tc-dark,#3730a3)] shadow-lg hover:bg-[var(--tc-lighter,#eef2ff)]"
           >
             Assinar e enviar agora
           </TrackedMailtoLink>

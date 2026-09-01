@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCampaignForOwner } from "@/lib/campaigns";
-import { formatBRL } from "@/lib/pricing";
 import { getAppSettings } from "@/lib/settings";
 import { isAdminEmail } from "@/lib/admin";
-import { startStripeCheckout, startMercadoPagoCheckout, publishFreeAsAdmin } from "./actions";
+import CouponCheckoutPanel from "@/components/CouponCheckoutPanel";
 
 export default async function CheckoutPage({
   searchParams,
@@ -45,9 +44,8 @@ export default async function CheckoutPage({
   return (
     <div className="mx-auto max-w-md">
       <h1 className="mb-2 text-2xl font-semibold">Pagamento</h1>
-      <p className="mb-1 text-gray-600">
-        Campanha <strong>{campaign.title}</strong> —{" "}
-        {formatBRL(priceCents)}
+      <p className="mb-1 text-sm text-gray-500">
+        Campanha <strong className="text-gray-700">{campaign.title}</strong>
       </p>
       {campaign.slug && (
         <p className="mb-6 text-sm text-gray-500">
@@ -64,38 +62,11 @@ export default async function CheckoutPage({
         </p>
       )}
 
-      <div className="flex flex-col gap-3">
-        <form action={startStripeCheckout}>
-          <input type="hidden" name="campaignId" value={campaign.id} />
-          <button
-            type="submit"
-            className="w-full rounded-md bg-brand-600 px-4 py-2.5 font-medium text-white hover:bg-brand-700"
-          >
-            Pagar com Stripe
-          </button>
-        </form>
-        <form action={startMercadoPagoCheckout}>
-          <input type="hidden" name="campaignId" value={campaign.id} />
-          <button
-            type="submit"
-            className="w-full rounded-md border border-gray-300 px-4 py-2.5 font-medium hover:bg-gray-100"
-          >
-            Pagar com Mercado Pago
-          </button>
-        </form>
-
-        {isAdminEmail(user.email) && (
-          <form action={publishFreeAsAdmin}>
-            <input type="hidden" name="campaignId" value={campaign.id} />
-            <button
-              type="submit"
-              className="w-full rounded-md border border-dashed border-gray-400 px-4 py-2.5 font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Publicar sem pagar (admin)
-            </button>
-          </form>
-        )}
-      </div>
+      <CouponCheckoutPanel
+        campaignId={campaign.id}
+        basePriceCents={priceCents}
+        isAdmin={isAdminEmail(user.email)}
+      />
 
       <p className="mt-6 text-xs text-gray-500">
         Assim que o pagamento for confirmado, sua campanha vira uma página

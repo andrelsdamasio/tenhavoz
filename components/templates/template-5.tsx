@@ -1,5 +1,6 @@
 import TrackedMailtoLink from "@/components/TrackedMailtoLink";
 import CopyFallbackButtons from "@/components/CopyFallbackButtons";
+import { deriveThemeShades, themeShadesToCssVars } from "@/lib/color";
 import type { TemplateProps } from "./types";
 
 /**
@@ -8,11 +9,18 @@ import type { TemplateProps } from "./types";
  * (envio de manifesto a órgãos públicos).
  */
 export default function Template5({ campaign, mailtoUrl }: TemplateProps) {
+  const style = campaign.theme_color
+    ? (themeShadesToCssVars(deriveThemeShades(campaign.theme_color)) as React.CSSProperties)
+    : undefined;
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-brand-50 to-white px-4 py-12">
+    <main
+      style={style}
+      className="min-h-screen bg-gradient-to-b from-[var(--tc-lighter,#eef2ff)] to-white px-4 py-12"
+    >
       <div className="mx-auto max-w-xl rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
         <div className="mb-4 flex justify-center">
-          <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700">
+          <span className="rounded-full bg-[var(--tc-light,#e0e7ff)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--tc-dark,#3730a3)]">
             Manifesto público
           </span>
         </div>
@@ -32,7 +40,7 @@ export default function Template5({ campaign, mailtoUrl }: TemplateProps) {
         <TrackedMailtoLink
           campaignId={campaign.id}
           mailtoUrl={mailtoUrl}
-          className="mb-3 block w-full rounded-md bg-brand-600 px-6 py-3.5 text-center text-lg font-semibold text-white hover:bg-brand-700"
+          className="mb-3 block w-full rounded-md bg-[var(--tc-base,#4338ca)] px-6 py-3.5 text-center text-lg font-semibold text-white hover:bg-[var(--tc-dark,#3730a3)]"
         >
           Abrir e-mail pronto para enviar
         </TrackedMailtoLink>
@@ -77,7 +85,7 @@ function Badge({ children }: { children: React.ReactNode }) {
 function Step({ number, text }: { number: number; text: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--tc-base,#4338ca)] text-xs font-bold text-white">
         {number}
       </span>
       <span>{text}</span>

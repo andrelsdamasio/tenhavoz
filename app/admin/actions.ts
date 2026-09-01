@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { updateAppSettings } from "@/lib/settings";
+import { isValidHexColor } from "@/lib/color";
 import type { TemplateId } from "@/lib/types";
 
 export interface UpdateSettingsState {
@@ -36,6 +37,7 @@ export async function updateSettingsAction(
     .map((value) => Number(value)) as TemplateId[];
   const manifestCharLimit = Number(formData.get("manifestCharLimit"));
   const manifestCharLimitEnabled = formData.get("manifestCharLimitEnabled") === "on";
+  const templateColorPalette = formData.getAll("paletteColor").map((value) => String(value));
 
   if (!Number.isFinite(priceReais) || priceReais <= 0) {
     return { error: "Preço inválido.", success: false };
@@ -49,6 +51,14 @@ export async function updateSettingsAction(
     return { error: "Limite de caracteres inválido.", success: false };
   }
 
+  if (templateColorPalette.length === 0) {
+    return { error: "Adicione ao menos uma cor na paleta.", success: false };
+  }
+
+  if (!templateColorPalette.every(isValidHexColor)) {
+    return { error: "Uma das cores da paleta é inválida.", success: false };
+  }
+
   const admin = createAdminClient();
 
   await updateAppSettings(admin, {
@@ -56,6 +66,7 @@ export async function updateSettingsAction(
     enabledTemplates,
     manifestCharLimit: Math.round(manifestCharLimit),
     manifestCharLimitEnabled,
+    templateColorPalette,
   });
 
   revalidatePath("/admin");

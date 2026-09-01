@@ -4,6 +4,7 @@ import { getMercadoPagoPaymentClient } from "@/lib/mercadopago";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recordPayment } from "@/lib/payments";
 import { publishCampaignAfterConfirmedPayment } from "@/lib/campaigns";
+import { redeemCoupon } from "@/lib/coupons";
 
 /**
  * Valida o header x-signature do Mercado Pago.
@@ -86,6 +87,11 @@ export async function POST(request: Request) {
   }
 
   const isApproved = payment.status === "approved";
+  const couponCode =
+    (payment.metadata as Record<string, unknown> | undefined)?.coupon_code ||
+    (payment.metadata as Record<string, unknown> | undefined)?.couponCode ||
+    null;
+  const couponCodeStr = typeof couponCode === "string" && couponCode ? couponCode : null;
 
   await recordPayment(admin, {
     userId: campaign.user_id,
@@ -94,10 +100,14 @@ export async function POST(request: Request) {
     providerPaymentId: String(payment.id),
     status: isApproved ? "confirmed" : payment.status === "rejected" ? "failed" : "pending",
     amount: payment.transaction_amount ?? 0,
+    couponCode: couponCodeStr,
   });
 
   if (isApproved) {
-    await publishCampaignAfterConfirmedPayment(admin, campaignId);
+    const { alreadyPublished } = await publishCampaignAfterConfirmedPayment(admin, campaignId);
+    if (!alreadyPublished && couponCodeStr) {
+      await redeemCoupon(admin, couponCodeStr);
+    }
   }
 
   return NextResponse.json({ received: true });

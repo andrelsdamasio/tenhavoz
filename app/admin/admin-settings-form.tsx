@@ -31,11 +31,24 @@ export default function AdminSettingsForm({
   const [enabledTemplates, setEnabledTemplates] = useState<TemplateId[]>(
     settings.enabled_templates
   );
+  const [palette, setPalette] = useState<string[]>(settings.template_color_palette);
 
   function toggleTemplate(id: TemplateId) {
     setEnabledTemplates((current) =>
       current.includes(id) ? current.filter((t) => t !== id) : [...current, id]
     );
+  }
+
+  function updatePaletteColor(index: number, value: string) {
+    setPalette((current) => current.map((color, i) => (i === index ? value : color)));
+  }
+
+  function removePaletteColor(index: number) {
+    setPalette((current) => current.filter((_, i) => i !== index));
+  }
+
+  function addPaletteColor() {
+    setPalette((current) => [...current, "#4338ca"]);
   }
 
   return (
@@ -104,6 +117,45 @@ export default function AdminSettingsForm({
               Template {id}
             </label>
           ))}
+        </div>
+      </div>
+
+      <div>
+        <span className="mb-1 block text-sm font-medium">
+          Cores disponíveis para quem cria a campanha
+        </span>
+        <p className="mb-2 text-xs text-gray-500">
+          A pessoa que cria a campanha escolhe uma dessas cores pro template
+          que selecionar (ou mantém a cor padrão). Adicione ou remova opções
+          aqui.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {palette.map((color, index) => (
+            <div key={index} className="flex items-center gap-1">
+              <input
+                type="color"
+                name="paletteColor"
+                value={color}
+                onChange={(e) => updatePaletteColor(index, e.target.value)}
+                className="h-9 w-9 cursor-pointer rounded border border-gray-300 p-0.5"
+              />
+              <button
+                type="button"
+                onClick={() => removePaletteColor(index)}
+                className="text-xs text-gray-400 hover:text-red-600"
+                aria-label="Remover cor"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addPaletteColor}
+            className="h-9 rounded-md border border-dashed border-gray-300 px-3 text-xs font-medium text-gray-600 hover:bg-gray-50"
+          >
+            + Adicionar cor
+          </button>
         </div>
       </div>
 

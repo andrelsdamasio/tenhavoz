@@ -4,6 +4,7 @@ import { getStripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recordPayment } from "@/lib/payments";
 import { publishCampaignAfterConfirmedPayment } from "@/lib/campaigns";
+import { redeemCoupon } from "@/lib/coupons";
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
 
     const campaignId = session.metadata?.campaignId;
     const userId = session.metadata?.userId;
+    const couponCode = session.metadata?.couponCode || null;
 
     if (!campaignId || !userId) {
       // Evento sem os metadados que sempre enviamos na criação da sessão —
@@ -51,10 +53,14 @@ export async function POST(request: Request) {
       providerPaymentId: session.id,
       status: session.payment_status === "paid" ? "confirmed" : "pending",
       amount: (session.amount_total ?? 0) / 100,
+      couponCode,
     });
 
     if (session.payment_status === "paid") {
-      await publishCampaignAfterConfirmedPayment(admin, campaignId);
+      const { alreadyPublished } = await publishCampaignAfterConfirmedPayment(admin, campaignId);
+      if (!alreadyPublished && couponCode) {
+        await redeemCoupon(admin, couponCode);
+      }
     }
   }
 

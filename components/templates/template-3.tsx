@@ -1,13 +1,18 @@
 import TrackedMailtoLink from "@/components/TrackedMailtoLink";
 import CopyFallbackButtons from "@/components/CopyFallbackButtons";
+import { deriveThemeShades, themeShadesToCssVars } from "@/lib/color";
 import type { TemplateProps } from "./types";
 
 /** Template 3: layout tipo "carta" em cartão, com assinatura formal. */
 export default function Template3({ campaign, mailtoUrl }: TemplateProps) {
+  const style = campaign.theme_color
+    ? (themeShadesToCssVars(deriveThemeShades(campaign.theme_color)) as React.CSSProperties)
+    : undefined;
+
   return (
-    <main className="min-h-screen bg-gray-100 px-4 py-16">
+    <main style={style} className="min-h-screen bg-gray-100 px-4 py-16">
       <div className="mx-auto max-w-xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-600">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--tc-base,#4338ca)]">
           Manifesto público
         </p>
         <h1 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl">
@@ -20,7 +25,7 @@ export default function Template3({ campaign, mailtoUrl }: TemplateProps) {
           <TrackedMailtoLink
             campaignId={campaign.id}
             mailtoUrl={mailtoUrl}
-            className="flex-1 rounded-md bg-brand-600 px-6 py-3 text-center font-medium text-white hover:bg-brand-700"
+            className="flex-1 rounded-md bg-[var(--tc-base,#4338ca)] px-6 py-3 text-center font-medium text-white hover:bg-[var(--tc-dark,#3730a3)]"
           >
             Assinar por e-mail
           </TrackedMailtoLink>

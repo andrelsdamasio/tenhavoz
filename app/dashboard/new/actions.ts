@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createDraftCampaign } from "@/lib/campaigns";
 import { getAppSettings } from "@/lib/settings";
+import { isValidHexColor } from "@/lib/color";
 import type { SendMode, TemplateId } from "@/lib/types";
 
 export interface NewCampaignState {
@@ -38,6 +39,8 @@ export async function createCampaignAction(
   const driveLink = String(formData.get("driveLink") ?? "").trim() || null;
   const templateId = Number(formData.get("templateId") ?? "1") as TemplateId;
   const slug = String(formData.get("slug") ?? "").trim();
+  const themeColorRaw = String(formData.get("themeColor") ?? "").trim();
+  const themeColor = themeColorRaw && isValidHexColor(themeColorRaw) ? themeColorRaw : null;
 
   if (!title || !manifestText || !subject) {
     return { error: "Preencha título, assunto e texto do manifesto." };
@@ -65,6 +68,7 @@ export async function createCampaignAction(
     driveLink,
     templateId,
     slug,
+    themeColor,
   });
 
   redirect(`/dashboard/checkout?campaignId=${campaign.id}`);

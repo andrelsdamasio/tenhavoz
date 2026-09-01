@@ -8,6 +8,7 @@ import { getStripe } from "@/lib/stripe";
 import { getMercadoPagoPreferenceClient } from "@/lib/mercadopago";
 import { getAppSettings } from "@/lib/settings";
 import { isAdminEmail } from "@/lib/admin";
+import { applyCouponDiscount, findUsableCoupon, normalizeCouponCode } from "@/lib/coupons";
 
 async function getOwnedCampaignOrRedirect(campaignId: string) {
   const supabase = await createClient();
@@ -34,9 +35,66 @@ function getSiteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
 
+/**
+ * Revalida o cupom no servidor (nunca confia no desconto calculado no
+ * cliente) e devolve o preço final. Cupom inválido/expirado/sem saldo é
+ * silenciosamente ignorado aqui — a validação com mensagem de erro pro
+ * usuário acontece antes, em validateCouponAction.
+ */
+async function resolvePriceWithCoupon(
+  basePriceCents: number,
+  couponCodeRaw: string
+): Promise<{ priceCents: number; couponCode: string | null }> {
+  const couponCode = normalizeCouponCode(couponCodeRaw);
+  if (!couponCode) return { priceCents: basePriceCents, couponCode: null };
+
+  const admin = createAdminClient();
+  const coupon = await findUsableCoupon(admin, couponCode);
+  if (!coupon) return { priceCents: basePriceCents, couponCode: null };
+
+  return { priceCents: applyCouponDiscount(basePriceCents, coupon), couponCode: coupon.code };
+}
+
+export interface ValidateCouponState {
+  error: string | null;
+  appliedCode: string | null;
+  discountedPriceCents: number | null;
+}
+
+export async function validateCouponAction(
+  _prevState: ValidateCouponState,
+  formData: FormData
+): Promise<ValidateCouponState> {
+  const priceCents = Number(formData.get("priceCents") ?? "0");
+  const rawCode = String(formData.get("couponCode") ?? "");
+
+  const admin = createAdminClient();
+  const coupon = await findUsableCoupon(admin, rawCode);
+
+  if (!coupon) {
+    return {
+      error: "Cupom inválido, expirado ou já esgotado.",
+      appliedCode: null,
+      discountedPriceCents: null,
+    };
+  }
+
+  return {
+    error: null,
+    appliedCode: coupon.code,
+    discountedPriceCents: applyCouponDiscount(priceCents, coupon),
+  };
+}
+
 export async function startStripeCheckout(formData: FormData) {
   const campaignId = String(formData.get("campaignId") ?? "");
-  const { user, campaign, priceCents } = await getOwnedCampaignOrRedirect(campaignId);
+  const { user, campaign, priceCents: basePriceCents } = await getOwnedCampaignOrRedirect(
+    campaignId
+  );
+  const { priceCents, couponCode } = await resolvePriceWithCoupon(
+    basePriceCents,
+    String(formData.get("couponCode") ?? "")
+  );
 
   const stripe = getStripe();
   const siteUrl = getSiteUrl();
@@ -58,6 +116,7 @@ export async function startStripeCheckout(formData: FormData) {
     metadata: {
       campaignId: campaign.id,
       userId: user.id,
+      couponCode: couponCode ?? "",
     },
     success_url: `${siteUrl}/dashboard?checkout=success`,
     cancel_url: `${siteUrl}/dashboard/checkout?campaignId=${campaign.id}&canceled=1`,
@@ -72,7 +131,11 @@ export async function startStripeCheckout(formData: FormData) {
 
 export async function startMercadoPagoCheckout(formData: FormData) {
   const campaignId = String(formData.get("campaignId") ?? "");
-  const { campaign, priceCents } = await getOwnedCampaignOrRedirect(campaignId);
+  const { campaign, priceCents: basePriceCents } = await getOwnedCampaignOrRedirect(campaignId);
+  const { priceCents, couponCode } = await resolvePriceWithCoupon(
+    basePriceCents,
+    String(formData.get("couponCode") ?? "")
+  );
 
   const preferenceClient = getMercadoPagoPreferenceClient();
   const siteUrl = getSiteUrl();
@@ -89,6 +152,9 @@ export async function startMercadoPagoCheckout(formData: FormData) {
         },
       ],
       external_reference: campaign.id,
+      metadata: {
+        coupon_code: couponCode ?? "",
+      },
       back_urls: {
         success: `${siteUrl}/dashboard?checkout=success`,
         pending: `${siteUrl}/dashboard?checkout=pending`,

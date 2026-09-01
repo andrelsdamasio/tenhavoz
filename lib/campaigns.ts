@@ -12,6 +12,8 @@ export interface CreateCampaignInput {
   templateId: TemplateId;
   /** Slug desejado pelo usuário (será saneado). Se vazio, é derivado do título. */
   slug?: string;
+  /** Cor hex escolhida para a template; null/undefined = cor padrão. */
+  themeColor?: string | null;
 }
 
 const UNIQUE_VIOLATION = "23505";
@@ -41,6 +43,7 @@ export async function createDraftCampaign(
     send_mode: input.sendMode,
     drive_link: input.driveLink,
     template_id: input.templateId,
+    theme_color: input.themeColor ?? null,
     status: "draft" as const,
   };
 
@@ -108,6 +111,14 @@ export async function getPublishedCampaignBySlug(
   return data;
 }
 
+export interface PublishResult {
+  campaign: Campaign;
+  /** false só na primeira vez que esta campanha é publicada — usado pra
+   * decidir se um cupom associado ao pagamento deve ser resgatado (contador
+   * incrementado), evitando contar duas vezes um reenvio de webhook. */
+  alreadyPublished: boolean;
+}
+
 /**
  * Só ponto do sistema que publica uma campanha. É idempotente de propósito:
  * webhooks de pagamento podem reenviar o mesmo evento (retry do Stripe /
@@ -116,7 +127,7 @@ export async function getPublishedCampaignBySlug(
 export async function publishCampaignAfterConfirmedPayment(
   admin: SupabaseClient<Database>,
   campaignId: string
-): Promise<Campaign> {
+): Promise<PublishResult> {
   const { data: campaign, error: fetchError } = await admin
     .from("campaigns")
     .select("*")
@@ -126,7 +137,7 @@ export async function publishCampaignAfterConfirmedPayment(
   if (fetchError) throw fetchError;
 
   if (campaign.status === "published" && campaign.slug) {
-    return campaign;
+    return { campaign, alreadyPublished: true };
   }
 
   const slug = campaign.slug ?? generateSlug(campaign.title);
@@ -139,5 +150,5 @@ export async function publishCampaignAfterConfirmedPayment(
     .single();
 
   if (updateError) throw updateError;
-  return updated;
+  return { campaign: updated, alreadyPublished: false };
 }

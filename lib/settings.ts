@@ -6,6 +6,16 @@ const FALLBACK_SETTINGS: Omit<AppSettings, "id" | "updated_at"> = {
   enabled_templates: [1, 2, 3],
   manifest_char_limit: 2100,
   manifest_char_limit_enabled: true,
+  template_color_palette: [
+    "#111827",
+    "#1d4ed8",
+    "#047857",
+    "#b91c1c",
+    "#7c3aed",
+    "#c2410c",
+    "#0f766e",
+    "#be185d",
+  ],
 };
 
 /**
@@ -19,7 +29,7 @@ export async function getAppSettings(
   const { data, error } = await supabase
     .from("app_settings")
     .select(
-      "campaign_price_brl_cents, enabled_templates, manifest_char_limit, manifest_char_limit_enabled"
+      "campaign_price_brl_cents, enabled_templates, manifest_char_limit, manifest_char_limit_enabled, template_color_palette"
     )
     .eq("id", true)
     .maybeSingle();
@@ -33,6 +43,7 @@ export async function getAppSettings(
     enabled_templates: data.enabled_templates as TemplateId[],
     manifest_char_limit: data.manifest_char_limit,
     manifest_char_limit_enabled: data.manifest_char_limit_enabled,
+    template_color_palette: data.template_color_palette as string[],
   };
 }
 
@@ -41,6 +52,7 @@ export interface UpdateAppSettingsInput {
   enabledTemplates: TemplateId[];
   manifestCharLimit: number;
   manifestCharLimitEnabled: boolean;
+  templateColorPalette: string[];
 }
 
 export async function updateAppSettings(
@@ -54,6 +66,7 @@ export async function updateAppSettings(
       enabled_templates: input.enabledTemplates,
       manifest_char_limit: input.manifestCharLimit,
       manifest_char_limit_enabled: input.manifestCharLimitEnabled,
+      template_color_palette: input.templateColorPalette,
       updated_at: new Date().toISOString(),
     })
     .eq("id", true);
