@@ -42,6 +42,8 @@ export interface AppSettings {
   id: true;
   campaign_price_brl_cents: number;
   enabled_templates: TemplateId[];
+  manifest_char_limit: number;
+  manifest_char_limit_enabled: boolean;
   updated_at: string;
 }
 

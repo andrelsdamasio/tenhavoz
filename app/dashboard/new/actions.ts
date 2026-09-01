@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createDraftCampaign } from "@/lib/campaigns";
+import { getAppSettings } from "@/lib/settings";
 import type { SendMode, TemplateId } from "@/lib/types";
 
 export interface NewCampaignState {
@@ -44,6 +45,15 @@ export async function createCampaignAction(
 
   if (recipients.length === 0) {
     return { error: "Informe pelo menos um e-mail de destino." };
+  }
+
+  const { manifest_char_limit: charLimit, manifest_char_limit_enabled: charLimitEnabled } =
+    await getAppSettings(supabase);
+
+  if (charLimitEnabled && manifestText.length > charLimit) {
+    return {
+      error: `O texto do manifesto tem ${manifestText.length} caracteres — o limite atual é ${charLimit}. Encurte o texto (ou use "Encurtar com IA") antes de continuar.`,
+    };
   }
 
   const campaign = await createDraftCampaign(supabase, user.id, {

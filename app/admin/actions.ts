@@ -34,6 +34,8 @@ export async function updateSettingsAction(
   const enabledTemplates = formData
     .getAll("enabledTemplates")
     .map((value) => Number(value)) as TemplateId[];
+  const manifestCharLimit = Number(formData.get("manifestCharLimit"));
+  const manifestCharLimitEnabled = formData.get("manifestCharLimitEnabled") === "on";
 
   if (!Number.isFinite(priceReais) || priceReais <= 0) {
     return { error: "Preço inválido.", success: false };
@@ -43,11 +45,17 @@ export async function updateSettingsAction(
     return { error: "Selecione ao menos um template.", success: false };
   }
 
+  if (!Number.isFinite(manifestCharLimit) || manifestCharLimit <= 0) {
+    return { error: "Limite de caracteres inválido.", success: false };
+  }
+
   const admin = createAdminClient();
 
   await updateAppSettings(admin, {
     campaignPriceBrlCents: Math.round(priceReais * 100),
     enabledTemplates,
+    manifestCharLimit: Math.round(manifestCharLimit),
+    manifestCharLimitEnabled,
   });
 
   revalidatePath("/admin");

@@ -8,9 +8,6 @@ import { getTemplateComponent } from "@/components/templates";
 import type { Campaign, SendMode, TemplateId } from "@/lib/types";
 import { createCampaignAction, type NewCampaignState } from "@/app/dashboard/new/actions";
 
-const RECOMMENDED_BODY_LIMIT = 2200;
-const AI_SHORTEN_TARGET_LENGTH = 1800;
-
 const initialState: NewCampaignState = { error: null };
 
 const SITE_HOST = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br").replace(
@@ -25,12 +22,12 @@ function parseRecipientsPreview(raw: string): string[] {
     .filter((email) => email.length > 0);
 }
 
-function SubmitButton() {
+function SubmitButton({ blocked }: { blocked: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || blocked}
       className="rounded-md bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700 disabled:opacity-60"
     >
       {pending ? "Salvando..." : "Salvar rascunho e ir para pagamento"}
@@ -80,9 +77,15 @@ function TemplatePreviewCard({
 
 interface CampaignFormProps {
   enabledTemplates: TemplateId[];
+  manifestCharLimit: number;
+  manifestCharLimitEnabled: boolean;
 }
 
-export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
+export default function CampaignForm({
+  enabledTemplates,
+  manifestCharLimit,
+  manifestCharLimitEnabled,
+}: CampaignFormProps) {
   const [state, formAction] = useFormState(createCampaignAction, initialState);
 
   const availableTemplates: TemplateId[] =
@@ -112,7 +115,7 @@ export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(
         task === "shorten"
-          ? { task, text: manifestText, targetLength: AI_SHORTEN_TARGET_LENGTH }
+          ? { task, text: manifestText, targetLength: manifestCharLimit }
           : { task, text: manifestText }
       ),
     });
@@ -178,7 +181,8 @@ export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
   };
 
   const bodyLength = manifestText.length;
-  const bodyOverRecommended = bodyLength > RECOMMENDED_BODY_LIMIT;
+  const bodyOverLimit = bodyLength > manifestCharLimit;
+  const bodyOverLimitBlocking = bodyOverLimit && manifestCharLimitEnabled;
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
@@ -255,9 +259,10 @@ export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
             Texto do manifesto
           </label>
           <span
-            className={`text-xs ${bodyOverRecommended ? "text-amber-700" : "text-gray-500"}`}
+            className={`text-xs ${bodyOverLimit ? (bodyOverLimitBlocking ? "text-red-600" : "text-amber-700") : "text-gray-500"}`}
           >
-            {bodyLength} / {RECOMMENDED_BODY_LIMIT} caracteres recomendados
+            {bodyLength} / {manifestCharLimit} caracteres
+            {manifestCharLimitEnabled ? "" : " (recomendado)"}
           </span>
         </div>
         <textarea
@@ -269,12 +274,12 @@ export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
           onChange={(e) => setManifestText(e.target.value)}
           className="w-full rounded-md border border-gray-300 px-3 py-2"
         />
-        {bodyOverRecommended && (
+        {bodyOverLimit && (
           <div className="mt-1 flex items-start justify-between gap-3">
-            <p className="text-xs text-amber-700">
-              Passou do recomendado — o botão de envio continua funcionando
-              normalmente, mas alguns apps de e-mail podem cortar o final da
-              mensagem. Encurte se quiser eliminar esse risco.
+            <p className={`text-xs ${bodyOverLimitBlocking ? "text-red-600" : "text-amber-700"}`}>
+              {bodyOverLimitBlocking
+                ? "Passou do limite — não é possível avançar para o pagamento até encurtar o texto (ou usar \"Encurtar com IA\")."
+                : "Passou do recomendado — o botão de envio continua funcionando normalmente, mas alguns apps de e-mail podem cortar o final da mensagem. Encurte se quiser eliminar esse risco."}
             </p>
             <button
               type="button"
@@ -393,7 +398,7 @@ export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
       {aiError && <p className="text-sm text-red-600">{aiError}</p>}
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
-      <SubmitButton />
+      <SubmitButton blocked={bodyOverLimitBlocking} />
     </form>
   );
 }
