@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { buildMailtoUrl } from "@/lib/mailto";
 import { sanitizeSlug } from "@/lib/slug";
@@ -9,6 +9,22 @@ import type { Campaign, SendMode, TemplateId } from "@/lib/types";
 import { createCampaignAction, type NewCampaignState } from "@/app/dashboard/new/actions";
 
 const initialState: NewCampaignState = { error: null };
+
+const DRAFT_STORAGE_KEY = "tenhavoz:new-campaign-draft";
+
+interface StoredDraft {
+  title: string;
+  subject: string;
+  manifestText: string;
+  recipientsRaw: string;
+  sendMode: SendMode;
+  driveLink: string;
+  templateId: TemplateId;
+  themeColor: string | null;
+  slug: string;
+  slugTouched: boolean;
+  mode: "basico" | "avancado";
+}
 
 const SITE_HOST = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br").replace(
   /^https?:\/\//,
@@ -107,6 +123,8 @@ export default function CampaignForm({
   const [aiShortenLoading, setAiShortenLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [mode, setMode] = useState<"basico" | "avancado">("basico");
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   function handleModeChange(next: "basico" | "avancado") {
     setMode(next);
@@ -117,9 +135,96 @@ export default function CampaignForm({
     }
   }
 
+  // Restaura um rascunho salvo no navegador (ex: a página recarregou por
+  // causa de um novo deploy do site enquanto a pessoa ainda estava digitando).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (raw) {
+        const draft: Partial<StoredDraft> = JSON.parse(raw);
+        if (draft.title) setTitle(draft.title);
+        if (draft.subject) setSubject(draft.subject);
+        if (draft.manifestText) setManifestText(draft.manifestText);
+        if (draft.recipientsRaw) setRecipientsRaw(draft.recipientsRaw);
+        if (draft.sendMode) setSendMode(draft.sendMode);
+        if (draft.driveLink) setDriveLink(draft.driveLink);
+        if (draft.templateId && availableTemplates.includes(draft.templateId)) {
+          setTemplateId(draft.templateId);
+        }
+        if (draft.themeColor !== undefined) setThemeColor(draft.themeColor);
+        if (draft.slug) {
+          setSlug(draft.slug);
+          setSlugTouched(!!draft.slugTouched);
+        }
+        if (draft.mode) setMode(draft.mode);
+      }
+    } catch {
+      // localStorage indisponível ou rascunho corrompido — segue com o formulário vazio
+    } finally {
+      setDraftLoaded(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Salva automaticamente o que a pessoa vai digitando, pra não perder nada
+  // se a página recarregar antes de terminar.
+  useEffect(() => {
+    if (!draftLoaded) return;
+    try {
+      const hasContent = title || subject || manifestText || recipientsRaw || driveLink;
+      if (!hasContent) {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        return;
+      }
+      const draft: StoredDraft = {
+        title,
+        subject,
+        manifestText,
+        recipientsRaw,
+        sendMode,
+        driveLink,
+        templateId,
+        themeColor,
+        slug,
+        slugTouched,
+        mode,
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    } catch {
+      // localStorage indisponível (modo privado, cota excedida) — segue sem salvar
+    }
+  }, [
+    draftLoaded,
+    title,
+    subject,
+    manifestText,
+    recipientsRaw,
+    sendMode,
+    driveLink,
+    templateId,
+    themeColor,
+    slug,
+    slugTouched,
+    mode,
+  ]);
+
+  function handleFormSubmit() {
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+      // ignora — pior caso é o rascunho reaparecer numa próxima campanha
+    }
+  }
+
   useEffect(() => {
     if (!slugTouched) setSlug(sanitizeSlug(title));
   }, [title, slugTouched]);
+
+  useEffect(() => {
+    if (state.error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [state.error]);
 
   async function callAiAssist(task: "shorten" | "title") {
     setAiError(null);
@@ -202,7 +307,24 @@ export default function CampaignForm({
 
   return (
     <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_440px]">
-    <form action={formAction} className="flex flex-col gap-6">
+    <form action={formAction} onSubmit={handleFormSubmit} className="flex flex-col gap-6">
+      {state.error && (
+        <div
+          ref={errorRef}
+          className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+        >
+          <p className="font-medium">Não foi possível continuar:</p>
+          <p className="mt-1">{state.error}</p>
+          <p className="mt-1 text-xs text-red-600">
+            Nada foi perdido — os dados que você digitou continuam preenchidos abaixo.
+          </p>
+        </div>
+      )}
+
+      <p className="text-xs text-gray-400">
+        Rascunho salvo automaticamente neste navegador.
+      </p>
+
       <div>
         <div className="mb-1 flex items-baseline justify-between">
           <label className="block text-sm font-medium" htmlFor="title">
@@ -493,7 +615,6 @@ export default function CampaignForm({
       </div>
 
       {aiError && <p className="text-sm text-red-600">{aiError}</p>}
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
       <SubmitButton blocked={bodyOverLimitBlocking} />
     </form>
@@ -512,12 +633,15 @@ export default function CampaignForm({
           </span>
         </div>
         <div className="max-h-[70vh] overflow-y-auto">
-          <SelectedTemplate campaign={previewCampaign} mailtoUrl={preview.url} />
+          <div className="pointer-events-none">
+            <SelectedTemplate campaign={previewCampaign} mailtoUrl={preview.url} />
+          </div>
         </div>
       </div>
       <p className="mt-2 text-xs text-gray-500">
         É assim que a página vai aparecer para quem receber o link — role para
-        ver o resto do conteúdo.
+        ver o resto do conteúdo. Os botões ficam desativados aqui: eles só
+        funcionam de verdade depois que a campanha é paga e publicada.
       </p>
     </aside>
     </div>
