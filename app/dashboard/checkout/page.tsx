@@ -8,9 +8,14 @@ import CouponCheckoutPanel from "@/components/CouponCheckoutPanel";
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ campaignId?: string; canceled?: string; couponExpired?: string }>;
+  searchParams: Promise<{
+    campaignId?: string;
+    canceled?: string;
+    couponExpired?: string;
+    planInvalid?: string;
+  }>;
 }) {
-  const { campaignId, canceled, couponExpired } = await searchParams;
+  const { campaignId, canceled, couponExpired, planInvalid } = await searchParams;
 
   if (!campaignId) {
     redirect("/dashboard");
@@ -35,7 +40,8 @@ export default async function CheckoutPage({
     redirect("/dashboard");
   }
 
-  const { campaign_price_brl_cents: priceCents } = await getAppSettings(supabase);
+  const { price_72h_brl_cents: price72hCents, price_7d_brl_cents: price7dCents } =
+    await getAppSettings(supabase);
   const siteHost = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br").replace(
     /^https?:\/\//,
     ""
@@ -69,9 +75,16 @@ export default async function CheckoutPage({
         </p>
       )}
 
+      {planInvalid && (
+        <p className="mb-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
+          Escolha um prazo antes de continuar.
+        </p>
+      )}
+
       <CouponCheckoutPanel
         campaignId={campaign.id}
-        basePriceCents={priceCents}
+        price72hCents={price72hCents}
+        price7dCents={price7dCents}
         isAdmin={isAdminEmail(user.email)}
       />
 

@@ -408,6 +408,8 @@ export default function CampaignForm({
     theme_color: themeColor,
     slug: null,
     status: "draft",
+    duration_hours: null,
+    expires_at: null,
     created_at: "1970-01-01T00:00:00.000Z",
   };
 

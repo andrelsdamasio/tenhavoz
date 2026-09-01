@@ -58,7 +58,7 @@ export async function createCouponAction(
   }
 
   // "fixed" é digitado em reais no formulário (ex.: 10,50); guardamos em
-  // centavos, mesma unidade de campaign_price_brl_cents / discount aplicado.
+  // centavos, mesma unidade dos preços por prazo (price_72h/7d_brl_cents).
   const discountValueStored =
     discountType === "fixed" ? Math.round(discountValue * 100) : Math.round(discountValue);
 

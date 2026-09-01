@@ -54,19 +54,45 @@ export default function AdminSettingsForm({
   return (
     <form action={formAction} className="flex flex-col gap-6">
       <div>
-        <label className="mb-1 block text-sm font-medium" htmlFor="priceReais">
-          Preço da campanha (R$)
-        </label>
-        <input
-          id="priceReais"
-          name="priceReais"
-          type="number"
-          min="1"
-          step="0.01"
-          required
-          defaultValue={(settings.campaign_price_brl_cents / 100).toFixed(2)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2"
-        />
+        <span className="mb-1 block text-sm font-medium">
+          Preço por prazo de campanha (R$)
+        </span>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs text-gray-500" htmlFor="price72hReais">
+              72 horas
+            </label>
+            <input
+              id="price72hReais"
+              name="price72hReais"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+              defaultValue={(settings.price_72h_brl_cents / 100).toFixed(2)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-xs text-gray-500" htmlFor="price7dReais">
+              7 dias
+            </label>
+            <input
+              id="price7dReais"
+              name="price7dReais"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+              defaultValue={(settings.price_7d_brl_cents / 100).toFixed(2)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+        </div>
+        <p className="mt-1 text-xs text-gray-500">
+          Quem cria a campanha escolhe um dos dois prazos no pagamento. A
+          página fica no ar até o prazo acabar.
+        </p>
       </div>
 
       <div>

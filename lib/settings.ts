@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppSettings, Database, TemplateId } from "@/lib/types";
 
 const FALLBACK_SETTINGS: Omit<AppSettings, "id" | "updated_at"> = {
-  campaign_price_brl_cents: Number(process.env.CAMPAIGN_PRICE_BRL_CENTS ?? "4900"),
+  price_72h_brl_cents: 4990,
+  price_7d_brl_cents: 7990,
   enabled_templates: [1, 2, 3],
   manifest_char_limit: 2100,
   manifest_char_limit_enabled: true,
@@ -29,7 +30,7 @@ export async function getAppSettings(
   const { data, error } = await supabase
     .from("app_settings")
     .select(
-      "campaign_price_brl_cents, enabled_templates, manifest_char_limit, manifest_char_limit_enabled, template_color_palette"
+      "price_72h_brl_cents, price_7d_brl_cents, enabled_templates, manifest_char_limit, manifest_char_limit_enabled, template_color_palette"
     )
     .eq("id", true)
     .maybeSingle();
@@ -39,7 +40,8 @@ export async function getAppSettings(
   }
 
   return {
-    campaign_price_brl_cents: data.campaign_price_brl_cents,
+    price_72h_brl_cents: data.price_72h_brl_cents,
+    price_7d_brl_cents: data.price_7d_brl_cents,
     enabled_templates: data.enabled_templates as TemplateId[],
     manifest_char_limit: data.manifest_char_limit,
     manifest_char_limit_enabled: data.manifest_char_limit_enabled,
@@ -48,7 +50,8 @@ export async function getAppSettings(
 }
 
 export interface UpdateAppSettingsInput {
-  campaignPriceBrlCents: number;
+  price72hBrlCents: number;
+  price7dBrlCents: number;
   enabledTemplates: TemplateId[];
   manifestCharLimit: number;
   manifestCharLimitEnabled: boolean;
@@ -62,7 +65,8 @@ export async function updateAppSettings(
   const { error } = await admin
     .from("app_settings")
     .update({
-      campaign_price_brl_cents: input.campaignPriceBrlCents,
+      price_72h_brl_cents: input.price72hBrlCents,
+      price_7d_brl_cents: input.price7dBrlCents,
       enabled_templates: input.enabledTemplates,
       manifest_char_limit: input.manifestCharLimit,
       manifest_char_limit_enabled: input.manifestCharLimitEnabled,

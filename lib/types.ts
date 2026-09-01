@@ -5,6 +5,8 @@ export type PaymentStatus = "pending" | "confirmed" | "failed" | "refunded";
 export type TemplateId = 1 | 2 | 3 | 4 | 5;
 export type EventType = "view" | "click";
 export type CouponDiscountType = "percent" | "fixed";
+/** Duração da campanha publicada, em horas: 72h ou 7 dias. */
+export type CampaignDuration = 72 | 168;
 
 export interface Campaign {
   id: string;
@@ -22,6 +24,10 @@ export interface Campaign {
   theme_color: string | null;
   slug: string | null;
   status: CampaignStatus;
+  /** Escolhido no checkout; null nas campanhas criadas antes desse recurso. */
+  duration_hours: CampaignDuration | null;
+  /** Calculado na publicação (published_at + duration_hours); null = nunca expira. */
+  expires_at: string | null;
   created_at: string;
 }
 
@@ -46,7 +52,8 @@ export interface CampaignEvent {
 
 export interface AppSettings {
   id: true;
-  campaign_price_brl_cents: number;
+  price_72h_brl_cents: number;
+  price_7d_brl_cents: number;
   enabled_templates: TemplateId[];
   manifest_char_limit: number;
   manifest_char_limit_enabled: boolean;

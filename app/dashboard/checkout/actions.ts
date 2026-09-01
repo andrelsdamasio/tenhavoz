@@ -3,11 +3,16 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCampaignForOwner, publishCampaignAfterConfirmedPayment } from "@/lib/campaigns";
+import {
+  getCampaignForOwner,
+  publishCampaignAfterConfirmedPayment,
+  setCampaignDuration,
+} from "@/lib/campaigns";
 import { getStripe } from "@/lib/stripe";
 import { getMercadoPagoPreferenceClient } from "@/lib/mercadopago";
 import { getAppSettings } from "@/lib/settings";
 import { isAdminEmail } from "@/lib/admin";
+import type { CampaignDuration } from "@/lib/types";
 import {
   applyCouponDiscount,
   findUsableCoupon,
@@ -31,9 +36,29 @@ async function getOwnedCampaignOrRedirect(campaignId: string) {
     redirect("/dashboard");
   }
 
-  const { campaign_price_brl_cents: priceCents } = await getAppSettings(supabase);
+  const settings = await getAppSettings(supabase);
 
-  return { user, campaign, priceCents };
+  return { user, supabase, campaign, settings };
+}
+
+/**
+ * Lê o prazo escolhido no checkout ("72" ou "168" horas) e resolve o preço
+ * base correspondente. Prazo ausente/inválido manda a pessoa de volta pro
+ * checkout em vez de deixar seguir com um preço arbitrário.
+ */
+function resolveDuration(
+  formData: FormData,
+  settings: { price_72h_brl_cents: number; price_7d_brl_cents: number },
+  campaignId: string
+): { duration: CampaignDuration; basePriceCents: number } {
+  const raw = String(formData.get("duration") ?? "");
+  if (raw === "72") {
+    return { duration: 72, basePriceCents: settings.price_72h_brl_cents };
+  }
+  if (raw === "168") {
+    return { duration: 168, basePriceCents: settings.price_7d_brl_cents };
+  }
+  redirect(`/dashboard/checkout?campaignId=${campaignId}&planInvalid=1`);
 }
 
 function getSiteUrl(): string {
@@ -93,13 +118,14 @@ export async function validateCouponAction(
 
 export async function startStripeCheckout(formData: FormData) {
   const campaignId = String(formData.get("campaignId") ?? "");
-  const { user, campaign, priceCents: basePriceCents } = await getOwnedCampaignOrRedirect(
-    campaignId
-  );
+  const { user, supabase, campaign, settings } = await getOwnedCampaignOrRedirect(campaignId);
+  const { duration, basePriceCents } = resolveDuration(formData, settings, campaignId);
   const { priceCents, couponCode } = await resolvePriceWithCoupon(
     basePriceCents,
     String(formData.get("couponCode") ?? "")
   );
+
+  await setCampaignDuration(supabase, campaign.id, user.id, duration);
 
   const stripe = getStripe();
   const siteUrl = getSiteUrl();
@@ -139,11 +165,14 @@ async function createMercadoPagoPreference(
   options?: { pixOnly?: boolean }
 ) {
   const campaignId = String(formData.get("campaignId") ?? "");
-  const { campaign, priceCents: basePriceCents } = await getOwnedCampaignOrRedirect(campaignId);
+  const { user, supabase, campaign, settings } = await getOwnedCampaignOrRedirect(campaignId);
+  const { duration, basePriceCents } = resolveDuration(formData, settings, campaignId);
   const { priceCents, couponCode } = await resolvePriceWithCoupon(
     basePriceCents,
     String(formData.get("couponCode") ?? "")
   );
+
+  await setCampaignDuration(supabase, campaign.id, user.id, duration);
 
   const preferenceClient = getMercadoPagoPreferenceClient();
   const siteUrl = getSiteUrl();
@@ -218,7 +247,8 @@ export async function startPixCheckout(formData: FormData) {
  */
 export async function claimFreeCampaign(formData: FormData) {
   const campaignId = String(formData.get("campaignId") ?? "");
-  const { campaign, priceCents: basePriceCents } = await getOwnedCampaignOrRedirect(campaignId);
+  const { user, supabase, campaign, settings } = await getOwnedCampaignOrRedirect(campaignId);
+  const { duration, basePriceCents } = resolveDuration(formData, settings, campaignId);
   const { priceCents, couponCode } = await resolvePriceWithCoupon(
     basePriceCents,
     String(formData.get("couponCode") ?? "")
@@ -227,6 +257,8 @@ export async function claimFreeCampaign(formData: FormData) {
   if (priceCents !== 0) {
     redirect(`/dashboard/checkout?campaignId=${campaign.id}&couponExpired=1`);
   }
+
+  await setCampaignDuration(supabase, campaign.id, user.id, duration);
 
   const admin = createAdminClient();
   const { alreadyPublished } = await publishCampaignAfterConfirmedPayment(admin, campaign.id);
@@ -241,16 +273,18 @@ export async function claimFreeCampaign(formData: FormData) {
  * Publica a campanha sem passar pelo checkout — restrito à conta admin
  * (ADMIN_EMAILS), para permitir testar/usar o produto sem pagar. Não gera
  * nenhuma linha em payments; só reaproveita a mesma função que os webhooks
- * usam para publicar.
+ * usam para publicar. Sempre usa o prazo de 7 dias, já que é só um atalho de
+ * teste sem tela de escolha de prazo.
  */
 export async function publishFreeAsAdmin(formData: FormData) {
   const campaignId = String(formData.get("campaignId") ?? "");
-  const { user, campaign } = await getOwnedCampaignOrRedirect(campaignId);
+  const { user, supabase, campaign } = await getOwnedCampaignOrRedirect(campaignId);
 
   if (!isAdminEmail(user.email)) {
     redirect("/dashboard");
   }
 
+  await setCampaignDuration(supabase, campaign.id, user.id, 168);
   await publishCampaignAfterConfirmedPayment(createAdminClient(), campaign.id);
 
   redirect("/dashboard");

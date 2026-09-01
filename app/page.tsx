@@ -26,7 +26,7 @@ const STEPS = [
 
 export default async function HomePage() {
   const supabase = createPublicClient();
-  const { campaign_price_brl_cents: priceCents } = await getAppSettings(supabase);
+  const { price_72h_brl_cents: price72hCents } = await getAppSettings(supabase);
 
   return (
     <main className="relative overflow-hidden bg-gray-50">
@@ -95,7 +95,7 @@ export default async function HomePage() {
           className="animate-fade-in-up mt-4 text-sm text-gray-400"
           style={{ animationDelay: "0.4s" }}
         >
-          A partir de {formatBRL(priceCents)}, pagamento único por campanha.
+          A partir de {formatBRL(price72hCents)}, pagamento único por campanha.
         </p>
       </section>
 

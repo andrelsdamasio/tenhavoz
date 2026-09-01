@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Campaign, SendMode, TemplateId } from "@/lib/types";
+import type { Database, Campaign, SendMode, TemplateId, CampaignDuration } from "@/lib/types";
 import { generateSlug, isReservedSlug, sanitizeSlug } from "@/lib/slug";
 
 export interface CreateCampaignInput {
@@ -231,14 +231,41 @@ export async function publishCampaignAfterConfirmedPayment(
   }
 
   const slug = campaign.slug ?? generateSlug(campaign.title);
+  const expiresAt = campaign.duration_hours
+    ? new Date(Date.now() + campaign.duration_hours * 60 * 60 * 1000).toISOString()
+    : null;
 
   const { data: updated, error: updateError } = await admin
     .from("campaigns")
-    .update({ status: "published", slug })
+    .update({ status: "published", slug, expires_at: expiresAt })
     .eq("id", campaignId)
     .select()
     .single();
 
   if (updateError) throw updateError;
   return { campaign: updated, alreadyPublished: false };
+}
+
+/**
+ * Grava o prazo escolhido (72h ou 7 dias) antes de ir pro checkout — a
+ * expiração de verdade (expires_at) só é calculada quando a campanha é
+ * publicada de fato, em publishCampaignAfterConfirmedPayment.
+ */
+export async function setCampaignDuration(
+  supabase: SupabaseClient<Database>,
+  campaignId: string,
+  userId: string,
+  durationHours: CampaignDuration
+): Promise<void> {
+  const { error } = await supabase
+    .from("campaigns")
+    .update({ duration_hours: durationHours })
+    .eq("id", campaignId)
+    .eq("user_id", userId);
+
+  if (error) throw error;
+}
+
+export function isCampaignExpired(campaign: Campaign): boolean {
+  return !!campaign.expires_at && new Date(campaign.expires_at).getTime() < Date.now();
 }

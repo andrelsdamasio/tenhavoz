@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createPublicClient } from "@/lib/supabase/public";
-import { getPublishedCampaignBySlug } from "@/lib/campaigns";
+import { getPublishedCampaignBySlug, isCampaignExpired } from "@/lib/campaigns";
 import { buildMailtoUrl } from "@/lib/mailto";
 import { getTemplateComponent } from "@/components/templates";
 import ViewTracker from "@/components/ViewTracker";
@@ -51,6 +51,18 @@ export default async function PublicCampaignPage({ params }: PageProps) {
 
   if (!campaign) {
     notFound();
+  }
+
+  if (isCampaignExpired(campaign)) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
+        <h1 className="text-2xl font-bold text-gray-900">Campanha encerrada</h1>
+        <p className="text-gray-600">
+          O prazo desta campanha (&quot;{campaign.title}&quot;) já acabou e o
+          link de envio não está mais disponível.
+        </p>
+      </main>
+    );
   }
 
   const { url: mailtoUrl } = buildMailtoUrl({

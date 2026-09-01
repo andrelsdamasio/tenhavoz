@@ -31,7 +31,8 @@ export async function updateSettingsAction(
 ): Promise<UpdateSettingsState> {
   await requireAdmin();
 
-  const priceReais = Number(formData.get("priceReais"));
+  const price72hReais = Number(formData.get("price72hReais"));
+  const price7dReais = Number(formData.get("price7dReais"));
   const enabledTemplates = formData
     .getAll("enabledTemplates")
     .map((value) => Number(value)) as TemplateId[];
@@ -39,8 +40,12 @@ export async function updateSettingsAction(
   const manifestCharLimitEnabled = formData.get("manifestCharLimitEnabled") === "on";
   const templateColorPalette = formData.getAll("paletteColor").map((value) => String(value));
 
-  if (!Number.isFinite(priceReais) || priceReais <= 0) {
-    return { error: "Preço inválido.", success: false };
+  if (!Number.isFinite(price72hReais) || price72hReais <= 0) {
+    return { error: "Preço do plano de 72h inválido.", success: false };
+  }
+
+  if (!Number.isFinite(price7dReais) || price7dReais <= 0) {
+    return { error: "Preço do plano de 7 dias inválido.", success: false };
   }
 
   if (enabledTemplates.length === 0) {
@@ -62,7 +67,8 @@ export async function updateSettingsAction(
   const admin = createAdminClient();
 
   await updateAppSettings(admin, {
-    campaignPriceBrlCents: Math.round(priceReais * 100),
+    price72hBrlCents: Math.round(price72hReais * 100),
+    price7dBrlCents: Math.round(price7dReais * 100),
     enabledTemplates,
     manifestCharLimit: Math.round(manifestCharLimit),
     manifestCharLimitEnabled,

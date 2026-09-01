@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { formatBRL } from "@/lib/pricing";
 import {
@@ -46,21 +47,60 @@ function PayButton({ label, variant }: { label: string; variant: "primary" | "se
 
 export default function CouponCheckoutPanel({
   campaignId,
-  basePriceCents,
+  price72hCents,
+  price7dCents,
   isAdmin,
 }: {
   campaignId: string;
-  basePriceCents: number;
+  price72hCents: number;
+  price7dCents: number;
   isAdmin: boolean;
 }) {
   const [state, formAction] = useFormState(validateCouponAction, initialCouponState);
+  const [duration, setDuration] = useState<"72" | "168">("72");
 
+  const basePriceCents = duration === "72" ? price72hCents : price7dCents;
   const finalPriceCents = state.discountedPriceCents ?? basePriceCents;
   const hasDiscount = state.appliedCode !== null;
   const isFree = hasDiscount && finalPriceCents === 0;
 
   return (
     <div className="flex flex-col gap-4">
+      <div>
+        <span className="mb-1 block text-sm font-medium text-gray-700">
+          Prazo da campanha
+        </span>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setDuration("72")}
+            className={`rounded-md border p-3 text-left ${
+              duration === "72"
+                ? "border-brand-600 ring-1 ring-brand-600"
+                : "border-gray-300 hover:border-gray-400"
+            }`}
+          >
+            <p className="font-medium">72 horas</p>
+            <p className="text-sm text-gray-500">{formatBRL(price72hCents)}</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDuration("168")}
+            className={`rounded-md border p-3 text-left ${
+              duration === "168"
+                ? "border-brand-600 ring-1 ring-brand-600"
+                : "border-gray-300 hover:border-gray-400"
+            }`}
+          >
+            <p className="font-medium">7 dias</p>
+            <p className="text-sm text-gray-500">{formatBRL(price7dCents)}</p>
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-gray-500">
+          A página fica no ar até o prazo escolhido acabar.
+        </p>
+      </div>
+
       <p className="text-gray-600">
         Campanha{" "}
         <strong>{isFree ? "Grátis" : formatBRL(finalPriceCents)}</strong>
@@ -100,6 +140,7 @@ export default function CouponCheckoutPanel({
         {isFree ? (
           <form action={claimFreeCampaign}>
             <input type="hidden" name="campaignId" value={campaignId} />
+            <input type="hidden" name="duration" value={duration} />
             <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
             <PayButton label="Publicar campanha gratuitamente" variant="primary" />
           </form>
@@ -107,16 +148,19 @@ export default function CouponCheckoutPanel({
           <>
             <form action={startPixCheckout}>
               <input type="hidden" name="campaignId" value={campaignId} />
+              <input type="hidden" name="duration" value={duration} />
               <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
               <PayButton label="Pagar com Pix" variant="primary" />
             </form>
             <form action={startStripeCheckout}>
               <input type="hidden" name="campaignId" value={campaignId} />
+              <input type="hidden" name="duration" value={duration} />
               <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
               <PayButton label="Pagar com Stripe" variant="secondary" />
             </form>
             <form action={startMercadoPagoCheckout}>
               <input type="hidden" name="campaignId" value={campaignId} />
+              <input type="hidden" name="duration" value={duration} />
               <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
               <PayButton label="Pagar com Mercado Pago" variant="secondary" />
             </form>
