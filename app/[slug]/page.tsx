@@ -19,9 +19,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!campaign) return {};
 
+  const description = campaign.manifest_text.slice(0, 160);
+
   return {
     title: campaign.title,
-    description: campaign.manifest_text.slice(0, 160),
+    description,
+    // O layout raiz já define openGraph/twitter com o título e a descrição
+    // fixos do site ("TenhaVoz") — Next.js não mescla esses campos com o
+    // title/description simples definidos acima, então sem repetir tudo
+    // aqui o card compartilhado (WhatsApp, etc.) mostraria sempre
+    // "TenhaVoz" em vez do título da campanha específica.
+    openGraph: {
+      title: campaign.title,
+      description,
+      siteName: "TenhaVoz",
+      locale: "pt_BR",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: campaign.title,
+      description,
+    },
   };
 }
 
