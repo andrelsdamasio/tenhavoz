@@ -18,11 +18,12 @@ const TITLE_INSTRUCTION = [
 ].join(" ");
 
 const AUTO_FILL_INSTRUCTION = [
-  "Você ajuda a preencher páginas de campanhas de mobilização (abaixo-assinados enviados por e-mail) em português do Brasil, a partir do texto do manifesto escrito pela pessoa.",
+  "Você ajuda a preencher páginas de campanhas de mobilização enviadas por e-mail em português do Brasil, a partir do texto do manifesto escrito pela pessoa.",
   "A partir do texto do manifesto, gere:",
   "- title: um título curto (máximo 60 caracteres) que resuma o pedido central, sem aspas nem ponto final.",
   "- subject: um assunto de e-mail curto e direto (máximo 80 caracteres) para o e-mail que será enviado.",
   "- subtitle: um resumo persuasivo do manifesto em no máximo 5 linhas curtas (até uns 260 caracteres no total), que convença quem visita a página a ler e enviar o e-mail. Não repita o texto do manifesto literalmente, resuma.",
+  'Importante: isso não é um abaixo-assinado nem uma assinatura — é uma pessoa contribuindo ao enviar um e-mail. Nunca use as palavras "assine", "assinatura" ou "assinar". Use termos como "contribua", "contribuição", "participe" ou "envie o e-mail" quando precisar de uma chamada para ação.',
   "Não invente fatos, números ou promessas que não estejam no texto original. Responda só com os três campos pedidos.",
 ].join(" ");
 
