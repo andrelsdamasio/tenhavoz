@@ -2,10 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCampaignForOwner } from "@/lib/campaigns";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getCampaignForOwner, publishCampaignAfterConfirmedPayment } from "@/lib/campaigns";
 import { getStripe } from "@/lib/stripe";
 import { getMercadoPagoPreferenceClient } from "@/lib/mercadopago";
 import { getAppSettings } from "@/lib/settings";
+import { isAdminEmail } from "@/lib/admin";
 
 async function getOwnedCampaignOrRedirect(campaignId: string) {
   const supabase = await createClient();
@@ -103,4 +105,23 @@ export async function startMercadoPagoCheckout(formData: FormData) {
   }
 
   redirect(checkoutUrl);
+}
+
+/**
+ * Publica a campanha sem passar pelo checkout — restrito à conta admin
+ * (ADMIN_EMAILS), para permitir testar/usar o produto sem pagar. Não gera
+ * nenhuma linha em payments; só reaproveita a mesma função que os webhooks
+ * usam para publicar.
+ */
+export async function publishFreeAsAdmin(formData: FormData) {
+  const campaignId = String(formData.get("campaignId") ?? "");
+  const { user, campaign } = await getOwnedCampaignOrRedirect(campaignId);
+
+  if (!isAdminEmail(user.email)) {
+    redirect("/dashboard");
+  }
+
+  await publishCampaignAfterConfirmedPayment(createAdminClient(), campaign.id);
+
+  redirect("/dashboard");
 }

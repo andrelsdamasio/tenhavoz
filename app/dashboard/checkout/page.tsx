@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCampaignForOwner } from "@/lib/campaigns";
 import { formatBRL } from "@/lib/pricing";
 import { getAppSettings } from "@/lib/settings";
-import { startStripeCheckout, startMercadoPagoCheckout } from "./actions";
+import { isAdminEmail } from "@/lib/admin";
+import { startStripeCheckout, startMercadoPagoCheckout, publishFreeAsAdmin } from "./actions";
 
 export default async function CheckoutPage({
   searchParams,
@@ -70,6 +71,18 @@ export default async function CheckoutPage({
             Pagar com Mercado Pago
           </button>
         </form>
+
+        {isAdminEmail(user.email) && (
+          <form action={publishFreeAsAdmin}>
+            <input type="hidden" name="campaignId" value={campaign.id} />
+            <button
+              type="submit"
+              className="w-full rounded-md border border-dashed border-gray-400 px-4 py-2.5 font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Publicar sem pagar (admin)
+            </button>
+          </form>
+        )}
       </div>
 
       <p className="mt-6 text-xs text-gray-500">
