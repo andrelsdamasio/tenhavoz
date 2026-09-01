@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!campaign) return {};
 
-  const description = campaign.manifest_text.slice(0, 160);
+  const description = (campaign.subtitle ?? campaign.manifest_text).slice(0, 160);
 
   return {
     title: campaign.title,

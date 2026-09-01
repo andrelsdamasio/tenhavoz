@@ -10,6 +10,8 @@ export interface Campaign {
   id: string;
   user_id: string;
   title: string;
+  /** Resumo curto (IA ou manual) mostrado abaixo do título na página pública. */
+  subtitle: string | null;
   manifest_text: string;
   subject: string;
   recipients: string[];

@@ -28,7 +28,7 @@ export default function Template5({ campaign, mailtoUrl }: TemplateProps) {
           {campaign.title}
         </h1>
         <p className="mb-6 whitespace-pre-wrap text-center leading-relaxed text-gray-600">
-          {campaign.manifest_text}
+          {campaign.subtitle ?? campaign.manifest_text}
         </p>
 
         <div className="mb-6 flex flex-wrap justify-center gap-2">

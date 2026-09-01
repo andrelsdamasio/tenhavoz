@@ -4,6 +4,7 @@ import { generateSlug, isReservedSlug, sanitizeSlug } from "@/lib/slug";
 
 export interface CreateCampaignInput {
   title: string;
+  subtitle?: string | null;
   manifestText: string;
   subject: string;
   recipients: string[];
@@ -37,6 +38,7 @@ export async function createDraftCampaign(
   const baseRow = {
     user_id: userId,
     title: input.title,
+    subtitle: input.subtitle ?? null,
     manifest_text: input.manifestText,
     subject: input.subject,
     recipients: input.recipients,
@@ -128,6 +130,7 @@ export async function deleteCampaign(
 
 export interface UpdateCampaignInput {
   title: string;
+  subtitle?: string | null;
   manifestText: string;
   subject: string;
   recipients: string[];
@@ -158,6 +161,7 @@ export async function updateCampaign(
     .from("campaigns")
     .update({
       title: input.title,
+      subtitle: input.subtitle ?? null,
       manifest_text: input.manifestText,
       subject: input.subject,
       recipients: input.recipients,

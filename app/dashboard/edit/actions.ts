@@ -45,6 +45,7 @@ export async function updateCampaignAction(
   }
 
   const title = String(formData.get("title") ?? "").trim();
+  const subtitle = String(formData.get("subtitle") ?? "").trim() || null;
   const manifestText = String(formData.get("manifestText") ?? "").trim();
   const subject = String(formData.get("subject") ?? "").trim();
   const recipients = parseRecipients(String(formData.get("recipients") ?? ""));
@@ -76,6 +77,7 @@ export async function updateCampaignAction(
   try {
     updated = await updateCampaign(supabase, campaignId, user.id, {
       title,
+      subtitle,
       manifestText,
       subject,
       recipients,

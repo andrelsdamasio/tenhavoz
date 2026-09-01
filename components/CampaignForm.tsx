@@ -15,6 +15,7 @@ const DRAFT_STORAGE_KEY = "tenhavoz:new-campaign-draft";
 
 interface StoredDraft {
   title: string;
+  subtitle: string;
   subject: string;
   manifestText: string;
   recipientsRaw: string;
@@ -126,6 +127,7 @@ export default function CampaignForm({
     enabledTemplates.length > 0 ? enabledTemplates : [1];
 
   const [title, setTitle] = useState(editCampaign?.title ?? "");
+  const [subtitle, setSubtitle] = useState(editCampaign?.subtitle ?? "");
   const [subject, setSubject] = useState(editCampaign?.subject ?? "");
   const [manifestText, setManifestText] = useState(editCampaign?.manifest_text ?? "");
   const [recipientsRaw, setRecipientsRaw] = useState(
@@ -142,8 +144,12 @@ export default function CampaignForm({
   const [slug, setSlug] = useState(editCampaign?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(isEditing);
   const [aiTitleLoading, setAiTitleLoading] = useState(false);
+  const [aiSubtitleLoading, setAiSubtitleLoading] = useState(false);
   const [aiShortenLoading, setAiShortenLoading] = useState(false);
+  const [aiAutoFillLoading, setAiAutoFillLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const autoFillDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastAutoFilledTextRef = useRef<string>(editCampaign?.manifest_text ?? "");
   const [mode, setMode] = useState<"basico" | "avancado">(
     editCampaign &&
       (editCampaign.drive_link || editCampaign.theme_color || editCampaign.send_mode !== "bcc")
@@ -175,8 +181,12 @@ export default function CampaignForm({
       if (raw) {
         const draft: Partial<StoredDraft> = JSON.parse(raw);
         if (draft.title) setTitle(draft.title);
+        if (draft.subtitle) setSubtitle(draft.subtitle);
         if (draft.subject) setSubject(draft.subject);
-        if (draft.manifestText) setManifestText(draft.manifestText);
+        if (draft.manifestText) {
+          setManifestText(draft.manifestText);
+          if (draft.title) lastAutoFilledTextRef.current = draft.manifestText;
+        }
         if (draft.recipientsRaw) setRecipientsRaw(draft.recipientsRaw);
         if (draft.sendMode) setSendMode(draft.sendMode);
         if (draft.driveLink) setDriveLink(draft.driveLink);
@@ -210,6 +220,7 @@ export default function CampaignForm({
       }
       const draft: StoredDraft = {
         title,
+        subtitle,
         subject,
         manifestText,
         recipientsRaw,
@@ -228,6 +239,7 @@ export default function CampaignForm({
   }, [
     draftLoaded,
     title,
+    subtitle,
     subject,
     manifestText,
     recipientsRaw,
@@ -292,6 +304,69 @@ export default function CampaignForm({
     }
   }
 
+  async function handleGenerateSubtitle() {
+    if (!manifestText.trim()) {
+      setAiError("Escreva o texto do manifesto antes de gerar o subtítulo.");
+      return;
+    }
+    setAiSubtitleLoading(true);
+    setAiError(null);
+    try {
+      const res = await fetch("/api/ai-assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: "auto_fill", text: manifestText }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Falha ao usar a IA.");
+      const result = data.result as { title: string; subject: string; subtitle: string };
+      setSubtitle(result.subtitle);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Falha ao usar a IA.");
+    } finally {
+      setAiSubtitleLoading(false);
+    }
+  }
+
+  // Modo básico: assim que a pessoa termina de digitar o corpo do texto, a
+  // IA gera título, assunto e subtítulo sozinha — a pessoa só digita
+  // e-mails, corpo do texto e escolhe o tema.
+  useEffect(() => {
+    if (mode !== "basico") return;
+    if (autoFillDebounceRef.current) clearTimeout(autoFillDebounceRef.current);
+
+    const trimmed = manifestText.trim();
+    if (trimmed.length < 30 || trimmed === lastAutoFilledTextRef.current) return;
+
+    autoFillDebounceRef.current = setTimeout(async () => {
+      setAiAutoFillLoading(true);
+      setAiError(null);
+      try {
+        const res = await fetch("/api/ai-assist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ task: "auto_fill", text: trimmed }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Falha ao usar a IA.");
+        const result = data.result as { title: string; subject: string; subtitle: string };
+        setTitle(result.title);
+        setSubject(result.subject);
+        setSubtitle(result.subtitle);
+        lastAutoFilledTextRef.current = trimmed;
+      } catch (err) {
+        setAiError(err instanceof Error ? err.message : "Falha ao usar a IA.");
+      } finally {
+        setAiAutoFillLoading(false);
+      }
+    }, 1500);
+
+    return () => {
+      if (autoFillDebounceRef.current) clearTimeout(autoFillDebounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manifestText, mode]);
+
   async function handleShortenText() {
     setAiShortenLoading(true);
     try {
@@ -318,6 +393,7 @@ export default function CampaignForm({
     id: "preview",
     user_id: "preview",
     title: title || "Título da sua campanha",
+    subtitle: subtitle || null,
     manifest_text:
       manifestText || "O texto do seu manifesto vai aparecer aqui, no template escolhido.",
     subject: subject || "Assunto do e-mail",
@@ -360,73 +436,110 @@ export default function CampaignForm({
         </p>
       )}
 
-      <div>
-        <div className="mb-1 flex items-baseline justify-between">
-          <label className="block text-sm font-medium" htmlFor="title">
-            Título da campanha
-          </label>
-          <button
-            type="button"
-            onClick={handleGenerateTitle}
-            disabled={aiTitleLoading}
-            className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-60"
-          >
-            {aiTitleLoading ? "Gerando..." : "Gerar título com IA"}
-          </button>
-        </div>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          required
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium" htmlFor="slug">
-          Link curto da página
-        </label>
-        <div className="flex items-center rounded-md border border-gray-300 focus-within:ring-1 focus-within:ring-brand-500">
-          <span className="whitespace-nowrap pl-3 text-sm text-gray-400">
-            {SITE_HOST}/
-          </span>
+      {mode === "avancado" && (
+        <div>
+          <div className="mb-1 flex items-baseline justify-between">
+            <label className="block text-sm font-medium" htmlFor="title">
+              Título da campanha
+            </label>
+            <button
+              type="button"
+              onClick={handleGenerateTitle}
+              disabled={aiTitleLoading}
+              className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-60"
+            >
+              {aiTitleLoading ? "Gerando..." : "Gerar título com IA"}
+            </button>
+          </div>
           <input
-            id="slug"
-            name="slug"
+            id="title"
+            name="title"
             type="text"
             required
-            value={slug}
-            onChange={(e) => {
-              setSlugTouched(true);
-              setSlug(sanitizeSlug(e.target.value));
-            }}
-            className="w-full rounded-md py-2 pr-3 text-sm outline-none"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-md border border-gray-300 px-3 py-2"
           />
         </div>
-        <p className="mt-1 text-xs text-gray-500">
-          {isEditing && editCampaign.status === "published"
-            ? "Mudar esse endereço muda o link da página que já está no ar — links antigos param de funcionar."
-            : "Fica ativo assim que o pagamento for confirmado. Se esse endereço já estiver em uso, adicionamos um código curto automaticamente."}
-        </p>
-      </div>
+      )}
+      {mode === "basico" && <input type="hidden" name="title" value={title} />}
 
-      <div>
-        <label className="mb-1 block text-sm font-medium" htmlFor="subject">
-          Assunto do e-mail
-        </label>
-        <input
-          id="subject"
-          name="subject"
-          type="text"
-          required
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2"
-        />
-      </div>
+      {mode === "avancado" && (
+        <div>
+          <label className="mb-1 block text-sm font-medium" htmlFor="slug">
+            Link curto da página
+          </label>
+          <div className="flex items-center rounded-md border border-gray-300 focus-within:ring-1 focus-within:ring-brand-500">
+            <span className="whitespace-nowrap pl-3 text-sm text-gray-400">
+              {SITE_HOST}/
+            </span>
+            <input
+              id="slug"
+              name="slug"
+              type="text"
+              required
+              value={slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setSlug(sanitizeSlug(e.target.value));
+              }}
+              className="w-full rounded-md py-2 pr-3 text-sm outline-none"
+            />
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            {isEditing && editCampaign.status === "published"
+              ? "Mudar esse endereço muda o link da página que já está no ar — links antigos param de funcionar."
+              : "Fica ativo assim que o pagamento for confirmado. Se esse endereço já estiver em uso, adicionamos um código curto automaticamente."}
+          </p>
+        </div>
+      )}
+      {mode === "basico" && <input type="hidden" name="slug" value={slug} />}
+
+      {mode === "avancado" && (
+        <div>
+          <label className="mb-1 block text-sm font-medium" htmlFor="subject">
+            Assunto do e-mail
+          </label>
+          <input
+            id="subject"
+            name="subject"
+            type="text"
+            required
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="w-full rounded-md border border-gray-300 px-3 py-2"
+          />
+        </div>
+      )}
+      {mode === "basico" && <input type="hidden" name="subject" value={subject} />}
+
+      {mode === "avancado" && (
+        <div>
+          <div className="mb-1 flex items-baseline justify-between">
+            <label className="block text-sm font-medium" htmlFor="subtitle">
+              Subtítulo (resumo curto abaixo do título)
+            </label>
+            <button
+              type="button"
+              onClick={handleGenerateSubtitle}
+              disabled={aiSubtitleLoading}
+              className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-60"
+            >
+              {aiSubtitleLoading ? "Gerando..." : "Gerar subtítulo com IA"}
+            </button>
+          </div>
+          <textarea
+            id="subtitle"
+            name="subtitle"
+            rows={3}
+            value={subtitle}
+            onChange={(e) => setSubtitle(e.target.value)}
+            placeholder="Resumo de até 5 linhas — aparece no lugar do texto completo do manifesto, abaixo do título."
+            className="w-full rounded-md border border-gray-300 px-3 py-2"
+          />
+        </div>
+      )}
+      {mode === "basico" && <input type="hidden" name="subtitle" value={subtitle} />}
 
       <div>
         <div className="mb-1 flex items-baseline justify-between">
@@ -465,6 +578,15 @@ export default function CampaignForm({
               {aiShortenLoading ? "Encurtando..." : "Encurtar com IA"}
             </button>
           </div>
+        )}
+        {mode === "basico" && (
+          <p className="mt-1 text-xs text-gray-500">
+            {aiAutoFillLoading
+              ? "Gerando título, assunto e subtítulo automaticamente com IA..."
+              : title
+                ? "Título, assunto e subtítulo já gerados por IA — veja na pré-visualização. Mude para o modo avançado se quiser editar."
+                : "Assim que você terminar de escrever, a IA gera o título, o assunto e o subtítulo automaticamente."}
+          </p>
         )}
       </div>
 

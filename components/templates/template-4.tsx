@@ -20,7 +20,7 @@ export default function Template4({ campaign, mailtoUrl }: TemplateProps) {
           {campaign.title}
         </h1>
         <p className="mb-6 whitespace-pre-wrap leading-relaxed text-gray-700">
-          {campaign.manifest_text}
+          {campaign.subtitle ?? campaign.manifest_text}
         </p>
 
         <div className="mb-4 rounded-md bg-amber-50 p-4">

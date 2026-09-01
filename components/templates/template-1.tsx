@@ -18,7 +18,7 @@ export default function Template1({ campaign, mailtoUrl }: TemplateProps) {
         {campaign.title}
       </h1>
       <p className="whitespace-pre-wrap text-lg leading-relaxed text-gray-700">
-        {campaign.manifest_text}
+        {campaign.subtitle ?? campaign.manifest_text}
       </p>
       <div className="rounded-md bg-gray-50 p-4 text-sm text-gray-600">
         <p className="mb-2 font-medium text-gray-800">Como participar</p>
