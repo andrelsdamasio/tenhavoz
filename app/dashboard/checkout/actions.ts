@@ -129,7 +129,10 @@ export async function startStripeCheckout(formData: FormData) {
   redirect(session.url);
 }
 
-export async function startMercadoPagoCheckout(formData: FormData) {
+async function createMercadoPagoPreference(
+  formData: FormData,
+  options?: { pixOnly?: boolean }
+) {
   const campaignId = String(formData.get("campaignId") ?? "");
   const { campaign, priceCents: basePriceCents } = await getOwnedCampaignOrRedirect(campaignId);
   const { priceCents, couponCode } = await resolvePriceWithCoupon(
@@ -162,6 +165,18 @@ export async function startMercadoPagoCheckout(formData: FormData) {
       },
       auto_return: "approved",
       notification_url: `${siteUrl}/api/webhooks/mercadopago`,
+      ...(options?.pixOnly
+        ? {
+            payment_methods: {
+              excluded_payment_types: [
+                { id: "credit_card" },
+                { id: "debit_card" },
+                { id: "ticket" },
+                { id: "atm" },
+              ],
+            },
+          }
+        : {}),
     },
   });
 
@@ -170,6 +185,21 @@ export async function startMercadoPagoCheckout(formData: FormData) {
     throw new Error("Mercado Pago não retornou uma URL de checkout.");
   }
 
+  return checkoutUrl;
+}
+
+export async function startMercadoPagoCheckout(formData: FormData) {
+  const checkoutUrl = await createMercadoPagoPreference(formData);
+  redirect(checkoutUrl);
+}
+
+/**
+ * Mesmo fluxo do Mercado Pago, mas restringindo o preference a Pix — o
+ * Checkout Pro pula a tela de seleção de meio de pagamento e vai direto pro
+ * QR code/código copia-e-cola quando só há um método disponível.
+ */
+export async function startPixCheckout(formData: FormData) {
+  const checkoutUrl = await createMercadoPagoPreference(formData, { pixOnly: true });
   redirect(checkoutUrl);
 }
 

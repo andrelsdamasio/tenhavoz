@@ -102,7 +102,7 @@ export default function AdminSettingsForm({
 
       <div>
         <span className="mb-1 block text-sm font-medium">
-          Templates disponíveis na criação de campanha
+          Temas disponíveis na criação de campanha
         </span>
         <div className="flex gap-4">
           {ALL_TEMPLATES.map((id) => (
@@ -114,7 +114,7 @@ export default function AdminSettingsForm({
                 checked={enabledTemplates.includes(id)}
                 onChange={() => toggleTemplate(id)}
               />
-              Template {id}
+              Tema {id}
             </label>
           ))}
         </div>
@@ -125,9 +125,9 @@ export default function AdminSettingsForm({
           Cores disponíveis para quem cria a campanha
         </span>
         <p className="mb-2 text-xs text-gray-500">
-          A pessoa que cria a campanha escolhe uma dessas cores pro template
-          que selecionar (ou mantém a cor padrão). Adicione ou remova opções
-          aqui.
+          No modo avançado, a pessoa que cria a campanha escolhe uma dessas
+          cores pro tema que selecionar (ou mantém a cor padrão). Adicione ou
+          remova opções aqui.
         </p>
         <div className="flex flex-wrap items-center gap-2">
           {palette.map((color, index) => (

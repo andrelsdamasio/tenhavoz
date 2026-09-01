@@ -5,6 +5,7 @@ import { formatBRL } from "@/lib/pricing";
 import {
   startStripeCheckout,
   startMercadoPagoCheckout,
+  startPixCheckout,
   publishFreeAsAdmin,
   validateCouponAction,
   type ValidateCouponState,
@@ -93,10 +94,15 @@ export default function CouponCheckoutPanel({
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
       <div className="flex flex-col gap-3">
+        <form action={startPixCheckout}>
+          <input type="hidden" name="campaignId" value={campaignId} />
+          <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
+          <PayButton label="Pagar com Pix" variant="primary" />
+        </form>
         <form action={startStripeCheckout}>
           <input type="hidden" name="campaignId" value={campaignId} />
           <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
-          <PayButton label="Pagar com Stripe" variant="primary" />
+          <PayButton label="Pagar com Stripe" variant="secondary" />
         </form>
         <form action={startMercadoPagoCheckout}>
           <input type="hidden" name="campaignId" value={campaignId} />
