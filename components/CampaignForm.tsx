@@ -393,7 +393,11 @@ export default function CampaignForm({
     id: "preview",
     user_id: "preview",
     title: title || "Título da sua campanha",
-    subtitle: subtitle || null,
+    subtitle:
+      subtitle ||
+      (aiAutoFillLoading
+        ? "Gerando o resumo com IA..."
+        : "O resumo gerado por IA vai aparecer aqui, no lugar do texto completo do manifesto."),
     manifest_text:
       manifestText || "O texto do seu manifesto vai aparecer aqui, no template escolhido.",
     subject: subject || "Assunto do e-mail",
