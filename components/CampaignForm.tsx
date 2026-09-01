@@ -757,24 +757,21 @@ export default function CampaignForm({
         <input type="hidden" name="themeColor" value="" />
       )}
 
-      <div className="rounded-md border border-gray-200 bg-white p-4">
-        <p className="mb-2 text-sm font-medium">
-          Pré-visualização do link de e-mail
-        </p>
-        <p className="text-xs text-gray-500">
-          Tamanho da URL: {preview.length} / {preview.maxLength} caracteres
-          {preview.isOverLimit && (
-            <span className="ml-2 font-medium text-amber-700">
-              acima do recomendado
-            </span>
-          )}
-        </p>
-        {preview.warnings.map((warning) => (
-          <p key={warning} className="mt-1 text-xs text-amber-700">
-            {warning}
+      {preview.warnings.filter((warning) => !warning.startsWith("A URL gerada tem")).length >
+        0 && (
+        <div className="rounded-md border border-gray-200 bg-white p-4">
+          <p className="mb-2 text-sm font-medium">
+            Pré-visualização do link de e-mail
           </p>
-        ))}
-      </div>
+          {preview.warnings
+            .filter((warning) => !warning.startsWith("A URL gerada tem"))
+            .map((warning) => (
+              <p key={warning} className="text-xs text-amber-700">
+                {warning}
+              </p>
+            ))}
+        </div>
+      )}
 
       {aiError && <p className="text-sm text-red-600">{aiError}</p>}
 
