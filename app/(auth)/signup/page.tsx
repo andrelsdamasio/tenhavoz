@@ -59,7 +59,19 @@ export default function SignupPage() {
           />
           <p className="mt-1 text-xs text-gray-500">Mínimo de 8 caracteres.</p>
         </div>
-        {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+        {state.error && (
+          <div className="text-sm text-red-600">
+            <p>{state.error}</p>
+            <p className="mt-1 text-gray-500">
+              Se esse e-mail já tem conta (inclusive via Google), use o botão
+              "Continuar com Google" acima ou{" "}
+              <Link href="/login" className="underline">
+                entre pela tela de login
+              </Link>
+              .
+            </p>
+          </div>
+        )}
         <SubmitButton />
       </form>
       <p className="mt-4 text-sm text-gray-600">

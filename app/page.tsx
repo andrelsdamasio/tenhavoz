@@ -23,6 +23,14 @@ export default function HomePage() {
           Entrar
         </Link>
       </div>
+      <div className="mt-8 flex gap-4 text-xs text-gray-400">
+        <Link href="/privacidade" className="hover:underline">
+          Privacidade
+        </Link>
+        <Link href="/termos" className="hover:underline">
+          Termos
+        </Link>
+      </div>
     </main>
   );
 }

@@ -60,7 +60,15 @@ export default function LoginForm() {
             className="w-full rounded-md border border-gray-300 px-3 py-2"
           />
         </div>
-        {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+        {state.error && (
+          <div className="text-sm text-red-600">
+            <p>{state.error}</p>
+            <p className="mt-1 text-gray-500">
+              Se você criou sua conta pelo Google, use o botão "Continuar com
+              Google" acima em vez de senha.
+            </p>
+          </div>
+        )}
         <SubmitButton />
       </form>
       <p className="mt-4 text-sm text-gray-600">
