@@ -21,9 +21,14 @@ export default async function AdminPage() {
     <div className="mx-auto max-w-xl">
       <div className="mb-2 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Configurações</h1>
-        <Link href="/admin/coupons" className="text-sm text-brand-600 hover:underline">
-          Cupons de desconto →
-        </Link>
+        <div className="flex gap-4 text-sm">
+          <Link href="/admin/reports" className="text-brand-600 hover:underline">
+            Relatório de vendas →
+          </Link>
+          <Link href="/admin/coupons" className="text-brand-600 hover:underline">
+            Cupons de desconto →
+          </Link>
+        </div>
       </div>
       <p className="mb-6 text-sm text-gray-600">
         Preço da campanha e templates disponíveis no formulário de criação.

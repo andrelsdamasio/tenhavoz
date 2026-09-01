@@ -98,7 +98,14 @@ export async function POST(request: Request) {
     campaignId,
     provider: "mercadopago",
     providerPaymentId: String(payment.id),
-    status: isApproved ? "confirmed" : payment.status === "rejected" ? "failed" : "pending",
+    status:
+      payment.status === "refunded"
+        ? "refunded"
+        : isApproved
+          ? "confirmed"
+          : payment.status === "rejected"
+            ? "failed"
+            : "pending",
     amount: payment.transaction_amount ?? 0,
     couponCode: couponCodeStr,
   });

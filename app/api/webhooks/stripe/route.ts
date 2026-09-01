@@ -64,5 +64,32 @@ export async function POST(request: Request) {
     }
   }
 
+  // Reembolso feito manualmente no painel do Stripe — só refletimos o
+  // status aqui pro relatório do /admin, nunca disparamos um reembolso a
+  // partir do app. O evento vem preso ao charge/payment_intent, não à
+  // checkout session que usamos como provider_payment_id, então achamos a
+  // session correspondente antes de atualizar.
+  if (event.type === "charge.refunded") {
+    const charge = event.data.object as Stripe.Charge;
+    const paymentIntentId =
+      typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+
+    if (paymentIntentId) {
+      const sessions = await getStripe().checkout.sessions.list({
+        payment_intent: paymentIntentId,
+        limit: 1,
+      });
+      const session = sessions.data[0];
+
+      if (session) {
+        await createAdminClient()
+          .from("payments")
+          .update({ status: "refunded" })
+          .eq("provider", "stripe")
+          .eq("provider_payment_id", session.id);
+      }
+    }
+  }
+
   return NextResponse.json({ received: true });
 }
