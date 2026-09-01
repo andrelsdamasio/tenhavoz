@@ -75,7 +75,7 @@ export default async function DashboardPage() {
                 </span>
                 {campaign.slug && (
                   <p className="mt-1 text-xs text-gray-500">
-                    {SITE_HOST}/p/{campaign.slug}
+                    {SITE_HOST}/{campaign.slug}
                   </p>
                 )}
                 {campaign.status === "published" && (
@@ -89,14 +89,14 @@ export default async function DashboardPage() {
               {campaign.status === "published" && campaign.slug ? (
                 <div className="flex flex-col items-end gap-2">
                   <Link
-                    href={`/p/${campaign.slug}`}
+                    href={`/${campaign.slug}`}
                     target="_blank"
                     className="text-sm text-brand-600 hover:underline"
                   >
                     Ver página pública ↗
                   </Link>
                   <ShareButtons
-                    url={`${SITE_URL}/p/${campaign.slug}`}
+                    url={`${SITE_URL}/${campaign.slug}`}
                     title={campaign.title}
                     className="text-right"
                   />

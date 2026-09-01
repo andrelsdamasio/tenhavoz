@@ -53,7 +53,7 @@ export default async function CheckoutPage({
         <p className="mb-6 text-sm text-gray-500">
           Sua página vai ficar em{" "}
           <span className="font-medium text-gray-700">
-            {siteHost}/p/{campaign.slug}
+            {siteHost}/{campaign.slug}
           </span>
         </p>
       )}

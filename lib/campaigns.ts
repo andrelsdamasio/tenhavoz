@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Campaign, SendMode, TemplateId } from "@/lib/types";
-import { generateSlug, sanitizeSlug } from "@/lib/slug";
+import { generateSlug, isReservedSlug, sanitizeSlug } from "@/lib/slug";
 
 export interface CreateCampaignInput {
   title: string;
@@ -28,7 +28,9 @@ export async function createDraftCampaign(
   userId: string,
   input: CreateCampaignInput
 ): Promise<Campaign> {
-  const desiredSlug = sanitizeSlug(input.slug || input.title) || sanitizeSlug(input.title);
+  const desiredRaw = sanitizeSlug(input.slug || input.title) || sanitizeSlug(input.title);
+  const desiredSlug =
+    desiredRaw && !isReservedSlug(desiredRaw) ? desiredRaw : generateSlug(input.title);
 
   const baseRow = {
     user_id: userId,
@@ -44,7 +46,7 @@ export async function createDraftCampaign(
 
   const { data, error } = await supabase
     .from("campaigns")
-    .insert({ ...baseRow, slug: desiredSlug || null })
+    .insert({ ...baseRow, slug: desiredSlug })
     .select()
     .single();
 

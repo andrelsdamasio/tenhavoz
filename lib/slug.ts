@@ -9,7 +9,32 @@ export function sanitizeSlug(input: string): string {
     .slice(0, 60);
 }
 
-/** Gera um slug único e amigável para a URL pública da campanha (/p/[slug]). */
+/**
+ * Segmentos de primeiro nível já usados por rotas do próprio app — um slug
+ * de campanha igual a um desses "sequestraria" a rota (ex.: campanha
+ * "admin" respondendo em /admin em vez do painel). Checado antes de usar o
+ * slug desejado pelo usuário; ver createDraftCampaign em lib/campaigns.ts.
+ */
+const RESERVED_SLUGS = new Set([
+  "login",
+  "signup",
+  "admin",
+  "api",
+  "auth",
+  "dashboard",
+  "p",
+  "privacidade",
+  "termos",
+  "favicon.ico",
+  "robots.txt",
+  "sitemap.xml",
+]);
+
+export function isReservedSlug(slug: string): boolean {
+  return RESERVED_SLUGS.has(slug);
+}
+
+/** Gera um slug único e amigável para a URL pública da campanha (/[slug]). */
 export function generateSlug(title: string): string {
   const base = sanitizeSlug(title);
   const suffix = crypto.randomUUID().slice(0, 6);

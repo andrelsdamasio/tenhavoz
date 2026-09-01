@@ -177,7 +177,7 @@ export default function CampaignForm({
     template_id: templateId,
     slug: null,
     status: "draft",
-    created_at: new Date().toISOString(),
+    created_at: "1970-01-01T00:00:00.000Z",
   };
 
   const bodyLength = manifestText.length;
@@ -220,7 +220,7 @@ export default function CampaignForm({
         </label>
         <div className="flex items-center rounded-md border border-gray-300 focus-within:ring-1 focus-within:ring-brand-500">
           <span className="whitespace-nowrap pl-3 text-sm text-gray-400">
-            {SITE_HOST}/p/
+            {SITE_HOST}/
           </span>
           <input
             id="slug"
@@ -414,7 +414,7 @@ export default function CampaignForm({
           <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
           <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
           <span className="ml-2 truncate text-xs text-gray-500">
-            {SITE_HOST}/p/{slug || "seu-link"}
+            {SITE_HOST}/{slug || "seu-link"}
           </span>
         </div>
         <div className="max-h-[70vh] overflow-y-auto">
