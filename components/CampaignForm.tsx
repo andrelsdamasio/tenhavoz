@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormState, useFormStatus, flushSync } from "react-dom";
 import { buildMailtoUrl } from "@/lib/mailto";
 import { sanitizeSlug } from "@/lib/slug";
 import { getTemplateComponent } from "@/components/templates";
@@ -158,6 +158,7 @@ export default function CampaignForm({
   );
   const [draftLoaded, setDraftLoaded] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   function handleModeChange(next: "basico" | "avancado") {
     setMode(next);
@@ -252,7 +253,61 @@ export default function CampaignForm({
     mode,
   ]);
 
-  function handleFormSubmit() {
+  async function fetchAutoFillResult(text: string) {
+    const res = await fetch("/api/ai-assist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task: "auto_fill", text }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Falha ao usar a IA.");
+    return data.result as { title: string; subject: string; subtitle: string };
+  }
+
+  // No modo básico, título e assunto vêm de campos ocultos preenchidos pela
+  // IA em segundo plano (debounce de 1.5s + chamada à API). Se a pessoa
+  // clicar em salvar antes disso terminar (ou se a IA falhar), esses campos
+  // ainda estão vazios e o servidor recusaria com um erro genérico que não
+  // faz sentido pra quem nunca viu um campo de título/assunto pra preencher.
+  // Por isso interceptamos o envio aqui: se faltar título/assunto, geramos
+  // na hora e só então deixamos o formulário seguir; se a IA falhar, damos
+  // um erro específico em vez do genérico.
+  async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (mode === "basico") {
+      const trimmed = manifestText.trim();
+      if (trimmed && (!title.trim() || !subject.trim())) {
+        e.preventDefault();
+        if (autoFillDebounceRef.current) clearTimeout(autoFillDebounceRef.current);
+        setAiError(null);
+        setAiAutoFillLoading(true);
+        try {
+          const result = await fetchAutoFillResult(trimmed);
+          if (!result.title.trim() || !result.subject.trim()) {
+            setAiAutoFillLoading(false);
+            setAiError(
+              "A IA não conseguiu gerar um título e assunto a partir desse texto. Tente detalhar um pouco mais o manifesto, ou mude para o modo avançado para preencher título e assunto você mesmo."
+            );
+            return;
+          }
+          flushSync(() => {
+            setTitle(result.title);
+            setSubject(result.subject);
+            setSubtitle(result.subtitle);
+          });
+          lastAutoFilledTextRef.current = trimmed;
+          setAiAutoFillLoading(false);
+          formRef.current?.requestSubmit();
+        } catch (err) {
+          setAiAutoFillLoading(false);
+          setAiError(
+            `Não conseguimos gerar o título e o assunto automaticamente agora (${
+              err instanceof Error ? err.message : "erro desconhecido"
+            }). Espere alguns segundos e clique em salvar de novo, ou mude para o modo avançado para preencher título e assunto você mesmo.`
+          );
+        }
+        return;
+      }
+    }
     try {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
     } catch {
@@ -342,14 +397,7 @@ export default function CampaignForm({
       setAiAutoFillLoading(true);
       setAiError(null);
       try {
-        const res = await fetch("/api/ai-assist", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ task: "auto_fill", text: trimmed }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Falha ao usar a IA.");
-        const result = data.result as { title: string; subject: string; subtitle: string };
+        const result = await fetchAutoFillResult(trimmed);
         setTitle(result.title);
         setSubject(result.subject);
         setSubtitle(result.subtitle);
@@ -421,7 +469,12 @@ export default function CampaignForm({
 
   return (
     <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_440px]">
-    <form action={formAction} onSubmit={handleFormSubmit} className="flex flex-col gap-6">
+    <form
+      ref={formRef}
+      action={formAction}
+      onSubmit={handleFormSubmit}
+      className="flex flex-col gap-6"
+    >
       {isEditing && <input type="hidden" name="campaignId" value={editCampaign.id} />}
       {state.error && (
         <div
@@ -777,8 +830,14 @@ export default function CampaignForm({
 
       {aiError && <p className="text-sm text-red-600">{aiError}</p>}
 
+      {mode === "basico" && aiAutoFillLoading && (
+        <p className="text-xs text-gray-500">
+          Gerando título e assunto com IA antes de continuar...
+        </p>
+      )}
+
       <SubmitButton
-        blocked={bodyOverLimitBlocking}
+        blocked={bodyOverLimitBlocking || aiAutoFillLoading}
         idleLabel={isEditing ? "Salvar alterações" : "Salvar rascunho e ir para pagamento"}
         pendingLabel="Salvando..."
       />
