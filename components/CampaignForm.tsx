@@ -8,7 +8,8 @@ import { getTemplateComponent } from "@/components/templates";
 import type { Campaign, SendMode, TemplateId } from "@/lib/types";
 import { createCampaignAction, type NewCampaignState } from "@/app/dashboard/new/actions";
 
-const RECOMMENDED_BODY_LIMIT = 1500;
+const RECOMMENDED_BODY_LIMIT = 2200;
+const AI_SHORTEN_TARGET_LENGTH = 1800;
 
 const initialState: NewCampaignState = { error: null };
 
@@ -96,10 +97,59 @@ export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
   const [templateId, setTemplateId] = useState<TemplateId>(availableTemplates[0]!);
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [aiTitleLoading, setAiTitleLoading] = useState(false);
+  const [aiShortenLoading, setAiShortenLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slugTouched) setSlug(sanitizeSlug(title));
   }, [title, slugTouched]);
+
+  async function callAiAssist(task: "shorten" | "title") {
+    setAiError(null);
+    const res = await fetch("/api/ai-assist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        task === "shorten"
+          ? { task, text: manifestText, targetLength: AI_SHORTEN_TARGET_LENGTH }
+          : { task, text: manifestText }
+      ),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error ?? "Falha ao usar a IA.");
+    }
+    return data.result as string;
+  }
+
+  async function handleGenerateTitle() {
+    if (!manifestText.trim()) {
+      setAiError("Escreva o texto do manifesto antes de gerar o título.");
+      return;
+    }
+    setAiTitleLoading(true);
+    try {
+      const result = await callAiAssist("title");
+      setTitle(result);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Falha ao usar a IA.");
+    } finally {
+      setAiTitleLoading(false);
+    }
+  }
+
+  async function handleShortenText() {
+    setAiShortenLoading(true);
+    try {
+      const result = await callAiAssist("shorten");
+      setManifestText(result);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Falha ao usar a IA.");
+    } finally {
+      setAiShortenLoading(false);
+    }
+  }
 
   const preview = useMemo(() => {
     const recipients = parseRecipientsPreview(recipientsRaw);
@@ -133,9 +183,19 @@ export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
   return (
     <form action={formAction} className="flex flex-col gap-6">
       <div>
-        <label className="mb-1 block text-sm font-medium" htmlFor="title">
-          Título da campanha
-        </label>
+        <div className="mb-1 flex items-baseline justify-between">
+          <label className="block text-sm font-medium" htmlFor="title">
+            Título da campanha
+          </label>
+          <button
+            type="button"
+            onClick={handleGenerateTitle}
+            disabled={aiTitleLoading}
+            className="text-xs font-medium text-brand-600 hover:underline disabled:opacity-60"
+          >
+            {aiTitleLoading ? "Gerando..." : "Gerar título com IA"}
+          </button>
+        </div>
         <input
           id="title"
           name="title"
@@ -210,11 +270,21 @@ export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
           className="w-full rounded-md border border-gray-300 px-3 py-2"
         />
         {bodyOverRecommended && (
-          <p className="mt-1 text-xs text-amber-700">
-            Passou do recomendado — o botão de envio continua funcionando
-            normalmente, mas alguns apps de e-mail podem cortar o final da
-            mensagem. Encurte se quiser eliminar esse risco.
-          </p>
+          <div className="mt-1 flex items-start justify-between gap-3">
+            <p className="text-xs text-amber-700">
+              Passou do recomendado — o botão de envio continua funcionando
+              normalmente, mas alguns apps de e-mail podem cortar o final da
+              mensagem. Encurte se quiser eliminar esse risco.
+            </p>
+            <button
+              type="button"
+              onClick={handleShortenText}
+              disabled={aiShortenLoading}
+              className="shrink-0 whitespace-nowrap text-xs font-medium text-brand-600 hover:underline disabled:opacity-60"
+            >
+              {aiShortenLoading ? "Encurtando..." : "Encurtar com IA"}
+            </button>
+          </div>
         )}
       </div>
 
@@ -320,6 +390,7 @@ export default function CampaignForm({ enabledTemplates }: CampaignFormProps) {
         ))}
       </div>
 
+      {aiError && <p className="text-sm text-red-600">{aiError}</p>}
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
       <SubmitButton />
