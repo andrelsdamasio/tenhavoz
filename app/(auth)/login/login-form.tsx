@@ -64,8 +64,8 @@ export default function LoginForm() {
           <div className="text-sm text-red-600">
             <p>{state.error}</p>
             <p className="mt-1 text-gray-500">
-              Se você criou sua conta pelo Google, use o botão "Continuar com
-              Google" acima em vez de senha.
+              Se você criou sua conta pelo Google, use o botão
+              &ldquo;Continuar com Google&rdquo; acima em vez de senha.
             </p>
           </div>
         )}

@@ -64,7 +64,7 @@ export default function SignupPage() {
             <p>{state.error}</p>
             <p className="mt-1 text-gray-500">
               Se esse e-mail já tem conta (inclusive via Google), use o botão
-              "Continuar com Google" acima ou{" "}
+              &ldquo;Continuar com Google&rdquo; acima ou{" "}
               <Link href="/login" className="underline">
                 entre pela tela de login
               </Link>

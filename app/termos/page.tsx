@@ -48,7 +48,7 @@ export default function TermsPage() {
         Disponibilidade
       </h2>
       <p className="mb-4">
-        O serviço é fornecido "como está", sem garantia de disponibilidade
+        O serviço é fornecido &ldquo;como está&rdquo;, sem garantia de disponibilidade
         ininterrupta. Podemos remover conteúdo que viole estes termos ou a
         lei, a qualquer momento.
       </p>
