@@ -36,6 +36,7 @@ export async function createCampaignAction(
   const sendMode = String(formData.get("sendMode") ?? "bcc") as SendMode;
   const driveLink = String(formData.get("driveLink") ?? "").trim() || null;
   const templateId = Number(formData.get("templateId") ?? "1") as TemplateId;
+  const slug = String(formData.get("slug") ?? "").trim();
 
   if (!title || !manifestText || !subject) {
     return { error: "Preencha título, assunto e texto do manifesto." };
@@ -53,6 +54,7 @@ export async function createCampaignAction(
     sendMode,
     driveLink,
     templateId,
+    slug,
   });
 
   redirect(`/dashboard/checkout?campaignId=${campaign.id}`);

@@ -37,14 +37,26 @@ export default async function CheckoutPage({
   }
 
   const { campaign_price_brl_cents: priceCents } = await getAppSettings(supabase);
+  const siteHost = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br").replace(
+    /^https?:\/\//,
+    ""
+  );
 
   return (
     <div className="mx-auto max-w-md">
       <h1 className="mb-2 text-2xl font-semibold">Pagamento</h1>
-      <p className="mb-6 text-gray-600">
+      <p className="mb-1 text-gray-600">
         Campanha <strong>{campaign.title}</strong> —{" "}
         {formatBRL(priceCents)}
       </p>
+      {campaign.slug && (
+        <p className="mb-6 text-sm text-gray-500">
+          Sua página vai ficar em{" "}
+          <span className="font-medium text-gray-700">
+            {siteHost}/p/{campaign.slug}
+          </span>
+        </p>
+      )}
 
       {canceled && (
         <p className="mb-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">

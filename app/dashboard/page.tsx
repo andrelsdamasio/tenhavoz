@@ -18,6 +18,11 @@ const STATUS_CLASS: Record<CampaignStatus, string> = {
   published: "bg-green-100 text-green-800",
 };
 
+const SITE_HOST = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br").replace(
+  /^https?:\/\//,
+  ""
+);
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
@@ -69,6 +74,11 @@ export default async function DashboardPage() {
                 >
                   {STATUS_LABEL[campaign.status]}
                 </span>
+                {campaign.slug && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    {SITE_HOST}/p/{campaign.slug}
+                  </p>
+                )}
                 {campaign.status === "published" && (
                   <p className="mt-1 text-xs text-gray-500">
                     {stats[campaign.id]?.views ?? 0} visualizações ·{" "}

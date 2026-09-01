@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Campaign, SendMode, TemplateId } from "@/lib/types";
-import { generateSlug } from "@/lib/slug";
+import { generateSlug, sanitizeSlug } from "@/lib/slug";
 
 export interface CreateCampaignInput {
   title: string;
@@ -10,31 +10,57 @@ export interface CreateCampaignInput {
   sendMode: SendMode;
   driveLink: string | null;
   templateId: TemplateId;
+  /** Slug desejado pelo usuário (será saneado). Se vazio, é derivado do título. */
+  slug?: string;
 }
 
+const UNIQUE_VIOLATION = "23505";
+
+/**
+ * Reserva o slug já na criação do rascunho (não só na publicação), pra o
+ * usuário ver e poder personalizar o link curto antes mesmo de pagar. Se o
+ * slug desejado já estiver em uso, cai para um slug com sufixo aleatório em
+ * vez de falhar — o usuário nunca perde o rascunho por causa de um link
+ * duplicado.
+ */
 export async function createDraftCampaign(
   supabase: SupabaseClient<Database>,
   userId: string,
   input: CreateCampaignInput
 ): Promise<Campaign> {
+  const desiredSlug = sanitizeSlug(input.slug || input.title) || sanitizeSlug(input.title);
+
+  const baseRow = {
+    user_id: userId,
+    title: input.title,
+    manifest_text: input.manifestText,
+    subject: input.subject,
+    recipients: input.recipients,
+    send_mode: input.sendMode,
+    drive_link: input.driveLink,
+    template_id: input.templateId,
+    status: "draft" as const,
+  };
+
   const { data, error } = await supabase
     .from("campaigns")
-    .insert({
-      user_id: userId,
-      title: input.title,
-      manifest_text: input.manifestText,
-      subject: input.subject,
-      recipients: input.recipients,
-      send_mode: input.sendMode,
-      drive_link: input.driveLink,
-      template_id: input.templateId,
-      status: "draft",
-    })
+    .insert({ ...baseRow, slug: desiredSlug || null })
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (!error) return data;
+
+  if (error.code !== UNIQUE_VIOLATION) throw error;
+
+  // Slug já estava em uso — tenta de novo com um sufixo aleatório.
+  const { data: retryData, error: retryError } = await supabase
+    .from("campaigns")
+    .insert({ ...baseRow, slug: generateSlug(input.title) })
+    .select()
+    .single();
+
+  if (retryError) throw retryError;
+  return retryData;
 }
 
 export async function listCampaignsForUser(
