@@ -37,6 +37,19 @@ const AUTO_FILL_SCHEMA = {
   required: ["title", "subject", "subtitle"],
 };
 
+/**
+ * A IA reescreve "com no máximo N caracteres" mas às vezes passa um pouco do
+ * pedido — isso garante o limite de verdade, cortando num espaço em vez de
+ * no meio de uma palavra quando possível.
+ */
+function truncateToLimit(text: string, limit: number): string {
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit);
+  const lastSpace = cut.lastIndexOf(" ");
+  const safe = lastSpace > limit * 0.8 ? cut.slice(0, lastSpace) : cut;
+  return safe.trimEnd();
+}
+
 interface AutoFillResult {
   title: string;
   subject: string;
@@ -134,7 +147,7 @@ export async function POST(request: Request) {
         `Reescreva o texto abaixo com no máximo ${targetLength} caracteres:\n\n${text}`,
         { maxOutputTokens: 4096 }
       );
-      return NextResponse.json({ result });
+      return NextResponse.json({ result: truncateToLimit(result, targetLength) });
     }
 
     if (task === "title") {
