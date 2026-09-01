@@ -55,7 +55,12 @@ async function callGemini(
       systemInstruction: { parts: [{ text: systemInstruction }] },
       contents: [{ role: "user", parts: [{ text: userText }] }],
       generationConfig: {
-        maxOutputTokens: opts?.maxOutputTokens ?? 512,
+        maxOutputTokens: opts?.maxOutputTokens ?? 1024,
+        // Sem isso, os modelos "flash" mais novos gastam boa parte (ou todo)
+        // o maxOutputTokens "pensando" antes de responder, cortando a
+        // resposta visível pela metade — nenhuma das nossas tarefas precisa
+        // de raciocínio em várias etapas.
+        thinkingConfig: { thinkingBudget: 0 },
         ...(opts?.jsonSchema
           ? { responseMimeType: "application/json", responseSchema: opts.jsonSchema }
           : {}),
@@ -125,15 +130,18 @@ export async function POST(request: Request) {
     }
 
     if (task === "title") {
-      const result = await callGemini(apiKey, TITLE_INSTRUCTION, text, { maxOutputTokens: 100 });
+      const result = await callGemini(apiKey, TITLE_INSTRUCTION, text, { maxOutputTokens: 150 });
       return NextResponse.json({ result });
     }
 
     const raw = await callGemini(apiKey, AUTO_FILL_INSTRUCTION, text, {
-      maxOutputTokens: 512,
+      maxOutputTokens: 800,
       jsonSchema: AUTO_FILL_SCHEMA,
     });
-    const parsed = JSON.parse(raw) as AutoFillResult;
+    // Defensivo: alguns retornos vêm com cerca de código (```json ... ```)
+    // mesmo com responseMimeType forçando JSON puro.
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+    const parsed = JSON.parse(cleaned) as AutoFillResult;
     return NextResponse.json({ result: parsed });
   } catch (error) {
     console.error("Erro ao chamar a API do Gemini:", error);
