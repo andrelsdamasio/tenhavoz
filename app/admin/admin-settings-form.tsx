@@ -5,7 +5,7 @@ import { useState } from "react";
 import { updateSettingsAction, type UpdateSettingsState } from "./actions";
 import type { AppSettings, TemplateId } from "@/lib/types";
 
-const ALL_TEMPLATES: TemplateId[] = [1, 2, 3];
+const ALL_TEMPLATES: TemplateId[] = [1, 2, 3, 4, 5];
 
 const initialState: UpdateSettingsState = { error: null, success: false };
 

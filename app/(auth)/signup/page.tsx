@@ -3,6 +3,7 @@
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { signUp, type AuthActionState } from "../actions";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const initialState: AuthActionState = { error: null };
 
@@ -25,6 +26,12 @@ export default function SignupPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
       <h1 className="mb-6 text-2xl font-semibold">Criar conta</h1>
+      <GoogleSignInButton />
+      <div className="my-4 flex items-center gap-3 text-xs text-gray-400">
+        <div className="h-px flex-1 bg-gray-200" />
+        ou
+        <div className="h-px flex-1 bg-gray-200" />
+      </div>
       <form action={formAction} className="flex flex-col gap-4">
         <div>
           <label className="mb-1 block text-sm font-medium" htmlFor="email">

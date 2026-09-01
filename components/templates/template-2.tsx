@@ -1,4 +1,5 @@
 import TrackedMailtoLink from "@/components/TrackedMailtoLink";
+import CopyFallbackButtons from "@/components/CopyFallbackButtons";
 import type { TemplateProps } from "./types";
 
 /** Template 2: hero centralizado, fundo em degradê, chamada mais dramática. */
@@ -31,6 +32,13 @@ export default function Template2({ campaign, mailtoUrl }: TemplateProps) {
             </a>
           )}
         </div>
+        <CopyFallbackButtons
+          subject={campaign.subject}
+          recipients={campaign.recipients}
+          manifestText={campaign.manifest_text}
+          sendMode={campaign.send_mode}
+          className="w-full max-w-xl rounded-xl bg-white/95 p-4 text-left shadow-lg"
+        />
       </div>
     </main>
   );

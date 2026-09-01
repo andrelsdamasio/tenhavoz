@@ -1,4 +1,5 @@
 import TrackedMailtoLink from "@/components/TrackedMailtoLink";
+import CopyFallbackButtons from "@/components/CopyFallbackButtons";
 import type { TemplateProps } from "./types";
 
 /** Template 1: minimalista, fundo claro, foco no texto. */
@@ -30,6 +31,13 @@ export default function Template1({ campaign, mailtoUrl }: TemplateProps) {
           </a>
         )}
       </div>
+      <CopyFallbackButtons
+        subject={campaign.subject}
+        recipients={campaign.recipients}
+        manifestText={campaign.manifest_text}
+        sendMode={campaign.send_mode}
+        className="mt-4 rounded-md border border-gray-200 bg-gray-50/50 p-4"
+      />
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import TrackedMailtoLink from "@/components/TrackedMailtoLink";
+import CopyFallbackButtons from "@/components/CopyFallbackButtons";
 import type { TemplateProps } from "./types";
 
 /** Template 3: layout tipo "carta" em cartão, com assinatura formal. */
@@ -9,7 +10,7 @@ export default function Template3({ campaign, mailtoUrl }: TemplateProps) {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-600">
           Manifesto público
         </p>
-        <h1 className="mb-6 text-2xl font-bold text-gray-900">
+        <h1 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl">
           {campaign.title}
         </h1>
         <p className="whitespace-pre-wrap leading-relaxed text-gray-700">
@@ -34,6 +35,13 @@ export default function Template3({ campaign, mailtoUrl }: TemplateProps) {
             </a>
           )}
         </div>
+        <CopyFallbackButtons
+          subject={campaign.subject}
+          recipients={campaign.recipients}
+          manifestText={campaign.manifest_text}
+          sendMode={campaign.send_mode}
+          className="mt-6 border-t border-gray-100 pt-6"
+        />
       </div>
     </main>
   );

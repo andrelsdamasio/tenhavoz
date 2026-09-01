@@ -4,6 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn, type AuthActionState } from "../actions";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const initialState: AuthActionState = { error: null };
 
@@ -27,6 +28,12 @@ export default function LoginForm() {
 
   return (
     <>
+      <GoogleSignInButton redirectTo={redirectTo} />
+      <div className="my-4 flex items-center gap-3 text-xs text-gray-400">
+        <div className="h-px flex-1 bg-gray-200" />
+        ou
+        <div className="h-px flex-1 bg-gray-200" />
+      </div>
       <form action={formAction} className="flex flex-col gap-4">
         <input type="hidden" name="redirectTo" value={redirectTo} />
         <div>
