@@ -55,12 +55,11 @@ async function callGemini(
       systemInstruction: { parts: [{ text: systemInstruction }] },
       contents: [{ role: "user", parts: [{ text: userText }] }],
       generationConfig: {
-        maxOutputTokens: opts?.maxOutputTokens ?? 1024,
-        // Sem isso, os modelos "flash" mais novos gastam boa parte (ou todo)
-        // o maxOutputTokens "pensando" antes de responder, cortando a
-        // resposta visível pela metade — nenhuma das nossas tarefas precisa
-        // de raciocínio em várias etapas.
-        thinkingConfig: { thinkingBudget: 0 },
+        // Generoso de propósito: modelos "flash" mais novos gastam parte do
+        // maxOutputTokens "pensando" antes de responder (thinkingConfig não
+        // é aceito por esse modelo/versão da API), então a margem cobre
+        // tanto esse raciocínio interno quanto a resposta visível.
+        maxOutputTokens: opts?.maxOutputTokens ?? 2048,
         ...(opts?.jsonSchema
           ? { responseMimeType: "application/json", responseSchema: opts.jsonSchema }
           : {}),
@@ -74,10 +73,18 @@ async function callGemini(
   }
 
   const data = await res.json();
+  const finishReason = data.candidates?.[0]?.finishReason;
   const text =
     data.candidates?.[0]?.content?.parts
       ?.map((part: { text?: string }) => part.text ?? "")
       .join("") ?? "";
+
+  if (!text.trim()) {
+    throw new Error(
+      `Gemini retornou resposta vazia (finishReason: ${finishReason ?? "desconhecido"})`
+    );
+  }
+
   return text.trim();
 }
 
@@ -124,18 +131,18 @@ export async function POST(request: Request) {
         apiKey,
         SHORTEN_INSTRUCTION,
         `Reescreva o texto abaixo com no máximo ${targetLength} caracteres:\n\n${text}`,
-        { maxOutputTokens: 2048 }
+        { maxOutputTokens: 4096 }
       );
       return NextResponse.json({ result });
     }
 
     if (task === "title") {
-      const result = await callGemini(apiKey, TITLE_INSTRUCTION, text, { maxOutputTokens: 150 });
+      const result = await callGemini(apiKey, TITLE_INSTRUCTION, text, { maxOutputTokens: 500 });
       return NextResponse.json({ result });
     }
 
     const raw = await callGemini(apiKey, AUTO_FILL_INSTRUCTION, text, {
-      maxOutputTokens: 800,
+      maxOutputTokens: 2048,
       jsonSchema: AUTO_FILL_SCHEMA,
     });
     // Defensivo: alguns retornos vêm com cerca de código (```json ... ```)
