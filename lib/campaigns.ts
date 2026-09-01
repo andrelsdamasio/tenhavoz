@@ -96,6 +96,29 @@ export async function getCampaignForOwner(
   return data;
 }
 
+/**
+ * Exclui a campanha do usuário logado. A policy de RLS já restringe isso a
+ * `auth.uid() = user_id`, mas o filtro extra por userId aqui é defesa a
+ * mais — e faz o delete simplesmente não afetar nada (0 linhas) se o
+ * chamador de alguma forma passar um campaignId de outra pessoa, em vez de
+ * um erro. Pagamentos associados somem junto (on delete cascade na tabela
+ * payments) — é uma exclusão permanente, sem confirmação adicional além da
+ * que a UI já pede antes de chamar isto.
+ */
+export async function deleteCampaign(
+  supabase: SupabaseClient<Database>,
+  campaignId: string,
+  userId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("id", campaignId)
+    .eq("user_id", userId);
+
+  if (error) throw error;
+}
+
 export async function getPublishedCampaignBySlug(
   supabase: SupabaseClient<Database>,
   slug: string

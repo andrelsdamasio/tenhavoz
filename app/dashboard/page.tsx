@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { listCampaignsForUser } from "@/lib/campaigns";
 import { getCampaignStats } from "@/lib/events";
 import ShareButtons from "@/components/ShareButtons";
+import DeleteCampaignButton from "@/components/DeleteCampaignButton";
 import type { CampaignStatus } from "@/lib/types";
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
@@ -86,29 +87,35 @@ export default async function DashboardPage() {
                   </p>
                 )}
               </div>
-              {campaign.status === "published" && campaign.slug ? (
-                <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-end gap-2">
+                {campaign.status === "published" && campaign.slug ? (
+                  <>
+                    <Link
+                      href={`/${campaign.slug}`}
+                      target="_blank"
+                      className="text-sm text-brand-600 hover:underline"
+                    >
+                      Ver página pública ↗
+                    </Link>
+                    <ShareButtons
+                      url={`${SITE_URL}/${campaign.slug}`}
+                      title={campaign.title}
+                      className="text-right"
+                    />
+                  </>
+                ) : (
                   <Link
-                    href={`/${campaign.slug}`}
-                    target="_blank"
+                    href={`/dashboard/checkout?campaignId=${campaign.id}`}
                     className="text-sm text-brand-600 hover:underline"
                   >
-                    Ver página pública ↗
+                    Pagar e publicar
                   </Link>
-                  <ShareButtons
-                    url={`${SITE_URL}/${campaign.slug}`}
-                    title={campaign.title}
-                    className="text-right"
-                  />
-                </div>
-              ) : (
-                <Link
-                  href={`/dashboard/checkout?campaignId=${campaign.id}`}
-                  className="text-sm text-brand-600 hover:underline"
-                >
-                  Pagar e publicar
-                </Link>
-              )}
+                )}
+                <DeleteCampaignButton
+                  campaignId={campaign.id}
+                  published={campaign.status === "published"}
+                />
+              </div>
             </li>
           ))}
         </ul>
