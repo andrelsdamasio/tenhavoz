@@ -26,7 +26,7 @@ export default async function AdminPage() {
         <h1 className="text-2xl font-semibold">Configurações</h1>
         <div className="flex gap-4 text-sm">
           <Link href="/admin/reports" className="text-brand-600 hover:underline">
-            Relatório de vendas →
+            Dashboard e vendas →
           </Link>
           <Link href="/admin/coupons" className="text-brand-600 hover:underline">
             Cupons de desconto →
