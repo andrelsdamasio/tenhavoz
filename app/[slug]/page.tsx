@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getPublishedCampaignBySlug, isCampaignExpired } from "@/lib/campaigns";
 import { buildMailtoUrl } from "@/lib/mailto";
+import { parseDriveLink } from "@/lib/campaign-input";
 import { getTemplateComponent } from "@/components/templates";
 import ViewTracker from "@/components/ViewTracker";
 
@@ -74,10 +75,16 @@ export default async function PublicCampaignPage({ params }: PageProps) {
 
   const Template = getTemplateComponent(campaign.template_id);
 
+  // Defesa em profundidade: campanhas salvas antes da validação server-side
+  // do link do Drive podem ter um esquema não-http(s) (ex.: javascript:).
+  // Nunca vira href na página pública.
+  const driveLink = parseDriveLink(campaign.drive_link ?? "");
+  const safeCampaign = { ...campaign, drive_link: driveLink.ok ? driveLink.value : null };
+
   return (
     <>
       <ViewTracker campaignId={campaign.id} />
-      <Template campaign={campaign} mailtoUrl={mailtoUrl} />
+      <Template campaign={safeCampaign} mailtoUrl={mailtoUrl} />
     </>
   );
 }

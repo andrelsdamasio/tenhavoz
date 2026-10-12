@@ -160,13 +160,27 @@ export default function CampaignForm({
   const errorRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Sempre reflete o modo atual — usado pra descartar respostas da IA que
+  // chegam depois da pessoa já ter trocado de modo.
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+
+  // No modo básico, forma de envio, link do Drive e cor ficam no padrão. Os
+  // valores escolhidos no avançado continuam guardados no estado (trocar de
+  // modo sem querer não apaga nada), mas só valem no avançado — o envio do
+  // formulário e a pré-visualização usam estes valores "efetivos".
+  const effectiveSendMode: SendMode = mode === "avancado" ? sendMode : "bcc";
+  const effectiveDriveLink = mode === "avancado" ? driveLink : "";
+  const effectiveThemeColor = mode === "avancado" ? themeColor : null;
+
   function handleModeChange(next: "basico" | "avancado") {
-    setMode(next);
-    if (next === "basico") {
-      setSendMode("bcc");
-      setDriveLink("");
-      setThemeColor(null);
+    if (next === "basico" && title.trim() && subject.trim()) {
+      // Título e assunto já existem (possivelmente digitados à mão no
+      // avançado): marca o texto atual como "já processado" pra IA do modo
+      // básico não sobrescrever o que a pessoa escreveu.
+      lastAutoFilledTextRef.current = manifestText.trim();
     }
+    setMode(next);
   }
 
   // Restaura um rascunho salvo no navegador (ex: a página recarregou por
@@ -239,6 +253,7 @@ export default function CampaignForm({
     }
   }, [
     draftLoaded,
+    isEditing,
     title,
     subtitle,
     subject,
@@ -398,6 +413,9 @@ export default function CampaignForm({
       setAiError(null);
       try {
         const result = await fetchAutoFillResult(trimmed);
+        // A pessoa pode ter ido pro modo avançado enquanto a IA respondia —
+        // nesse caso não sobrescreve o que ela está editando.
+        if (modeRef.current !== "basico") return;
         setTitle(result.title);
         setSubject(result.subject);
         setSubtitle(result.subtitle);
@@ -431,11 +449,11 @@ export default function CampaignForm({
     const recipients = parseRecipientsPreview(recipientsRaw);
     return buildMailtoUrl({
       recipients,
-      sendMode,
+      sendMode: effectiveSendMode,
       subject,
       body: manifestText,
     });
-  }, [recipientsRaw, sendMode, subject, manifestText]);
+  }, [recipientsRaw, effectiveSendMode, subject, manifestText]);
 
   const previewCampaign: Campaign = {
     id: "preview",
@@ -450,10 +468,10 @@ export default function CampaignForm({
       manifestText || "O texto do seu manifesto vai aparecer aqui, no template escolhido.",
     subject: subject || "Assunto do e-mail",
     recipients: preview.recipients,
-    send_mode: sendMode,
-    drive_link: driveLink || null,
+    send_mode: effectiveSendMode,
+    drive_link: effectiveDriveLink || null,
     template_id: templateId,
-    theme_color: themeColor,
+    theme_color: effectiveThemeColor,
     slug: null,
     status: "draft",
     duration_hours: null,
