@@ -10,15 +10,13 @@ import {
 } from "@/lib/campaigns";
 import { getAppSettings } from "@/lib/settings";
 import { isValidHexColor } from "@/lib/color";
-import type { SendMode, TemplateId } from "@/lib/types";
+import {
+  parseDriveLink,
+  parseRecipients,
+  parseSendMode,
+  parseTemplateId,
+} from "@/lib/campaign-input";
 import type { NewCampaignState } from "@/app/dashboard/new/actions";
-
-function parseRecipients(raw: string): string[] {
-  return raw
-    .split(/[\n,;]+/)
-    .map((email) => email.trim())
-    .filter((email) => email.length > 0);
-}
 
 export async function updateCampaignAction(
   _prevState: NewCampaignState,
@@ -49,9 +47,6 @@ export async function updateCampaignAction(
   const manifestText = String(formData.get("manifestText") ?? "").trim();
   const subject = String(formData.get("subject") ?? "").trim();
   const recipients = parseRecipients(String(formData.get("recipients") ?? ""));
-  const sendMode = String(formData.get("sendMode") ?? "bcc") as SendMode;
-  const driveLink = String(formData.get("driveLink") ?? "").trim() || null;
-  const templateId = Number(formData.get("templateId") ?? "1") as TemplateId;
   const slug = String(formData.get("slug") ?? "").trim();
   const themeColorRaw = String(formData.get("themeColor") ?? "").trim();
   const themeColor = themeColorRaw && isValidHexColor(themeColorRaw) ? themeColorRaw : null;
@@ -64,8 +59,22 @@ export async function updateCampaignAction(
     return { error: "Informe pelo menos um e-mail de destino." };
   }
 
+  const settings = await getAppSettings(supabase);
   const { manifest_char_limit: charLimit, manifest_char_limit_enabled: charLimitEnabled } =
-    await getAppSettings(supabase);
+    settings;
+
+  const sendModeResult = parseSendMode(formData.get("sendMode"));
+  if (!sendModeResult.ok) return { error: sendModeResult.error };
+
+  const driveLinkResult = parseDriveLink(String(formData.get("driveLink") ?? ""));
+  if (!driveLinkResult.ok) return { error: driveLinkResult.error };
+
+  const templateIdResult = parseTemplateId(
+    formData.get("templateId"),
+    settings.enabled_templates,
+    campaign.template_id
+  );
+  if (!templateIdResult.ok) return { error: templateIdResult.error };
 
   if (charLimitEnabled && manifestText.length > charLimit) {
     return {
@@ -81,9 +90,9 @@ export async function updateCampaignAction(
       manifestText,
       subject,
       recipients,
-      sendMode,
-      driveLink,
-      templateId,
+      sendMode: sendModeResult.value,
+      driveLink: driveLinkResult.value,
+      templateId: templateIdResult.value,
       slug,
       themeColor,
     });
