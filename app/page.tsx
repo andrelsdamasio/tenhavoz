@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import WhatsAppSupportButton from "@/components/WhatsAppSupportButton";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getAppSettings } from "@/lib/settings";
 import { formatBRL } from "@/lib/pricing";
@@ -135,6 +136,8 @@ export default async function HomePage() {
           </div>
         </div>
       </footer>
+
+      <WhatsAppSupportButton />
     </main>
   );
 }
