@@ -70,8 +70,8 @@ vi.mock("@/lib/payment-audit", () => ({
     ignored: 3,
     rows: [
       { paymentId: "111", status: "ok", amount: 79.9, createdAt: new Date().toISOString(), payerEmail: "tudo-certo@x.com", campaignId: "c1", campaignTitle: "A" },
-      { paymentId: "222", status: "campaign_deleted", amount: 79.9, createdAt: new Date().toISOString(), payerEmail: "perdeu@x.com", campaignId: "c2", campaignTitle: null },
-      { paymentId: "333", status: "release", amount: 49.9, createdAt: new Date().toISOString(), payerEmail: "espera@x.com", campaignId: "c3", campaignTitle: "C" },
+      { paymentId: "222", status: "campaign_deleted", amount: 79.9, createdAt: new Date().toISOString(), payerEmail: "XXXXXXXXXXX", accountEmail: "perdeu@x.com", campaignId: "c2", campaignTitle: null },
+      { paymentId: "333", status: "release", amount: 49.9, createdAt: new Date().toISOString(), payerEmail: null, accountEmail: "espera@x.com", campaignId: "c3", campaignTitle: "C" },
     ],
   }),
 }));

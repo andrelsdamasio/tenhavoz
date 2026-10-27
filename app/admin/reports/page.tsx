@@ -266,7 +266,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                 <tr>
                   <th className="p-2">Data</th>
                   <th className="p-2">Valor</th>
-                  <th className="p-2">Pagador</th>
+                  <th className="p-2">Conta / e-mail</th>
                   <th className="p-2">Situação</th>
                   <th className="p-2">Ação</th>
                 </tr>
@@ -276,7 +276,14 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                   <tr key={r.paymentId} className="border-t border-gray-100">
                     <td className="p-2">{r.createdAt ? formatDate(r.createdAt) : "—"}</td>
                     <td className="p-2">{formatBRLFromReais(r.amount)}</td>
-                    <td className="p-2">{r.payerEmail ?? "—"}</td>
+                    <td className="p-2">
+                      {r.accountEmail ?? r.payerEmail ?? "não identificado"}
+                      {!r.accountEmail && (
+                        <span className="block text-xs text-gray-500">
+                          o Mercado Pago oculta o e-mail do pagador; veja Atividades &gt; pagamento nº {r.paymentId}
+                        </span>
+                      )}
+                    </td>
                     <td className="p-2">{AUDIT_LABEL[r.status as Exclude<AuditStatus, "ok">]}</td>
                     <td className="p-2">
                       {r.status === "release" ? (
