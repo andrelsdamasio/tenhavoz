@@ -11,6 +11,7 @@ import {
 } from "@/lib/payment-sync";
 import ShareButtons from "@/components/ShareButtons";
 import DeleteCampaignButton from "@/components/DeleteCampaignButton";
+import AutoRefresh from "@/components/AutoRefresh";
 import VerifyPaymentButton from "@/components/VerifyPaymentButton";
 import type { CampaignStatus } from "@/lib/types";
 
@@ -101,6 +102,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     )
     .slice(0, AUTO_CHECK_MAX_CAMPAIGNS);
 
+  // Só mostra o aviso do Pix para quem começou há pouco; rascunhos antigos
+  // abandonados não devem exibir "pagou o Pix?".
+  const recentlyStarted = awaitingPayment.some(
+    (c) => Date.now() - new Date(c.created_at).getTime() < 24 * 60 * 60 * 1000
+  );
+
   if (awaitingPayment.length > 0) {
     const admin = createAdminClient();
     const outcomes = await Promise.all(
@@ -158,6 +165,18 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           confirmar, a página é liberada sozinha; para conferir agora, use
           &quot;Já paguei — verificar pagamento&quot; na sua campanha.
         </p>
+      )}
+      {(checkout === "pending" || recentlyStarted) && !releasedNow && verify !== "ok" && (
+        <>
+          <AutoRefresh />
+          <p className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+            <strong>Pagou o Pix?</strong> Sua página é liberada sozinha em
+            alguns minutos e esta tela atualiza sozinha. <strong>Não apague a
+            campanha</strong>: o pagamento está sendo confirmado. Se demorar
+            mais de 10 minutos, clique em &quot;Já paguei&quot; ou chame o
+            suporte no WhatsApp.
+          </p>
+        </>
       )}
       {verify === "pending" && (
         <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">

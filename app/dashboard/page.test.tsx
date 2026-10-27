@@ -11,6 +11,7 @@ vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT:${url}`);
   },
+  useRouter: () => ({ refresh: () => {} }),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 // useFormStatus só existe no React embutido no Next; no Vitest (React 18.3
@@ -97,6 +98,8 @@ describe("dashboard do cliente — liberação de quem pagou", () => {
     expect(html).toContain("Rascunho");
     expect(html).toContain("Já paguei — verificar pagamento");
     expect(html).not.toContain("Pagamento confirmado!");
+    expect(html).toContain("Pagou o Pix?");
+    expect(html).toContain("Não apague a");
   });
 
   it("rascunho que nunca chegou ao checkout não gera consulta aos provedores", async () => {

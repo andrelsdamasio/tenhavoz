@@ -128,3 +128,21 @@ export async function issueCompensationCouponAction(formData: FormData) {
   revalidatePath("/admin/reports");
   redirect(`/admin/reports?cupom=${code}`);
 }
+
+/** Tira da lista de alertas um pagamento que já foi atendido por fora. */
+export async function resolvePaymentAction(formData: FormData) {
+  await requireAdmin();
+
+  const paymentId = String(formData.get("paymentId") ?? "").replace(/\D/g, "");
+  if (paymentId) {
+    await createAdminClient()
+      .from("payment_followups")
+      .upsert(
+        { provider_payment_id: paymentId, resolved_at: new Date().toISOString() },
+        { onConflict: "provider_payment_id" }
+      );
+  }
+
+  revalidatePath("/admin/reports");
+  redirect("/admin/reports");
+}
