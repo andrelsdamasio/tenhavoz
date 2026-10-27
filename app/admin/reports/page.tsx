@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { issueCompensationCouponAction, releasePaymentAction } from "@/app/admin/actions";
+import { issueCompensationCouponAction, releasePaymentAction, resolvePaymentAction } from "@/app/admin/actions";
 import { auditMercadoPagoPayments, type AuditStatus } from "@/lib/payment-audit";
 import { getSalesReport, type ReportGranularity } from "@/lib/reports";
 import {
@@ -306,12 +306,21 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                           </span>
                         </div>
                       )}
+                      <form action={resolvePaymentAction} className="mt-2">
+                        <input type="hidden" name="paymentId" value={r.paymentId} />
+                        <button type="submit" className="text-xs text-gray-500 underline">
+                          Marcar como resolvido
+                        </button>
+                      </form>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        )}
+        {audit.resolved > 0 && (
+          <p className="mt-2 text-xs text-gray-500">{audit.resolved} caso(s) já marcado(s) como resolvido(s).</p>
         )}
         {audit.ignored > 0 && (
           <p className="mt-2 text-xs text-gray-500">

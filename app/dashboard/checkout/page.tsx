@@ -76,6 +76,12 @@ export default async function CheckoutPage({
         </p>
       )}
 
+      <p className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+        Pagando por Pix: depois de pagar no app do seu banco, sua página é
+        liberada sozinha em alguns minutos. Volte ao painel para acompanhar e{" "}
+        <strong>não apague a campanha</strong> enquanto o pagamento é confirmado.
+      </p>
+
       {checkoutError && (
         <p className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           Não conseguimos abrir a tela de pagamento agora. Nada foi cobrado.

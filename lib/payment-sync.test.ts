@@ -8,10 +8,14 @@ const mpGet = vi.fn();
 const mpSearch = vi.fn();
 const stripeRetrieve = vi.fn();
 const stripeList = vi.fn();
+const notifyCustomer = vi.fn();
 
 vi.mock("@/lib/payments", () => ({ recordPayment: (...a: unknown[]) => recordPayment(...a) }));
 vi.mock("@/lib/campaigns", () => ({
   publishCampaignAfterConfirmedPayment: (...a: unknown[]) => publishCampaign(...a),
+}));
+vi.mock("@/lib/notifications", () => ({
+  notifyCustomerPaymentConfirmed: (...a: unknown[]) => notifyCustomer(...a),
 }));
 vi.mock("@/lib/coupons", () => ({ redeemCoupon: (...a: unknown[]) => redeemCoupon(...a) }));
 vi.mock("@/lib/mercadopago", () => ({
@@ -97,6 +101,13 @@ describe("processStripeSession", () => {
     );
     expect(publishCampaign).toHaveBeenCalledWith(expect.anything(), "camp-1");
     expect(result).toEqual({ campaignId: "camp-1", paymentStatus: "confirmed", published: true });
+    expect(notifyCustomer).toHaveBeenCalledTimes(1);
+  });
+
+  it("reprocessar uma campanha já publicada não manda o e-mail de novo", async () => {
+    publishCampaign.mockResolvedValue({ campaign: {}, alreadyPublished: true });
+    await processStripeSession(fakeAdmin({}), stripeSession());
+    expect(notifyCustomer).not.toHaveBeenCalled();
   });
 
   it("meio assíncrono ainda não pago: grava pendente e NÃO publica", async () => {

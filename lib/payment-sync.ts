@@ -6,6 +6,7 @@ import { publishCampaignAfterConfirmedPayment } from "@/lib/campaigns";
 import { redeemCoupon } from "@/lib/coupons";
 import { getStripe } from "@/lib/stripe";
 import { getMercadoPagoPaymentClient } from "@/lib/mercadopago";
+import { notifyCustomerPaymentConfirmed } from "@/lib/notifications";
 
 /**
  * Confirmação de pagamento, num lugar só.
@@ -62,10 +63,13 @@ async function publishAndRedeem(
   campaignId: string,
   couponCode: string | null
 ): Promise<void> {
-  const { alreadyPublished } = await publishCampaignAfterConfirmedPayment(admin, campaignId);
-  if (!alreadyPublished && couponCode) {
-    await redeemCoupon(admin, couponCode);
-  }
+  const { campaign, alreadyPublished } = await publishCampaignAfterConfirmedPayment(admin, campaignId);
+  if (alreadyPublished) return;
+
+  if (couponCode) await redeemCoupon(admin, couponCode);
+  // Só na primeira publicação: avisa a pessoa que está no ar (evita ela achar
+  // que "não liberou"). Nunca derruba a liberação.
+  await notifyCustomerPaymentConfirmed(admin, campaign);
 }
 
 /** Grava e, se pago, publica a partir de uma Checkout Session do Stripe. */

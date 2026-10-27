@@ -62,12 +62,14 @@ vi.mock("@/lib/admin", () => ({ isAdminEmail: (email: string) => email === "admi
 vi.mock("@/app/admin/actions", () => ({
   releasePaymentAction: async () => {},
   issueCompensationCouponAction: async () => {},
+  resolvePaymentAction: async () => {},
 }));
 
 vi.mock("@/lib/payment-audit", () => ({
   auditMercadoPagoPayments: async () => ({
     error: null,
     ignored: 3,
+    resolved: 2,
     rows: [
       { paymentId: "111", status: "ok", amount: 79.9, createdAt: new Date().toISOString(), payerEmail: "tudo-certo@x.com", campaignId: "c1", campaignTitle: "A" },
       { paymentId: "222", status: "campaign_deleted", amount: 79.9, createdAt: new Date().toISOString(), payerEmail: "XXXXXXXXXXX", accountEmail: "perdeu@x.com", campaignId: "c2", campaignTitle: null },
@@ -134,6 +136,8 @@ describe("página /admin/reports", () => {
     expect(html).toContain("a campanha foi apagada");
     expect(html).toContain("Liberar agora");
     expect(html).toContain("Gerar cupom 100%");
+    expect(html).toContain("Marcar como resolvido");
+    expect(html).toContain("2 caso(s) já marcado(s) como resolvido(s)");
     expect(html).toContain("3 pagamento(s) da conta do Mercado Pago não vieram do TenhaVoz");
     expect(html).not.toContain("tudo-certo@x.com");
   });

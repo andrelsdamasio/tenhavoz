@@ -73,6 +73,13 @@ export interface Coupon {
   created_at: string;
 }
 
+export interface PaymentFollowup {
+  provider_payment_id: string;
+  alerted_at: string | null;
+  resolved_at: string | null;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -100,6 +107,11 @@ export interface Database {
         Row: AppSettings;
         Insert: Partial<AppSettings>;
         Update: Partial<AppSettings>;
+      };
+      payment_followups: {
+        Row: PaymentFollowup;
+        Insert: Partial<PaymentFollowup> & Pick<PaymentFollowup, "provider_payment_id">;
+        Update: Partial<PaymentFollowup>;
       };
       coupons: {
         Row: Coupon;
