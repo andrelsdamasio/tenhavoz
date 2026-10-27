@@ -3,6 +3,7 @@ import { signOut } from "../(auth)/actions";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail, getSupportEmail } from "@/lib/admin";
 import Logo from "@/components/Logo";
+import WhatsAppSupportButton from "@/components/WhatsAppSupportButton";
 
 function buildSupportMailto(userEmail: string | undefined): string {
   const supportEmail = getSupportEmail();
@@ -54,6 +55,7 @@ export default async function DashboardLayout({
         </div>
       </header>
       <main className="mx-auto max-w-4xl px-4 py-8">{children}</main>
+      <WhatsAppSupportButton userEmail={user?.email} />
     </div>
   );
 }
