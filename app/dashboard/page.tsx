@@ -159,6 +159,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           &quot;Já paguei — verificar pagamento&quot; na sua campanha.
         </p>
       )}
+      {verify === "pending" && (
+        <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Seu pagamento ainda está sendo confirmado (o Pix pode levar alguns
+          minutos). Não apague a campanha: assim que for aprovado, sua página
+          é liberada e você pode usar o botão &quot;Já paguei — verificar
+          pagamento&quot;. Precisando de ajuda, chame o suporte no WhatsApp.
+        </p>
+      )}
       {verify === "notfound" && (
         <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           Ainda não encontramos um pagamento aprovado para essa campanha. Se

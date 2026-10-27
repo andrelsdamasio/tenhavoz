@@ -298,7 +298,7 @@ describe("reconcileCampaignPayment (botão 'Já paguei' e abertura do dashboard)
     expect(mpSearch).toHaveBeenCalledWith({
       options: expect.objectContaining({ external_reference: "camp-1" }),
     });
-    expect(outcome).toEqual({ published: true, found: 2, errors: [] });
+    expect(outcome).toEqual({ published: true, found: 2, pending: 1, errors: [] });
     expect(publishCampaign).toHaveBeenCalledTimes(1);
   });
 
@@ -308,7 +308,7 @@ describe("reconcileCampaignPayment (botão 'Já paguei' e abertura do dashboard)
       results: [{ id: "1", status: "pending", external_reference: "camp-1", transaction_amount: 1 }],
     });
     const outcome = await reconcileCampaignPayment(admin, campaign);
-    expect(outcome).toEqual({ published: false, found: 1, errors: [] });
+    expect(outcome).toEqual({ published: false, found: 1, pending: 1, errors: [] });
     expect(publishCampaign).not.toHaveBeenCalled();
   });
 
@@ -318,13 +318,14 @@ describe("reconcileCampaignPayment (botão 'Já paguei' e abertura do dashboard)
     expect(await reconcileCampaignPayment(admin, campaign)).toEqual({
       published: false,
       found: 0,
+      pending: 0,
       errors: [],
     });
   });
 
   it("provedor não configurado é pulado, sem erro", async () => {
     const outcome = await reconcileCampaignPayment(admin, campaign);
-    expect(outcome).toEqual({ published: false, found: 0, errors: [] });
+    expect(outcome).toEqual({ published: false, found: 0, pending: 0, errors: [] });
     expect(mpSearch).not.toHaveBeenCalled();
     expect(stripeList).not.toHaveBeenCalled();
   });

@@ -24,6 +24,39 @@ export async function deleteCampaignAction(formData: FormData) {
     redirect("/dashboard");
   }
 
+  // Trava de segurança: apagar uma campanha apaga também o registro do pagamento
+  // dela. Quem pagou (Pix demora a compensar) e achou que "não liberou" já
+  // apagou a campanha e perdeu a página e o rastro do pagamento. Antes de
+  // apagar uma campanha que não está no ar, conferimos nos provedores se há
+  // pagamento: aprovado → libera em vez de apagar; em análise → não apaga.
+  if (campaign.status !== "published") {
+    let blocked: "ok" | "pending" | null = null;
+    try {
+      const outcome = await reconcileCampaignPayment(createAdminClient(), campaign);
+      if (outcome.published) blocked = "ok";
+      else if (outcome.pending > 0) blocked = "pending";
+      else if (outcome.errors.length > 0 && outcome.found === 0) {
+        // Não deu para consultar: por segurança, não apaga agora.
+        console.error("[delete-campaign] provedor indisponível; exclusão adiada", {
+          campaignId,
+          errors: outcome.errors,
+        });
+        blocked = "pending";
+      }
+    } catch (err) {
+      console.error("[delete-campaign] falha ao conferir pagamento; exclusão adiada", {
+        campaignId,
+        err,
+      });
+      blocked = "pending";
+    }
+
+    if (blocked) {
+      revalidatePath("/dashboard");
+      redirect(`/dashboard?verify=${blocked}`);
+    }
+  }
+
   await deleteCampaign(supabase, campaignId, user.id);
 
   revalidatePath("/dashboard");

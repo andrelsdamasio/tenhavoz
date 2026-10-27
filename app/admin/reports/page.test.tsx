@@ -59,6 +59,19 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/admin", () => ({ isAdminEmail: (email: string) => email === "admin@x.com" }));
 
+vi.mock("@/app/admin/actions", () => ({ releasePaymentAction: async () => {} }));
+
+vi.mock("@/lib/payment-audit", () => ({
+  auditMercadoPagoPayments: async () => ({
+    error: null,
+    rows: [
+      { paymentId: "111", status: "ok", amount: 79.9, createdAt: new Date().toISOString(), payerEmail: "tudo-certo@x.com", campaignId: "c1", campaignTitle: "A" },
+      { paymentId: "222", status: "campaign_deleted", amount: 79.9, createdAt: new Date().toISOString(), payerEmail: "perdeu@x.com", campaignId: "c2", campaignTitle: null },
+      { paymentId: "333", status: "release", amount: 49.9, createdAt: new Date().toISOString(), payerEmail: "espera@x.com", campaignId: "c3", campaignTitle: "C" },
+    ],
+  }),
+}));
+
 vi.mock("@/lib/reports", () => ({
   getSalesReport: async () => ({
     rows: [
@@ -108,6 +121,15 @@ describe("página /admin/reports", () => {
     expect(html).toContain("200 / 50");
     expect(html).toContain("25%"); // 50 cliques / 200 visitas
     expect(html).toContain("80%"); // 4 de 5 publicadas
+  });
+
+  it("alerta pagamentos aprovados sem página, com botão de liberar", async () => {
+    const html = await render();
+    expect(html).toContain("2 pagamento(s) aprovado(s) sem página no ar");
+    expect(html).toContain("perdeu@x.com");
+    expect(html).toContain("a campanha foi apagada");
+    expect(html).toContain("Liberar agora");
+    expect(html).not.toContain("tudo-certo@x.com");
   });
 
   it("lista todas as campanhas, com o dono e a classificação", async () => {
