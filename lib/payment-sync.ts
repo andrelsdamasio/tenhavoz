@@ -191,6 +191,8 @@ export interface ReconcileOutcome {
   published: boolean;
   /** Quantos pagamentos desta campanha foram encontrados nos provedores. */
   found: number;
+  /** Quantos deles ainda estão em análise (Pix/boleto aguardando compensação). */
+  pending: number;
   /** Provedores que não puderam ser consultados (para log; nunca vai ao cliente). */
   errors: string[];
 }
@@ -205,7 +207,7 @@ export async function reconcileCampaignPayment(
   admin: Admin,
   campaign: Pick<Campaign, "id" | "created_at">
 ): Promise<ReconcileOutcome> {
-  const outcome: ReconcileOutcome = { published: false, found: 0, errors: [] };
+  const outcome: ReconcileOutcome = { published: false, found: 0, pending: 0, errors: [] };
 
   if (process.env.MERCADOPAGO_ACCESS_TOKEN) {
     try {
@@ -227,6 +229,7 @@ export async function reconcileCampaignPayment(
           metadata: payment.metadata,
         });
         if (synced.published) outcome.published = true;
+        if (synced.paymentStatus === "pending") outcome.pending += 1;
       }
     } catch (err) {
       outcome.errors.push(`mercadopago: ${err instanceof Error ? err.message : String(err)}`);
@@ -249,6 +252,7 @@ export async function reconcileCampaignPayment(
         outcome.found += 1;
         const synced = await processStripeSession(admin, session);
         if (synced.published) outcome.published = true;
+        if (synced.paymentStatus === "pending") outcome.pending += 1;
       }
     } catch (err) {
       outcome.errors.push(`stripe: ${err instanceof Error ? err.message : String(err)}`);

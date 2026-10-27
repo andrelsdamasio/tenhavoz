@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { updateAppSettings } from "@/lib/settings";
 import { isValidHexColor } from "@/lib/color";
+import { syncMercadoPagoPaymentById } from "@/lib/payment-sync";
 import type { TemplateId } from "@/lib/types";
 
 export interface UpdateSettingsState {
@@ -80,4 +81,19 @@ export async function updateSettingsAction(
   revalidatePath("/dashboard/checkout");
 
   return { error: null, success: true };
+}
+
+/** Libera na hora a página de um pagamento aprovado que não foi processado. */
+export async function releasePaymentAction(formData: FormData) {
+  await requireAdmin();
+
+  const paymentId = String(formData.get("paymentId") ?? "");
+  try {
+    await syncMercadoPagoPaymentById(createAdminClient(), paymentId);
+  } catch (err) {
+    console.error("[admin] falha ao liberar pagamento", { paymentId, err });
+  }
+
+  revalidatePath("/admin/reports");
+  redirect("/admin/reports");
 }

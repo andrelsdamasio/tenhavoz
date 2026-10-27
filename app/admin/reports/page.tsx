@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
+import { releasePaymentAction } from "@/app/admin/actions";
+import { auditMercadoPagoPayments, type AuditStatus } from "@/lib/payment-audit";
 import { getSalesReport, type ReportGranularity } from "@/lib/reports";
 import {
   CAMPAIGN_FILTERS,
@@ -82,6 +84,12 @@ const BILLING_BADGE: Record<Billing, { label: string; className: string }> = {
   paid: { label: "Paga", className: "bg-emerald-100 text-emerald-800" },
   free: { label: "Grátis", className: "bg-violet-100 text-violet-800" },
   refunded: { label: "Reembolsada", className: "bg-red-100 text-red-700" },
+};
+
+const AUDIT_LABEL: Record<Exclude<AuditStatus, "ok">, string> = {
+  release: "Pago, mas a página não foi liberada",
+  campaign_deleted: "Pago, mas a campanha foi apagada",
+  no_reference: "Pago fora do checkout do site",
 };
 
 function Badge({ label, className }: { label: string; className: string }) {
@@ -180,10 +188,12 @@ export default async function ReportsPage({ searchParams }: PageProps) {
   const filter = parseFilter(filterRaw);
 
   const admin = createAdminClient();
-  const [{ rows, summary }, dashboard] = await Promise.all([
+  const [{ rows, summary }, dashboard, audit] = await Promise.all([
     getSalesReport(admin, granularity),
     getAdminDashboard(admin),
+    auditMercadoPagoPayments(admin),
   ]);
+  const problems = audit.rows.filter((r) => r.status !== "ok");
   const { overview, totals } = dashboard;
 
   const filtered = dashboard.campaigns.filter((c) => matchesFilter(c, filter));
@@ -222,6 +232,62 @@ export default async function ReportsPage({ searchParams }: PageProps) {
           ← Configurações
         </Link>
       </div>
+
+      <section aria-labelledby="conciliacao" className="mb-8">
+        <h2 id="conciliacao" className="mb-3 text-sm font-semibold uppercase text-gray-500">
+          Conciliação de pagamentos (Mercado Pago, últimos 30 dias)
+        </h2>
+        {audit.error ? (
+          <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {audit.error}
+          </p>
+        ) : problems.length === 0 ? (
+          <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+            Tudo certo: {audit.rows.length} pagamento(s) aprovado(s) e todos com página no ar.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-md border border-red-200 bg-white">
+            <p className="border-b border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">
+              {problems.length} pagamento(s) aprovado(s) sem página no ar — atender agora.
+            </p>
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs text-gray-500">
+                <tr>
+                  <th className="p-2">Data</th>
+                  <th className="p-2">Valor</th>
+                  <th className="p-2">Pagador</th>
+                  <th className="p-2">Situação</th>
+                  <th className="p-2">Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {problems.map((r) => (
+                  <tr key={r.paymentId} className="border-t border-gray-100">
+                    <td className="p-2">{r.createdAt ? formatDate(r.createdAt) : "—"}</td>
+                    <td className="p-2">{formatBRLFromReais(r.amount)}</td>
+                    <td className="p-2">{r.payerEmail ?? "—"}</td>
+                    <td className="p-2">{AUDIT_LABEL[r.status as Exclude<AuditStatus, "ok">]}</td>
+                    <td className="p-2">
+                      {r.status === "release" ? (
+                        <form action={releasePaymentAction}>
+                          <input type="hidden" name="paymentId" value={r.paymentId} />
+                          <button type="submit" className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white">
+                            Liberar agora
+                          </button>
+                        </form>
+                      ) : (
+                        <span className="text-xs text-gray-600">
+                          Pagamento nº {r.paymentId}: reembolsar ou refazer a página manualmente
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <section aria-labelledby="visao-geral" className="mb-8">
         <h2 id="visao-geral" className="mb-3 text-sm font-semibold uppercase text-gray-500">
