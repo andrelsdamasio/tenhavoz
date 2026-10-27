@@ -13,9 +13,10 @@ export default async function CheckoutPage({
     canceled?: string;
     couponExpired?: string;
     planInvalid?: string;
+    checkoutError?: string;
   }>;
 }) {
-  const { campaignId, canceled, couponExpired, planInvalid } = await searchParams;
+  const { campaignId, canceled, couponExpired, planInvalid, checkoutError } = await searchParams;
 
   if (!campaignId) {
     redirect("/dashboard");
@@ -72,6 +73,13 @@ export default async function CheckoutPage({
         <p className="mb-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
           O cupom não é mais válido — aplique-o de novo ou escolha uma forma
           de pagamento.
+        </p>
+      )}
+
+      {checkoutError && (
+        <p className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          Não conseguimos abrir a tela de pagamento agora. Nada foi cobrado.
+          Tente de novo em instantes; se continuar, fale com o suporte.
         </p>
       )}
 
