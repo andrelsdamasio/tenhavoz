@@ -202,8 +202,12 @@ async function createMercadoPagoPreference(
           },
         ],
         external_reference: campaign.id,
+        // user_id/user_email ficam no pagamento: mesmo que a campanha seja
+        // apagada, ainda dá para saber de quem é o pagamento.
         metadata: {
           coupon_code: couponCode ?? "",
+          user_id: user.id,
+          user_email: user.email ?? "",
         },
         back_urls: {
           success: `${siteUrl}/dashboard?checkout=success`,

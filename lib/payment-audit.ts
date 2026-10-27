@@ -21,6 +21,8 @@ export interface AuditRow {
   amount: number;
   createdAt: string;
   payerEmail: string | null;
+  /** E-mail da conta do TenhaVoz que pagou (a fonte confiável). */
+  accountEmail: string | null;
   campaignId: string | null;
   campaignTitle: string | null;
 }
@@ -42,6 +44,7 @@ interface MpPaymentLite {
   transaction_amount?: number;
   date_created?: string;
   payer?: { email?: string };
+  metadata?: Record<string, unknown>;
   description?: string;
   notification_url?: string;
 }
@@ -64,7 +67,8 @@ export function isFromSite(p: MpPaymentLite): boolean {
 
 export function classify(
   payment: MpPaymentLite,
-  campaigns: Map<string, { title: string; status: string }>
+  campaigns: Map<string, { title: string; status: string }>,
+  accountEmail: string | null = null
 ): AuditRow {
   const ref = payment.external_reference || null;
   const campaign = ref ? campaigns.get(ref) : undefined;
@@ -80,6 +84,7 @@ export function classify(
     amount: payment.transaction_amount ?? 0,
     createdAt: payment.date_created ?? "",
     payerEmail: payment.payer?.email ?? null,
+    accountEmail,
     campaignId: ref,
     campaignTitle: campaign?.title ?? null,
   };
@@ -118,23 +123,43 @@ export async function auditMercadoPagoPayments(
     const ignored = all.length - payments.length;
     const refs = [...new Set(payments.map((p) => p.external_reference).filter(Boolean))] as string[];
     const campaigns = new Map<string, { title: string; status: string }>();
+    const owners = new Map<string, string>();
     // Só ids com formato de uuid vão ao banco; qualquer outra coisa é "sem campanha".
     const uuidRefs = refs.filter((r) => UUID.test(r));
     for (let i = 0; i < uuidRefs.length; i += 100) {
       const { data, error } = await admin
         .from("campaigns")
-        .select("id, title, status")
+        .select("id, title, status, user_id")
         .in("id", uuidRefs.slice(i, i + 100));
       if (error) throw error;
-      for (const c of data ?? []) campaigns.set(c.id, { title: c.title, status: c.status });
+      for (const c of data ?? []) {
+        campaigns.set(c.id, { title: c.title, status: c.status });
+        owners.set(c.id, c.user_id);
+      }
     }
 
-    const rows = payments.map((p) =>
-      classify(
-        { ...p, external_reference: p.external_reference && UUID.test(p.external_reference) ? p.external_reference : undefined },
-        campaigns
-      )
-    );
+    const emailCache = new Map<string, string | null>();
+    async function emailOf(userId: string | undefined): Promise<string | null> {
+      if (!userId) return null;
+      if (!emailCache.has(userId)) {
+        const { data } = await admin.auth.admin.getUserById(userId);
+        emailCache.set(userId, data.user?.email ?? null);
+      }
+      return emailCache.get(userId) ?? null;
+    }
+
+    const rows: AuditRow[] = [];
+    for (const p of payments) {
+      const ref = p.external_reference && UUID.test(p.external_reference) ? p.external_reference : undefined;
+      const row = classify({ ...p, external_reference: ref }, campaigns);
+      if (row.status !== "ok") {
+        const metaUser = typeof p.metadata?.user_id === "string" ? p.metadata.user_id : undefined;
+        const metaEmail = typeof p.metadata?.user_email === "string" && p.metadata.user_email ? p.metadata.user_email : null;
+        row.accountEmail =
+          (await emailOf(ref ? owners.get(ref) : undefined)) ?? metaEmail ?? (await emailOf(metaUser));
+      }
+      rows.push(row);
+    }
     return { rows, ignored, error: null };
   } catch (err) {
     console.error("[payment-audit] falha ao consultar o Mercado Pago", err);
