@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -96,4 +97,34 @@ export async function releasePaymentAction(formData: FormData) {
 
   revalidatePath("/admin/reports");
   redirect("/admin/reports");
+}
+
+/**
+ * Para quem pagou mas teve a campanha apagada (os dados se foram): gera um
+ * cupom de 100% de uso único. O cliente refaz a página sem pagar de novo e
+ * o admin devolve o código para ele. Se preferir devolver o dinheiro, o
+ * reembolso é feito no painel do Mercado Pago.
+ */
+export async function issueCompensationCouponAction(formData: FormData) {
+  await requireAdmin();
+
+  const paymentId = String(formData.get("paymentId") ?? "").replace(/\D/g, "");
+  const code = `PAGO-${randomBytes(4).toString("hex").toUpperCase()}`;
+
+  const { error } = await createAdminClient().from("coupons").insert({
+    code,
+    discount_type: "percent",
+    discount_value: 100,
+    max_redemptions: 1,
+    active: true,
+  });
+
+  if (error) {
+    console.error("[admin] falha ao gerar cupom de compensação", { paymentId, error });
+    redirect("/admin/reports?cupom=erro");
+  }
+
+  console.log(`[admin] cupom de compensação ${code} gerado para o pagamento ${paymentId}`);
+  revalidatePath("/admin/reports");
+  redirect(`/admin/reports?cupom=${code}`);
 }

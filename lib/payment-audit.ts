@@ -27,6 +27,8 @@ export interface AuditRow {
 
 export interface AuditResult {
   rows: AuditRow[];
+  /** Pagamentos da conta que NÃO vieram do TenhaVoz (outros usos da conta). */
+  ignored: number;
   /** Mensagem se o Mercado Pago não pôde ser consultado. */
   error: string | null;
 }
@@ -40,6 +42,24 @@ interface MpPaymentLite {
   transaction_amount?: number;
   date_created?: string;
   payer?: { email?: string };
+  description?: string;
+  notification_url?: string;
+}
+
+const UUID = /^[0-9a-f-]{36}$/i;
+
+/**
+ * A conta do Mercado Pago pode receber pagamentos que nada têm a ver com o
+ * TenhaVoz. Só entra na conciliação o que veio do nosso checkout: tem
+ * external_reference de campanha, ou aponta para o nosso webhook, ou leva o
+ * título que usamos no item.
+ */
+export function isFromSite(p: MpPaymentLite): boolean {
+  return (
+    UUID.test(p.external_reference ?? "") ||
+    (p.notification_url ?? "").includes("/api/webhooks/mercadopago") ||
+    (p.description ?? "").includes("TenhaVoz")
+  );
 }
 
 export function classify(
@@ -70,11 +90,11 @@ export async function auditMercadoPagoPayments(
   days = 30
 ): Promise<AuditResult> {
   if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
-    return { rows: [], error: "MERCADOPAGO_ACCESS_TOKEN não configurada." };
+    return { rows: [], ignored: 0, error: "MERCADOPAGO_ACCESS_TOKEN não configurada." };
   }
 
   try {
-    const payments: MpPaymentLite[] = [];
+    const all: MpPaymentLite[] = [];
     const client = getMercadoPagoPaymentClient();
     for (let i = 0; i < MAX_PAGES; i += 1) {
       const result = await client.search({
@@ -90,14 +110,16 @@ export async function auditMercadoPagoPayments(
         },
       });
       const batch = (result.results ?? []) as MpPaymentLite[];
-      payments.push(...batch);
+      all.push(...batch);
       if (batch.length < PAGE) break;
     }
 
+    const payments = all.filter(isFromSite);
+    const ignored = all.length - payments.length;
     const refs = [...new Set(payments.map((p) => p.external_reference).filter(Boolean))] as string[];
     const campaigns = new Map<string, { title: string; status: string }>();
     // Só ids com formato de uuid vão ao banco; qualquer outra coisa é "sem campanha".
-    const uuidRefs = refs.filter((r) => /^[0-9a-f-]{36}$/i.test(r));
+    const uuidRefs = refs.filter((r) => UUID.test(r));
     for (let i = 0; i < uuidRefs.length; i += 100) {
       const { data, error } = await admin
         .from("campaigns")
@@ -109,13 +131,13 @@ export async function auditMercadoPagoPayments(
 
     const rows = payments.map((p) =>
       classify(
-        { ...p, external_reference: p.external_reference && /^[0-9a-f-]{36}$/i.test(p.external_reference) ? p.external_reference : undefined },
+        { ...p, external_reference: p.external_reference && UUID.test(p.external_reference) ? p.external_reference : undefined },
         campaigns
       )
     );
-    return { rows, error: null };
+    return { rows, ignored, error: null };
   } catch (err) {
     console.error("[payment-audit] falha ao consultar o Mercado Pago", err);
-    return { rows: [], error: "Não foi possível consultar o Mercado Pago agora." };
+    return { rows: [], ignored: 0, error: "Não foi possível consultar o Mercado Pago agora." };
   }
 }

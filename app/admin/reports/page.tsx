@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { releasePaymentAction } from "@/app/admin/actions";
+import { issueCompensationCouponAction, releasePaymentAction } from "@/app/admin/actions";
 import { auditMercadoPagoPayments, type AuditStatus } from "@/lib/payment-audit";
 import { getSalesReport, type ReportGranularity } from "@/lib/reports";
 import {
@@ -89,7 +89,7 @@ const BILLING_BADGE: Record<Billing, { label: string; className: string }> = {
 const AUDIT_LABEL: Record<Exclude<AuditStatus, "ok">, string> = {
   release: "Pago, mas a página não foi liberada",
   campaign_deleted: "Pago, mas a campanha foi apagada",
-  no_reference: "Pago fora do checkout do site",
+  no_reference: "Pago pelo site, mas sem campanha identificada",
 };
 
 function Badge({ label, className }: { label: string; className: string }) {
@@ -169,7 +169,7 @@ function deadlineLabel(campaign: ClassifiedCampaign): string {
 }
 
 interface PageProps {
-  searchParams: Promise<{ granularity?: string; filter?: string; page?: string }>;
+  searchParams: Promise<{ granularity?: string; filter?: string; page?: string; cupom?: string }>;
 }
 
 export default async function ReportsPage({ searchParams }: PageProps) {
@@ -182,7 +182,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
     redirect("/dashboard");
   }
 
-  const { granularity: granularityRaw, filter: filterRaw, page: pageRaw } = await searchParams;
+  const { granularity: granularityRaw, filter: filterRaw, page: pageRaw, cupom } = await searchParams;
   const granularity: ReportGranularity =
     granularityRaw === "day" || granularityRaw === "year" ? granularityRaw : "month";
   const filter = parseFilter(filterRaw);
@@ -237,13 +237,24 @@ export default async function ReportsPage({ searchParams }: PageProps) {
         <h2 id="conciliacao" className="mb-3 text-sm font-semibold uppercase text-gray-500">
           Conciliação de pagamentos (Mercado Pago, últimos 30 dias)
         </h2>
+        {cupom && cupom !== "erro" && /^PAGO-[0-9A-F]{8}$/.test(cupom) && (
+          <p className="mb-3 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+            Cupom de 100% gerado (uso único): <strong className="font-mono">{cupom}</strong>.
+            Passe este código ao cliente — ele refaz a página e usa no checkout sem pagar de novo.
+          </p>
+        )}
+        {cupom === "erro" && (
+          <p className="mb-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            Não foi possível gerar o cupom. Tente de novo.
+          </p>
+        )}
         {audit.error ? (
           <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             {audit.error}
           </p>
         ) : problems.length === 0 ? (
           <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-            Tudo certo: {audit.rows.length} pagamento(s) aprovado(s) e todos com página no ar.
+            Tudo certo: {audit.rows.length} pagamento(s) do TenhaVoz aprovado(s) e todos com página no ar.
           </p>
         ) : (
           <div className="overflow-x-auto rounded-md border border-red-200 bg-white">
@@ -276,9 +287,17 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                           </button>
                         </form>
                       ) : (
-                        <span className="text-xs text-gray-600">
-                          Pagamento nº {r.paymentId}: reembolsar ou refazer a página manualmente
-                        </span>
+                        <div className="flex flex-col items-start gap-1">
+                          <form action={issueCompensationCouponAction}>
+                            <input type="hidden" name="paymentId" value={r.paymentId} />
+                            <button type="submit" className="rounded bg-brand-600 px-2 py-1 text-xs font-medium text-white">
+                              Gerar cupom 100%
+                            </button>
+                          </form>
+                          <span className="text-xs text-gray-500">
+                            Pagamento nº {r.paymentId}. Para devolver o dinheiro: Mercado Pago &gt; Atividades.
+                          </span>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -286,6 +305,11 @@ export default async function ReportsPage({ searchParams }: PageProps) {
               </tbody>
             </table>
           </div>
+        )}
+        {audit.ignored > 0 && (
+          <p className="mt-2 text-xs text-gray-500">
+            {audit.ignored} pagamento(s) da conta do Mercado Pago não vieram do TenhaVoz e foram ignorados aqui.
+          </p>
         )}
       </section>
 
