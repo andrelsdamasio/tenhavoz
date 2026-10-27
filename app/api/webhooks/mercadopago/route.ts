@@ -1,10 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getMercadoPagoPaymentClient } from "@/lib/mercadopago";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { recordPayment } from "@/lib/payments";
-import { publishCampaignAfterConfirmedPayment } from "@/lib/campaigns";
-import { redeemCoupon } from "@/lib/coupons";
+import { syncMercadoPagoPaymentById } from "@/lib/payment-sync";
 
 /**
  * Valida o header x-signature do Mercado Pago.
@@ -33,7 +30,8 @@ function isValidSignature(
   const receivedHash = parts.v1;
   if (!ts || !receivedHash) return false;
 
-  const manifest = `id:${dataId};request-id:${xRequestId ?? ""};ts:${ts};`;
+  // Segundo a documentação, ids alfanuméricos entram no manifesto em minúsculas.
+  const manifest = `id:${dataId.toLowerCase()};request-id:${xRequestId ?? ""};ts:${ts};`;
   const expectedHash = createHmac("sha256", secret).update(manifest).digest("hex");
 
   const a = Buffer.from(expectedHash, "utf8");
@@ -45,76 +43,56 @@ export async function POST(request: Request) {
   const url = new URL(request.url);
   const body = await request.json().catch(() => ({}) as Record<string, unknown>);
 
-  const type = url.searchParams.get("type") ?? (body as { type?: string }).type;
+  // O Mercado Pago tem dois formatos de aviso:
+  //  - webhook:  ?data.id=123&type=payment   (+ header x-signature)
+  //  - IPN:      ?id=123&topic=payment       (sem assinatura)
+  // Só o primeiro era tratado; se a conta estivesse mandando o segundo, todo
+  // aviso era ignorado com 200 e nenhuma campanha era liberada.
+  const isIpn = !url.searchParams.has("type") && url.searchParams.get("topic") === "payment";
+  const type =
+    url.searchParams.get("type") ??
+    url.searchParams.get("topic") ??
+    (body as { type?: string }).type;
   const dataId =
     url.searchParams.get("data.id") ??
-    (body as { data?: { id?: string } }).data?.id ??
+    (isIpn ? url.searchParams.get("id") : null) ??
+    (body as { data?: { id?: string | number } }).data?.id?.toString() ??
     null;
 
   if (type !== "payment" || !dataId) {
+    console.log(`[webhook:mercadopago] ignorado: type=${type ?? "?"} id=${dataId ?? "?"}`);
     return NextResponse.json({ received: true });
   }
 
-  const valid = isValidSignature(
-    request.headers.get("x-signature"),
-    request.headers.get("x-request-id"),
-    dataId,
-    process.env.MERCADOPAGO_WEBHOOK_SECRET
-  );
+  // O IPN não traz assinatura. Não é um risco: a decisão abaixo nunca usa o
+  // conteúdo do aviso, só o pagamento que buscamos na API do Mercado Pago
+  // com o nosso token — um aviso forjado só faz reconsultar um pagamento real.
+  if (!isIpn) {
+    const valid = isValidSignature(
+      request.headers.get("x-signature"),
+      request.headers.get("x-request-id"),
+      dataId,
+      process.env.MERCADOPAGO_WEBHOOK_SECRET
+    );
 
-  if (!valid) {
-    return NextResponse.json({ error: "Assinatura inválida." }, { status: 400 });
-  }
-
-  const paymentClient = getMercadoPagoPaymentClient();
-  const payment = await paymentClient.get({ id: dataId });
-
-  const campaignId = payment.external_reference;
-  if (!campaignId) {
-    return NextResponse.json({ received: true });
-  }
-
-  const admin = createAdminClient();
-
-  const { data: campaign, error } = await admin
-    .from("campaigns")
-    .select("user_id")
-    .eq("id", campaignId)
-    .maybeSingle();
-
-  if (error || !campaign) {
-    return NextResponse.json({ received: true });
-  }
-
-  const isApproved = payment.status === "approved";
-  const couponCode =
-    (payment.metadata as Record<string, unknown> | undefined)?.coupon_code ||
-    (payment.metadata as Record<string, unknown> | undefined)?.couponCode ||
-    null;
-  const couponCodeStr = typeof couponCode === "string" && couponCode ? couponCode : null;
-
-  await recordPayment(admin, {
-    userId: campaign.user_id,
-    campaignId,
-    provider: "mercadopago",
-    providerPaymentId: String(payment.id),
-    status:
-      payment.status === "refunded"
-        ? "refunded"
-        : isApproved
-          ? "confirmed"
-          : payment.status === "rejected"
-            ? "failed"
-            : "pending",
-    amount: payment.transaction_amount ?? 0,
-    couponCode: couponCodeStr,
-  });
-
-  if (isApproved) {
-    const { alreadyPublished } = await publishCampaignAfterConfirmedPayment(admin, campaignId);
-    if (!alreadyPublished && couponCodeStr) {
-      await redeemCoupon(admin, couponCodeStr);
+    if (!valid) {
+      console.error(
+        "[webhook:mercadopago] assinatura inválida — a MERCADOPAGO_WEBHOOK_SECRET da Vercel precisa ser a chave secreta do webhook em Suas integrações > Webhooks (modo produção, não teste).",
+        { dataId, temSignature: request.headers.has("x-signature") }
+      );
+      return NextResponse.json({ error: "Assinatura inválida." }, { status: 400 });
     }
+  }
+
+  try {
+    const result = await syncMercadoPagoPaymentById(createAdminClient(), dataId);
+    console.log(
+      `[webhook:mercadopago] pagamento=${dataId} campanha=${result.campaignId} status=${result.paymentStatus} publicada=${result.published}`
+    );
+  } catch (err) {
+    // 500 faz o Mercado Pago reenviar o aviso mais tarde.
+    console.error(`[webhook:mercadopago] falha ao processar o pagamento ${dataId}:`, err);
+    return NextResponse.json({ error: "Falha ao processar o pagamento." }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

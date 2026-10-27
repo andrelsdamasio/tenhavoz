@@ -127,37 +127,48 @@ export async function startStripeCheckout(formData: FormData) {
 
   await setCampaignDuration(supabase, campaign.id, user.id, duration);
 
-  const stripe = getStripe();
   const siteUrl = getSiteUrl();
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    line_items: [
-      {
-        price_data: {
-          currency: "brl",
-          unit_amount: priceCents,
-          product_data: {
-            name: "Publicação de campanha — TenhaVoz",
+  let checkoutUrl: string | null = null;
+  try {
+    const session = await getStripe().checkout.sessions.create({
+      mode: "payment",
+      line_items: [
+        {
+          price_data: {
+            currency: "brl",
+            unit_amount: priceCents,
+            product_data: {
+              name: "Publicação de campanha — TenhaVoz",
+            },
           },
+          quantity: 1,
         },
-        quantity: 1,
+      ],
+      metadata: {
+        campaignId: campaign.id,
+        userId: user.id,
+        couponCode: couponCode ?? "",
       },
-    ],
-    metadata: {
+      // {CHECKOUT_SESSION_ID} é trocado pelo Stripe. Com ele, ao voltar do
+      // pagamento o dashboard confirma a sessão direto no Stripe, sem depender
+      // de o webhook ter chegado.
+      success_url: `${siteUrl}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/dashboard/checkout?campaignId=${campaign.id}&canceled=1`,
+    });
+    checkoutUrl = session.url;
+  } catch (err) {
+    console.error("[checkout:stripe] falha ao criar a sessão de pagamento", {
       campaignId: campaign.id,
-      userId: user.id,
-      couponCode: couponCode ?? "",
-    },
-    success_url: `${siteUrl}/dashboard?checkout=success`,
-    cancel_url: `${siteUrl}/dashboard/checkout?campaignId=${campaign.id}&canceled=1`,
-  });
-
-  if (!session.url) {
-    throw new Error("Stripe não retornou uma URL de checkout.");
+      err,
+    });
   }
 
-  redirect(session.url);
+  if (!checkoutUrl) {
+    redirect(`/dashboard/checkout?campaignId=${campaign.id}&checkoutError=1`);
+  }
+
+  redirect(checkoutUrl);
 }
 
 async function createMercadoPagoPreference(
@@ -174,49 +185,57 @@ async function createMercadoPagoPreference(
 
   await setCampaignDuration(supabase, campaign.id, user.id, duration);
 
-  const preferenceClient = getMercadoPagoPreferenceClient();
   const siteUrl = getSiteUrl();
 
-  const preference = await preferenceClient.create({
-    body: {
-      items: [
-        {
-          id: campaign.id,
-          title: "Publicação de campanha — TenhaVoz",
-          quantity: 1,
-          unit_price: priceCents / 100,
-          currency_id: "BRL",
+  let checkoutUrl: string | undefined;
+  try {
+    const preferenceClient = getMercadoPagoPreferenceClient();
+    const preference = await preferenceClient.create({
+      body: {
+        items: [
+          {
+            id: campaign.id,
+            title: "Publicação de campanha — TenhaVoz",
+            quantity: 1,
+            unit_price: priceCents / 100,
+            currency_id: "BRL",
+          },
+        ],
+        external_reference: campaign.id,
+        metadata: {
+          coupon_code: couponCode ?? "",
         },
-      ],
-      external_reference: campaign.id,
-      metadata: {
-        coupon_code: couponCode ?? "",
+        back_urls: {
+          success: `${siteUrl}/dashboard?checkout=success`,
+          pending: `${siteUrl}/dashboard?checkout=pending`,
+          failure: `${siteUrl}/dashboard/checkout?campaignId=${campaign.id}&canceled=1`,
+        },
+        auto_return: "approved",
+        notification_url: `${siteUrl}/api/webhooks/mercadopago`,
+        ...(options?.pixOnly
+          ? {
+              payment_methods: {
+                excluded_payment_types: [
+                  { id: "credit_card" },
+                  { id: "debit_card" },
+                  { id: "ticket" },
+                  { id: "atm" },
+                ],
+              },
+            }
+          : {}),
       },
-      back_urls: {
-        success: `${siteUrl}/dashboard?checkout=success`,
-        pending: `${siteUrl}/dashboard?checkout=pending`,
-        failure: `${siteUrl}/dashboard/checkout?campaignId=${campaign.id}&canceled=1`,
-      },
-      auto_return: "approved",
-      notification_url: `${siteUrl}/api/webhooks/mercadopago`,
-      ...(options?.pixOnly
-        ? {
-            payment_methods: {
-              excluded_payment_types: [
-                { id: "credit_card" },
-                { id: "debit_card" },
-                { id: "ticket" },
-                { id: "atm" },
-              ],
-            },
-          }
-        : {}),
-    },
-  });
+    });
+    checkoutUrl = preference.init_point;
+  } catch (err) {
+    console.error("[checkout:mercadopago] falha ao criar a preferência de pagamento", {
+      campaignId: campaign.id,
+      err,
+    });
+  }
 
-  const checkoutUrl = preference.init_point;
   if (!checkoutUrl) {
-    throw new Error("Mercado Pago não retornou uma URL de checkout.");
+    redirect(`/dashboard/checkout?campaignId=${campaign.id}&checkoutError=1`);
   }
 
   return checkoutUrl;
