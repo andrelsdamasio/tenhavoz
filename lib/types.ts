@@ -80,6 +80,19 @@ export interface PaymentFollowup {
   created_at: string;
 }
 
+export interface InboxMessage {
+  id: string;
+  resend_email_id: string;
+  from_address: string;
+  to_addresses: string[];
+  subject: string;
+  text_body: string | null;
+  attachments_count: number;
+  received_at: string;
+  forwarded_at: string | null;
+  read_at: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -107,6 +120,12 @@ export interface Database {
         Row: AppSettings;
         Insert: Partial<AppSettings>;
         Update: Partial<AppSettings>;
+      };
+      inbox_messages: {
+        Row: InboxMessage;
+        Insert: Partial<InboxMessage> &
+          Pick<InboxMessage, "resend_email_id" | "from_address">;
+        Update: Partial<InboxMessage>;
       };
       payment_followups: {
         Row: PaymentFollowup;

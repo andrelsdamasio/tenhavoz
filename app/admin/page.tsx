@@ -31,6 +31,9 @@ export default async function AdminPage() {
           <Link href="/admin/coupons" className="text-brand-600 hover:underline">
             Cupons de desconto →
           </Link>
+          <Link href="/admin/inbox" className="text-brand-600 hover:underline">
+            Caixa de entrada →
+          </Link>
         </div>
       </div>
       <p className="mb-6 text-sm text-gray-600">
