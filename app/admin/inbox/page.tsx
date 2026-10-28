@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { extractAddress } from "@/lib/inbox";
+import MarkInboxRead from "@/components/MarkInboxRead";
 import { markInboxReadAction, sendInboxEmailAction } from "./actions";
 
 const TIME_ZONE = "America/Sao_Paulo";
@@ -160,6 +161,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
             <p className="text-gray-500">Selecione um e-mail para ler ou clique em &quot;Nova mensagem&quot;.</p>
           ) : (
             <>
+              {original.direction === "in" && !original.read_at && <MarkInboxRead id={original.id} />}
               <h2 className="mb-3 text-lg font-semibold">{original.subject || "(sem assunto)"}</h2>
               <div className="space-y-4">
                 {thread.map((m) => (
