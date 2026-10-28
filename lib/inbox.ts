@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types";
 import { sendEmail } from "@/lib/email";
@@ -109,6 +109,7 @@ export async function storeAndForwardEmail(
       subject: email.subject ?? "",
       text_body: body || null,
       attachments_count: email.attachments?.length ?? 0,
+      direction: "in" as const,
     },
     { onConflict: "resend_email_id", ignoreDuplicates: false }
   );
@@ -137,4 +138,55 @@ export async function storeAndForwardEmail(
       .eq("resend_email_id", emailId);
   }
   return { stored: true, forwarded };
+}
+
+const EMAIL_RE = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
+
+export function isValidEmailAddress(value: string): boolean {
+  return value.length <= 254 && EMAIL_RE.test(value);
+}
+
+export interface OutgoingInput {
+  to: string;
+  subject: string;
+  body: string;
+  replyToId?: string | null;
+}
+
+/**
+ * Envia um e-mail pelo TenhaVoz (resposta ou mensagem nova) e guarda uma cópia
+ * na caixa de entrada, na aba "Enviados". A resposta do destinatário volta ao
+ * endereço do remetente (EMAIL_FROM), que cai de novo nesta caixa de entrada.
+ */
+export async function sendFromInbox(
+  admin: SupabaseClient<Database>,
+  input: OutgoingInput
+): Promise<{ ok: boolean; error?: string }> {
+  const to = input.to.trim();
+  const subject = input.subject.trim().slice(0, 200);
+  const body = input.body.trim();
+
+  if (!isValidEmailAddress(to)) return { ok: false, error: "E-mail do destinatário inválido." };
+  if (!subject) return { ok: false, error: "Informe o assunto." };
+  if (!body) return { ok: false, error: "Escreva a mensagem." };
+  if (body.length > 20000) return { ok: false, error: "Mensagem longa demais." };
+
+  const sent = await sendEmail({ to, subject, text: body });
+  if (!sent) return { ok: false, error: "Não foi possível enviar agora. Confira o Resend e tente de novo." };
+
+  const { error } = await admin.from("inbox_messages").insert({
+    resend_email_id: `out-${randomUUID()}`,
+    from_address: process.env.EMAIL_FROM ?? "TenhaVoz",
+    to_addresses: [to],
+    subject,
+    text_body: body,
+    direction: "out",
+    reply_to_id: input.replyToId ?? null,
+    read_at: new Date().toISOString(),
+  });
+  if (error) {
+    // O e-mail já saiu; só a cópia falhou. Não finge que o envio falhou.
+    console.error("[inbox] e-mail enviado, mas a cópia não foi gravada", error);
+  }
+  return { ok: true };
 }

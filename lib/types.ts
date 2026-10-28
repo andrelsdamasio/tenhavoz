@@ -91,6 +91,8 @@ export interface InboxMessage {
   received_at: string;
   forwarded_at: string | null;
   read_at: string | null;
+  direction: "in" | "out";
+  reply_to_id: string | null;
 }
 
 export interface Database {

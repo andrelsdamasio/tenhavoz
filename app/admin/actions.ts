@@ -77,7 +77,7 @@ export async function updateSettingsAction(
     templateColorPalette,
   });
 
-  revalidatePath("/admin");
+  revalidatePath("/admin/settings");
   revalidatePath("/dashboard/new");
   revalidatePath("/dashboard/checkout");
 

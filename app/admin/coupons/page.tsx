@@ -26,12 +26,7 @@ export default async function CouponsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Cupons de desconto</h1>
-        <Link href="/admin" className="text-sm text-brand-600 hover:underline">
-          ← Configurações
-        </Link>
-      </div>
+      <h1 className="mb-6 text-2xl font-semibold">Cupons de desconto</h1>
 
       <div className="mb-8">
         <CouponForm />
