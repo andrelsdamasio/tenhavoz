@@ -52,3 +52,19 @@ export async function sendInboxEmailAction(formData: FormData) {
   }
   redirect(`/admin/inbox?${UUID.test(replyToId) ? `id=${replyToId}&` : "box=out&"}enviado=1`);
 }
+
+/** Marca como lida ao abrir a mensagem (sem redirecionar) e atualiza o selo do menu. */
+export async function markInboxReadOnOpenAction(id: string) {
+  await requireAdmin();
+  if (!UUID.test(id)) return;
+
+  await createAdminClient()
+    .from("inbox_messages")
+    .update({ read_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("direction", "in")
+    .is("read_at", null);
+
+  // O selo fica no layout, então revalida o layout inteiro do admin.
+  revalidatePath("/admin", "layout");
+}
