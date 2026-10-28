@@ -226,12 +226,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Dashboard e relatório de vendas</h1>
-        <Link href="/admin" className="text-sm text-brand-600 hover:underline">
-          ← Configurações
-        </Link>
-      </div>
+      <h1 className="mb-6 text-2xl font-semibold">Campanhas e vendas</h1>
 
       <section aria-labelledby="conciliacao" className="mb-8">
         <h2 id="conciliacao" className="mb-3 text-sm font-semibold uppercase text-gray-500">

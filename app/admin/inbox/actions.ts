@@ -5,16 +5,23 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
+import { sendFromInbox } from "@/lib/inbox";
 
-export async function markInboxReadAction(formData: FormData) {
+const UUID = /^[0-9a-f-]{36}$/i;
+
+async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user || !isAdminEmail(user.email)) redirect("/dashboard");
+}
+
+export async function markInboxReadAction(formData: FormData) {
+  await requireAdmin();
 
   const id = String(formData.get("id") ?? "");
-  if (/^[0-9a-f-]{36}$/i.test(id)) {
+  if (UUID.test(id)) {
     await createAdminClient()
       .from("inbox_messages")
       .update({ read_at: new Date().toISOString() })
@@ -24,4 +31,24 @@ export async function markInboxReadAction(formData: FormData) {
 
   revalidatePath("/admin/inbox");
   redirect(`/admin/inbox?id=${id}`);
+}
+
+/** Responde a uma mensagem recebida (ou escreve uma nova, sem replyToId). */
+export async function sendInboxEmailAction(formData: FormData) {
+  await requireAdmin();
+
+  const replyToId = String(formData.get("replyToId") ?? "");
+  const result = await sendFromInbox(createAdminClient(), {
+    to: String(formData.get("to") ?? ""),
+    subject: String(formData.get("subject") ?? ""),
+    body: String(formData.get("body") ?? ""),
+    replyToId: UUID.test(replyToId) ? replyToId : null,
+  });
+
+  revalidatePath("/admin/inbox");
+  const back = UUID.test(replyToId) ? `id=${replyToId}` : "compose=1";
+  if (!result.ok) {
+    redirect(`/admin/inbox?${back}&erro=${encodeURIComponent(result.error ?? "Falha ao enviar.")}`);
+  }
+  redirect(`/admin/inbox?${UUID.test(replyToId) ? `id=${replyToId}&` : "box=out&"}enviado=1`);
 }

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const sendEmail = vi.fn();
 vi.mock("@/lib/email", () => ({ sendEmail: (...a: unknown[]) => sendEmail(...a) }));
 
-import { extractAddress, htmlToText, storeAndForwardEmail, verifyResendSignature } from "./inbox";
+import { extractAddress, htmlToText, isValidEmailAddress, sendFromInbox, storeAndForwardEmail, verifyResendSignature } from "./inbox";
 
 const SECRET_RAW = Buffer.from("chave-super-secreta-de-teste");
 const SECRET = `whsec_${SECRET_RAW.toString("base64")}`;
@@ -93,5 +93,41 @@ describe("storeAndForwardEmail", () => {
 
   it("recusa id de e-mail com formato estranho", async () => {
     await expect(storeAndForwardEmail(admin, "../x")).rejects.toThrow();
+  });
+});
+
+describe("sendFromInbox", () => {
+  const makeAdmin = () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    return { insert, admin: { from: () => ({ insert }) } as never };
+  };
+  beforeEach(() => sendEmail.mockReset());
+
+  it("valida endereços", () => {
+    expect(isValidEmailAddress("a@b.com")).toBe(true);
+    expect(isValidEmailAddress("a b@c.com")).toBe(false);
+  });
+
+  it("envia e grava cópia em Enviados", async () => {
+    sendEmail.mockResolvedValue(true);
+    const { insert, admin } = makeAdmin();
+    const r = await sendFromInbox(admin, { to: "x@y.com", subject: "Oi", body: "Olá", replyToId: "id1" });
+    expect(r.ok).toBe(true);
+    expect(sendEmail).toHaveBeenCalledOnce();
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ direction: "out", reply_to_id: "id1" }));
+  });
+
+  it("não grava cópia se o envio falhar", async () => {
+    sendEmail.mockResolvedValue(false);
+    const { insert, admin } = makeAdmin();
+    const r = await sendFromInbox(admin, { to: "x@y.com", subject: "Oi", body: "Olá" });
+    expect(r.ok).toBe(false);
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it("rejeita destinatário inválido", async () => {
+    const { admin } = makeAdmin();
+    expect((await sendFromInbox(admin, { to: "nope", subject: "a", body: "b" })).ok).toBe(false);
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 });
