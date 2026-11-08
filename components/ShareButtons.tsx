@@ -17,7 +17,7 @@ export default function ShareButtons({ url, title, className = "" }: ShareButton
   const [copied, setCopied] = useState(false);
 
   const encodedUrl = encodeURIComponent(url);
-  const encodedText = encodeURIComponent(title);
+  const encodedText = encodeURIComponent(`Participe da campanha "${title}": envie seu e-mail em um clique.`);
 
   async function handleCopy() {
     try {
