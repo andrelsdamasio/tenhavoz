@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       request.headers.get("x-signature"),
       request.headers.get("x-request-id"),
       paymentId,
-      process.env.MERCADOPAGO_WEBHOOK_SECRET
+      process.env.MP_DONATIONS_WEBHOOK_SECRET
     )
   ) {
     return NextResponse.json({ error: "assinatura inválida" }, { status: 401 });
