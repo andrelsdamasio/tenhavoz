@@ -23,7 +23,7 @@ export async function createFundraiserAction(
 
   const admin = createAdminClient();
   if (!(await isFundraisingEnabled(admin))) {
-    return { error: "As campanhas de doação ainda não estão disponíveis." };
+    return { error: "As campanhas de arrecadação ainda não estão disponíveis." };
   }
 
   const parsed = parseFundraiserForm(formData);

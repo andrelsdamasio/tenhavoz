@@ -28,7 +28,7 @@ export default async function AdminPage() {
       </p>
       <AdminSettingsForm settings={settings} />
       <form action={setFundraisingEnabledAction} className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-1 font-semibold">Campanhas de doação</h2>
+        <h2 className="mb-1 font-semibold">Campanhas de arrecadação</h2>
         <p className="mb-3 text-sm text-gray-600">
           Desligado: ninguém além do código vê o recurso. Ligue só depois de confirmar o Mercado Pago e testar com contas de teste.
         </p>

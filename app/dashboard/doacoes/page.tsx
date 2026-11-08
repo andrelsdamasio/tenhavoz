@@ -37,7 +37,7 @@ export default async function FundraisersPage({ searchParams }: { searchParams: 
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Campanhas de doação</h1>
+        <h1 className="text-2xl font-semibold">Campanhas de arrecadação</h1>
         <Link href="/dashboard/doacoes/new" className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
           Nova campanha
         </Link>
@@ -70,7 +70,7 @@ export default async function FundraisersPage({ searchParams }: { searchParams: 
       </section>
       {items.length === 0 ? (
         <p className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-600">
-          Você ainda não criou nenhuma campanha de doação.
+          Você ainda não criou nenhuma campanha de arrecadação.
         </p>
       ) : (
         <ul className="space-y-3">

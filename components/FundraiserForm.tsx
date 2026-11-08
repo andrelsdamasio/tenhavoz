@@ -8,7 +8,7 @@ import { BASIC_COLORS } from "@/lib/color";
 import ColorPicker from "@/components/ColorPicker";
 import FundraiserView, { FUNDRAISER_THEMES, type FundraiserViewProps } from "@/components/FundraiserView";
 
-const STEPS = ["Sua história", "Meta e prazo", "Orçamento", "Aparência", "Revisar"] as const;
+const STEPS = ["Receber", "Sua história", "Meta e prazo", "Orçamento", "Aparência", "Revisar"] as const;
 const initial: FundraiserFormState = { error: null };
 
 interface Line {
@@ -61,7 +61,7 @@ function SubmitButton() {
 
 const inputCls = "w-full rounded-md border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
 
-export default function FundraiserForm() {
+export default function FundraiserForm({ connected }: { connected: boolean }) {
   const [state, formAction] = useFormState(createFundraiserAction, initial);
   const [step, setStep] = useState(0);
   const [stepError, setStepError] = useState<string | null>(null);
@@ -115,12 +115,13 @@ export default function FundraiserForm() {
   }
 
   function validateStep(n: number): string | null {
-    if (n === 0) {
+    if (n === 0 && !connected) return "Conecte sua conta do Mercado Pago para continuar.";
+    if (n === 1) {
       if (forWhom === "other" && !beneficiary.trim()) return "Diga o nome de quem vai receber a ajuda.";
       if (title.trim().length < 5) return "Dê um título à campanha (mínimo 5 letras).";
       if (story.trim().length < 50) return "Conte a história com pelo menos 50 caracteres.";
     }
-    if (n === 1) {
+    if (n === 2) {
       if (!goalCents || goalCents < 1000) return "Informe a meta em reais (mínimo R$ 10,00).";
     }
     return null;
@@ -192,8 +193,32 @@ export default function FundraiserForm() {
         ))}
       </ol>
 
-      {/* Passo 1 */}
+      {/* Passo 0: receber o dinheiro */}
       <section hidden={step !== 0} className="space-y-4">
+        <div className="rounded-lg border border-gray-200 bg-white p-5">
+          <h2 className="text-lg font-semibold">Onde você vai receber o dinheiro?</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            As doações caem <strong>direto na sua conta do Mercado Pago</strong>. O dinheiro nunca passa pelo TenhaVoz. Você só precisa autorizar uma vez.
+          </p>
+          {connected ? (
+            <p className="mt-4 rounded-md bg-green-50 p-3 text-sm font-medium text-green-800">✓ Sua conta do Mercado Pago está conectada. Pode continuar.</p>
+          ) : (
+            <>
+              <a href="/api/mp/oauth/start?next=nova" className="mt-4 inline-block rounded-md bg-[#009ee3] px-5 py-2.5 font-medium text-white hover:opacity-90">
+                Conectar com Mercado Pago
+              </a>
+              <ul className="mt-4 list-disc space-y-1 pl-5 text-xs text-gray-600">
+                <li>Você será levado à página oficial do Mercado Pago, onde fará o login e autorizará.</li>
+                <li>Depois, volta aqui para criar a campanha. Você pode revogar o acesso quando quiser, no próprio Mercado Pago.</li>
+                <li>Não guardamos sua senha. O Mercado Pago libera só o necessário para receber as doações.</li>
+              </ul>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Passo 1 */}
+      <section hidden={step !== 1} className="space-y-4">
         <fieldset>
           <legend className="mb-2 text-sm font-medium">Para quem é a ajuda?</legend>
           <div className="flex gap-3">
@@ -252,7 +277,7 @@ export default function FundraiserForm() {
       </section>
 
       {/* Passo 2 */}
-      <section hidden={step !== 1} className="space-y-4">
+      <section hidden={step !== 2} className="space-y-4">
         <label className="block text-sm">
           <span className="mb-1 block font-medium">Meta (R$)</span>
           <input name="goal" value={goal} onChange={(e) => setGoal(e.target.value)} inputMode="decimal" placeholder="5.000,00" className={inputCls} />
@@ -268,7 +293,7 @@ export default function FundraiserForm() {
       </section>
 
       {/* Passo 3 */}
-      <section hidden={step !== 2} className="space-y-3">
+      <section hidden={step !== 3} className="space-y-3">
         <p className="text-sm text-gray-700">Mostre para que o dinheiro será usado. Quem vê o orçamento confia mais e doa mais.</p>
         {lines.map((l, i) => (
           <div key={i} className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
@@ -353,7 +378,7 @@ export default function FundraiserForm() {
       </section>
 
       {/* Passo 4: aparência */}
-      <section hidden={step !== 3} className="space-y-4">
+      <section hidden={step !== 4} className="space-y-4">
         <input type="hidden" name="templateId" value={templateId} />
         <input type="hidden" name="themeColor" value={color ?? ""} />
         <div>
@@ -385,7 +410,7 @@ export default function FundraiserForm() {
       </section>
 
       {/* Passo 5 */}
-      <section hidden={step !== 4} className="space-y-3">
+      <section hidden={step !== 5} className="space-y-3">
         <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm">
           <p className="text-lg font-semibold">{title || "Sem título"}</p>
           {summary && <p className="mt-1 text-gray-600">{summary}</p>}
@@ -402,7 +427,7 @@ export default function FundraiserForm() {
           <strong>Como funciona o custo:</strong> o TenhaVoz fica com 4% de cada doação (
           {goalCents ? `${formatCentsBRL(fee)} se você atingir a meta` : "sobre o valor doado"}), além da tarifa do Mercado Pago. O doador pode, se quiser, deixar uma contribuição voluntária ao TenhaVoz. Não há taxa para abrir a campanha.
         </p>
-        <p className="text-xs text-gray-500">Ao salvar, a campanha fica como rascunho e você segue para conectar a sua conta do Mercado Pago, que é por onde o dinheiro vai chegar direto para você. É rápido: o Mercado Pago abre, você autoriza e volta. Depois é só publicar.</p>
+        <p className="text-xs text-gray-500">Ao salvar, a campanha fica como rascunho. Na próxima tela você confere tudo e clica em publicar.</p>
         {state.error && <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">{state.error}</p>}
       </section>
 
