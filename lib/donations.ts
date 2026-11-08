@@ -9,6 +9,7 @@ export interface DonationInput {
   amountCents: number;
   tipCents: number;
   donorName: string | null;
+  donorEmail: string;
   isAnonymous: boolean;
   message: string | null;
 }
@@ -28,6 +29,11 @@ export function parseDonationForm(form: FormData): Parsed<DonationInput> {
     return { ok: false, error: "A contribuição voluntária pode ser de no máximo 25% do valor doado." };
   }
 
+  const email = String(form.get("donorEmail") ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200) {
+    return { ok: false, error: "Informe um e-mail válido para receber o comprovante da doação." };
+  }
+
   const name = String(form.get("donorName") ?? "").trim().slice(0, 60);
   const isAnonymous = form.get("anonymous") === "on";
   const message = String(form.get("message") ?? "").trim();
@@ -36,7 +42,7 @@ export function parseDonationForm(form: FormData): Parsed<DonationInput> {
 
   return {
     ok: true,
-    value: { amountCents, tipCents, donorName: name || null, isAnonymous, message: message || null },
+    value: { amountCents, tipCents, donorName: name || null, donorEmail: email, isAnonymous, message: message || null },
   };
 }
 

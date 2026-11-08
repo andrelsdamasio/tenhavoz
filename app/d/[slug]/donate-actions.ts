@@ -33,7 +33,7 @@ export async function donateAction(slug: string, _prev: DonateState, formData: F
 
   const { data: settings } = await admin.from("app_settings").select("fundraising_fee_bps").eq("id", true).maybeSingle();
   const feeBps = (settings as { fundraising_fee_bps?: number } | null)?.fundraising_fee_bps ?? 400;
-  const { amountCents, tipCents, donorName, isAnonymous, message } = parsed.value;
+  const { amountCents, tipCents, donorName, donorEmail, isAnonymous, message } = parsed.value;
   const charge = computeCharge(amountCents, tipCents, feeBps);
 
   const { data: donation, error } = await admin
@@ -45,6 +45,7 @@ export async function donateAction(slug: string, _prev: DonateState, formData: F
       tip_cents: tipCents,
       platform_fee_cents: charge.platformFeeCents,
       donor_name: donorName,
+      donor_email: donorEmail,
       is_anonymous: isAnonymous,
       message,
     })

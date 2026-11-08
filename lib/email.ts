@@ -7,6 +7,8 @@ export async function sendEmail(input: {
   to: string | string[];
   subject: string;
   text: string;
+  /** Versão bonita do e-mail; o texto continua indo junto para quem não abre HTML. */
+  html?: string;
   replyTo?: string;
 }): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -24,6 +26,7 @@ export async function sendEmail(input: {
         to: input.to,
         subject: input.subject,
         text: input.text,
+        ...(input.html ? { html: input.html } : {}),
         ...(input.replyTo ? { reply_to: input.replyTo } : {}),
       }),
     });

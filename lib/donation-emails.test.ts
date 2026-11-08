@@ -20,3 +20,26 @@ describe("e-mails de doação", () => {
     expect(donorReceiptEmail({ ...base, donorName: "Ana", tipCents: 0 }).text).not.toContain("Contribuição voluntária");
   });
 });
+
+describe("e-mails de encerramento", () => {
+  it("doador vê o total e quantas doações", async () => {
+    const { closingDonorEmail, closingCreatorEmail } = await import("./donation-emails");
+    const d = closingDonorEmail({ ...base, raisedCents: 12345, donationCount: 3 });
+    expect(d.subject).toContain("encerrada");
+    expect(d.text).toContain("3 doações");
+    const c = closingCreatorEmail({ ...base, raisedCents: 50000, goalCents: 100000, donationCount: 1 });
+    expect(c.text).toContain("50%");
+    expect(c.text).toContain("1 doação");
+  });
+});
+
+describe("e-mail bonito", () => {
+  it("recibo traz a logo, o total e escapa HTML", async () => {
+    const { donorReceiptEmail } = await import("./donation-emails");
+    const e = donorReceiptEmail({ ...base, title: "A <b>b</b>", donorName: "Ana", tipCents: 0 });
+    expect(e.html).toContain("logo-email.png");
+    expect(e.html).toContain("Comprovante da sua doação");
+    expect(e.html).not.toContain("<b>b</b>");
+    expect(e.html).toContain("&lt;b&gt;");
+  });
+});

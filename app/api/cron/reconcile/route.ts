@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyExpiringCampaigns } from "@/lib/expiry-notice";
+import { closeAndNotifyFundraisers } from "@/lib/fundraiser-closing";
 import {
   alertAdminAboutProblems,
   notifyCustomersAboutDelay,
@@ -42,8 +43,14 @@ export async function GET(request: Request) {
       console.error("[cron] falha no aviso de expiração", err);
       return { notified: 0 };
     });
+    // Encerramento das campanhas de arrecadação: também é secundário.
+    const fundraisers = await closeAndNotifyFundraisers(admin).catch((err) => {
+      console.error("[cron] falha ao encerrar arrecadações", err);
+      return { closed: 0, emails: 0 };
+    });
     return NextResponse.json({
       ok: true,
+      fundraisersClosed: fundraisers.closed,
       ...released,
       ...alerts,
       ...customers,

@@ -8,6 +8,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/expiry-notice", () => ({
   notifyExpiringCampaigns: (...a: unknown[]) => notifyExpiring(...a),
 }));
+vi.mock("@/lib/fundraiser-closing", () => ({ closeAndNotifyFundraisers: async () => ({ closed: 0, emails: 0 }) }));
 vi.mock("@/lib/payment-recovery", () => ({
   releaseApprovedPayments: (...a: unknown[]) => release(...a),
   alertAdminAboutProblems: (...a: unknown[]) => alert(...a),
@@ -44,7 +45,7 @@ describe("GET /api/cron/reconcile", () => {
   it("com a credencial certa: roda a liberação, o alerta ao admin e o aviso aos clientes", async () => {
     const res = await call("Bearer segredo");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, checked: 1, released: 1, alerted: 0, notified: 2, expiringNotified: 3 });
+    expect(await res.json()).toEqual({ ok: true, checked: 1, released: 1, alerted: 0, notified: 2, expiringNotified: 3, fundraisersClosed: 0 });
   });
 
   it("falha só no aviso de expiração: a conciliação segue com 200", async () => {

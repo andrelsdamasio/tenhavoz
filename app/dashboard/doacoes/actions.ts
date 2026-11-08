@@ -1,5 +1,6 @@
 "use server";
 
+import { closeAndNotifyFundraisers } from "@/lib/fundraiser-closing";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -42,7 +43,14 @@ export async function endFundraiserAction(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(id)) redirect("/dashboard/doacoes");
   const admin = createAdminClient();
-  await admin.from("fundraisers").update({ status: "ended" }).eq("id", id).eq("user_id", user.id).eq("status", "active");
+  const { data: ended } = await admin.from("fundraisers").update({ status: "ended" }).eq("id", id).eq("user_id", user.id).eq("status", "active").select("id");
+  if (ended && ended.length > 0) {
+    try {
+      await closeAndNotifyFundraisers(admin, id);
+    } catch (err) {
+      console.error("[doacoes] falha ao avisar o encerramento", err);
+    }
+  }
   revalidatePath("/dashboard/doacoes");
   redirect("/dashboard/doacoes");
 }
