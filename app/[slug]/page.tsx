@@ -1,3 +1,4 @@
+import { findInvalidEmails, isValidEmailAddress } from "@/lib/email-address";
 import CreateYourOwnLink from "@/components/CreateYourOwnLink";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -67,8 +68,19 @@ export default async function PublicCampaignPage({ params }: PageProps) {
     );
   }
 
+  // Rede de segurança para campanhas já salvas: um único endereço inválido
+  // (ex.: ".gov.b") faria o app de e-mail recusar a mensagem para TODOS. Os
+  // inválidos ficam de fora do link e o problema vai para o log.
+  const validRecipients = campaign.recipients.filter(isValidEmailAddress);
+  if (validRecipients.length !== campaign.recipients.length) {
+    console.error("[campanha] destinatário(s) inválido(s) ignorado(s) no link", {
+      slug,
+      invalid: findInvalidEmails(campaign.recipients),
+    });
+  }
+
   const { url: mailtoUrl } = buildMailtoUrl({
-    recipients: campaign.recipients,
+    recipients: validRecipients,
     sendMode: campaign.send_mode,
     subject: campaign.subject,
     body: campaign.manifest_text,
@@ -80,7 +92,11 @@ export default async function PublicCampaignPage({ params }: PageProps) {
   // do link do Drive podem ter um esquema não-http(s) (ex.: javascript:).
   // Nunca vira href na página pública.
   const driveLink = parseDriveLink(campaign.drive_link ?? "");
-  const safeCampaign = { ...campaign, drive_link: driveLink.ok ? driveLink.value : null };
+  const safeCampaign = {
+    ...campaign,
+    recipients: validRecipients,
+    drive_link: driveLink.ok ? driveLink.value : null,
+  };
 
   return (
     <>

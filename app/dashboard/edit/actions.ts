@@ -1,5 +1,6 @@
 "use server";
 
+import { invalidEmailsMessage } from "@/lib/email-address";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -58,6 +59,11 @@ export async function updateCampaignAction(
   if (recipients.length === 0) {
     return { error: "Informe pelo menos um e-mail de destino." };
   }
+
+  // Um endereço inválido (ex.: ".gov.b" em vez de ".gov.br") faz o app de e-mail
+  // de quem participa recusar a mensagem inteira. Barra aqui, no servidor.
+  const invalidRecipients = invalidEmailsMessage(recipients);
+  if (invalidRecipients) return { error: invalidRecipients };
 
   const settings = await getAppSettings(supabase);
   const { manifest_char_limit: charLimit, manifest_char_limit_enabled: charLimitEnabled } =

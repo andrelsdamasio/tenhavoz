@@ -8,6 +8,7 @@ import { getTemplateComponent } from "@/components/templates";
 import { TEMPLATE_NAMES } from "@/lib/template-names";
 import ColorPicker from "@/components/ColorPicker";
 import { isBasicColor } from "@/lib/color";
+import { findInvalidEmails } from "@/lib/email-address";
 import type { Campaign, SendMode, TemplateId } from "@/lib/types";
 import { createCampaignAction, type NewCampaignState } from "@/app/dashboard/new/actions";
 import { updateCampaignAction } from "@/app/dashboard/edit/actions";
@@ -488,6 +489,7 @@ export default function CampaignForm({
   const bodyLength = manifestText.length;
   const bodyOverLimit = bodyLength > manifestCharLimit;
   const bodyOverLimitBlocking = bodyOverLimit && manifestCharLimitEnabled;
+  const invalidRecipients = findInvalidEmails(preview.recipients);
 
   const SelectedTemplate = getTemplateComponent(templateId);
 
@@ -689,11 +691,22 @@ export default function CampaignForm({
           placeholder="nome@exemplo.com, outro@exemplo.com"
           value={recipientsRaw}
           onChange={(e) => setRecipientsRaw(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2"
+          aria-invalid={invalidRecipients.length > 0}
+          aria-describedby="recipients-status"
+          className={`w-full rounded-md border px-3 py-2 ${
+            invalidRecipients.length > 0 ? "border-red-400" : "border-gray-300"
+          }`}
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p id="recipients-status" className="mt-1 text-xs text-gray-500">
           {preview.recipients.length} destinatário(s) reconhecido(s).
         </p>
+        {invalidRecipients.length > 0 && (
+          <p role="alert" className="mt-1 text-sm text-red-600">
+            {invalidRecipients.length === 1 ? "Este e-mail parece incorreto" : "Estes e-mails parecem incorretos"}:{" "}
+            <strong>{invalidRecipients.join(", ")}</strong>. Confira se não faltou letra no final (ex.:
+            .com.br, .gov.br). Com um endereço inválido, o app de e-mail recusa a mensagem para todos.
+          </p>
+        )}
       </div>
 
       <div>
@@ -835,7 +848,7 @@ export default function CampaignForm({
       )}
 
       <SubmitButton
-        blocked={bodyOverLimitBlocking || aiAutoFillLoading}
+        blocked={bodyOverLimitBlocking || aiAutoFillLoading || invalidRecipients.length > 0}
         idleLabel={isEditing ? "Salvar alterações" : "Salvar rascunho e ir para pagamento"}
         pendingLabel="Salvando..."
       />

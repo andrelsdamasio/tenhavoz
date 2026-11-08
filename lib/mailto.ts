@@ -15,6 +15,8 @@
  *   `mailto:` em clientes como o Outlook.
  */
 
+import { isValidEmailAddress } from "@/lib/email-address";
+
 export type SendMode = "to" | "bcc";
 
 export interface BuildMailtoInput {
@@ -43,9 +45,6 @@ export interface BuildMailtoResult {
 
 const DEFAULT_MAX_LENGTH = 1800;
 
-// Validação leve, suficiente para pegar erros de digitação óbvios no formulário.
-// Não é uma validação RFC 5322 completa — não é o objetivo aqui.
-const EMAIL_REGEX = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
 
 function normalizeLineBreaksToCRLF(text: string): string {
   return text.replace(/\r\n/g, "\n").replace(/\n/g, "\r\n");
@@ -74,9 +73,7 @@ export function buildMailtoUrl(input: BuildMailtoInput): BuildMailtoResult {
     warnings.push("Nenhum destinatário informado.");
   }
 
-  const invalidEmails = recipients.filter(
-    (email) => !EMAIL_REGEX.test(email)
-  );
+  const invalidEmails = recipients.filter((email) => !isValidEmailAddress(email));
   if (invalidEmails.length > 0) {
     warnings.push(
       `E-mail(s) com formato inválido: ${invalidEmails.join(", ")}`
