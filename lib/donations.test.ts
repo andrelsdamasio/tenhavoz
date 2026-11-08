@@ -52,3 +52,12 @@ describe("judgePayment", () => {
     expect(judgePayment({ ...pay, status: "in_process" }, donation).kind).toBe("pending");
   });
 });
+
+describe("payerEmail", () => {
+  it("pega o e-mail do pagador e ignora lixo", async () => {
+    const { payerEmail } = await import("./donations");
+    expect(payerEmail({ payer: { email: " Ana@Exemplo.com " } })).toBe("ana@exemplo.com");
+    expect(payerEmail({ payer: { email: "sem-arroba" } })).toBeNull();
+    expect(payerEmail({})).toBeNull();
+  });
+});
