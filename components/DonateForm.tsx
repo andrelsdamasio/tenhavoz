@@ -78,6 +78,11 @@ export default function DonateForm({ slug }: { slug: string }) {
         <p className="mt-1 text-xs text-gray-500">Totalmente opcional: é um extra, além da doação, só para quem quiser ajudar a manter o TenhaVoz no ar. Não sai do valor da campanha.</p>
       </div>
 
+      <label className="block text-sm">
+        <span className="mb-1 block font-medium">Seu e-mail (para receber o comprovante)</span>
+        <input name="donorEmail" type="email" required autoComplete="email" placeholder="voce@exemplo.com" className={inputCls} />
+        <span className="text-xs text-gray-500">Você não precisa de conta. Usamos o e-mail só para o comprovante e o aviso quando a campanha terminar. Ele não aparece para ninguém.</span>
+      </label>
       <input name="donorName" placeholder="Seu nome (opcional)" maxLength={60} className={inputCls} />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="anonymous" /> Doar como anônimo

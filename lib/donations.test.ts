@@ -9,7 +9,7 @@ const form = (o: Record<string, string>) => {
 
 describe("parseDonationForm", () => {
   it("aceita doação com contribuição e mensagem", () => {
-    const r = parseDonationForm(form({ amount: "50,00", tip: "2,50", donorName: "Maria Silva", message: "Boa sorte!" }));
+    const r = parseDonationForm(form({ amount: "50,00", tip: "2,50", donorName: "Maria Silva", donorEmail: "maria@exemplo.com", message: "Boa sorte!" }));
     expect(r).toMatchObject({ ok: true, value: { amountCents: 5000, tipCents: 250, donorName: "Maria Silva" } });
   });
   it("recusa valores fora dos limites, contribuição acima de 25% e links", () => {
@@ -59,5 +59,14 @@ describe("payerEmail", () => {
     expect(payerEmail({ payer: { email: " Ana@Exemplo.com " } })).toBe("ana@exemplo.com");
     expect(payerEmail({ payer: { email: "sem-arroba" } })).toBeNull();
     expect(payerEmail({})).toBeNull();
+  });
+});
+
+describe("e-mail do doador", () => {
+  it("é obrigatório e precisa ser válido", () => {
+    const r = parseDonationForm(form({ amount: "20,00", tip: "0", donorEmail: "" }));
+    expect(r.ok).toBe(false);
+    const ok = parseDonationForm(form({ amount: "20,00", tip: "0", donorEmail: "Ana@Exemplo.com" }));
+    expect(ok.ok && ok.value.donorEmail).toBe("ana@exemplo.com");
   });
 });

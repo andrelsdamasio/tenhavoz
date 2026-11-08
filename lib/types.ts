@@ -80,6 +80,7 @@ export interface Fundraiser {
   theme_color: string | null;
   status: FundraiserStatus;
   published_at: string | null;
+  closing_emailed_at: string | null;
   created_at: string;
   updated_at: string;
 }
