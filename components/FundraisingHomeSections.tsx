@@ -133,3 +133,26 @@ export function ActiveFundraisers({ items }: { items: ActiveFundraiserCard[] }) 
     </section>
   );
 }
+
+const TRUST = [
+  { title: "Direto na sua conta", text: "O dinheiro cai no seu Mercado Pago. Nunca passa pelo TenhaVoz." },
+  { title: "Sem taxa para abrir", text: "Só 4% de cada doação recebida. Sem mensalidade." },
+  { title: "Orçamento à vista", text: "Cada campanha mostra para que o dinheiro será usado." },
+  { title: "Fique com o que arrecadar", text: "Meta flexível: você recebe tudo, mesmo sem bater a meta." },
+];
+
+/** Faixa de confiança logo abaixo do topo, como nos sites de vaquinha. */
+export function TrustStrip() {
+  return (
+    <section aria-label="Por que confiar" className="relative mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+      <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {TRUST.map((t) => (
+          <li key={t.title} className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="text-sm font-semibold text-gray-900">{t.title}</p>
+            <p className="mt-1 text-xs text-gray-600 sm:text-sm">{t.text}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}

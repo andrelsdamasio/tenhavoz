@@ -12,7 +12,7 @@ import { BENEFITS, FAQ, USE_CASES } from "@/lib/landing-content";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isFundraisingEnabled } from "@/lib/fundraisers";
 import { listActiveFundraisers } from "@/lib/fundraiser-public";
-import { ActiveFundraisers, FundraisingExplainer, TwoPathsSection } from "@/components/FundraisingHomeSections";
+import { ActiveFundraisers, FundraisingExplainer, TrustStrip, TwoPathsSection } from "@/components/FundraisingHomeSections";
 
 export const revalidate = 60;
 
@@ -171,19 +171,30 @@ export default async function HomePage() {
           >
             Para causas, bairros, sindicatos e coletivos
           </p>
-          <h1
+          {fundraisingOn ? (
+            <h1
+              className="animate-fade-in-up text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl"
+              style={{ animationDelay: "0.1s" }}
+            >
+              Dê voz à sua causa: <span className="text-brand-600">mobilize</span> ou{" "}
+              <span className="text-brand-600">arrecade</span>
+            </h1>
+          ) : (
+            <h1
             className="animate-fade-in-up text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl"
             style={{ animationDelay: "0.1s" }}
           >
             Sua causa vira centenas de e&#8209;mails em{" "}
             <span className="text-brand-600">um clique</span>
           </h1>
+          )}
           <p
             className="animate-fade-in-up mx-auto mt-5 max-w-xl text-lg text-gray-600 lg:mx-0"
             style={{ animationDelay: "0.2s" }}
           >
-            Crie uma página com o seu manifesto e um botão que abre o e-mail já escrito e endereçado. É só
-            compartilhar o link e quem apoia envia em segundos.
+            {fundraisingOn
+              ? "Crie uma campanha de e-mail para pressionar quem decide, ou uma campanha de doação para arrecadar com transparência. O dinheiro vai direto para a sua conta."
+              : "Crie uma página com o seu manifesto e um botão que abre o e-mail já escrito e endereçado. É só compartilhar o link e quem apoia envia em segundos."}
           </p>
 
           <div
@@ -194,8 +205,16 @@ export default async function HomePage() {
               href="/signup"
               className="rounded-full bg-brand-600 px-7 py-3 font-semibold text-white shadow-md shadow-brand-600/30 transition hover:bg-brand-700 hover:shadow-lg"
             >
-              Criar minha campanha
+              {fundraisingOn ? "Campanha de e-mail" : "Criar minha campanha"}
             </Link>
+            {fundraisingOn && (
+              <Link
+                href="/dashboard/doacoes/new"
+                className="rounded-full bg-gray-900 px-7 py-3 font-semibold text-white shadow-md transition hover:bg-gray-800"
+              >
+                Campanha de doação
+              </Link>
+            )}
             <a
               href="#como-funciona"
               className="rounded-full border border-gray-300 px-7 py-3 font-medium text-gray-700 transition hover:bg-white"
@@ -225,6 +244,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {fundraisingOn && <TrustStrip />}
+      {fundraisingOn && <ActiveFundraisers items={activeFundraisers} />}
       {fundraisingOn && <TwoPathsSection />}
 
       <section id="como-funciona" className="relative mx-auto max-w-6xl scroll-mt-20 px-6 pb-24">
@@ -272,7 +293,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {fundraisingOn && <ActiveFundraisers items={activeFundraisers} />}
       {fundraisingOn && <FundraisingExplainer />}
 
       <div id="temas" className="relative scroll-mt-20 pt-20">
