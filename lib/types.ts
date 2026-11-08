@@ -114,6 +114,13 @@ export interface CampaignComment {
   author_name: string;
   body: string;
   reported_at: string | null;
+  like_count: number;
+  created_at: string;
+}
+
+export interface CommentLike {
+  comment_id: string;
+  user_id: string;
   created_at: string;
 }
 
@@ -174,6 +181,11 @@ export interface Database {
         Row: CampaignComment;
         Insert: Partial<CampaignComment> & Pick<CampaignComment, "campaign_id" | "user_id" | "author_name" | "body">;
         Update: Partial<CampaignComment>;
+      };
+      comment_likes: {
+        Row: CommentLike;
+        Insert: Partial<CommentLike> & Pick<CommentLike, "comment_id" | "user_id">;
+        Update: Partial<CommentLike>;
       };
       admin_audit_log: {
         Row: AdminAuditEntry;

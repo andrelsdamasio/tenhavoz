@@ -13,10 +13,14 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
-    id: "2026-11-08-comentarios",
-    title: "Agora dá para comentar",
+    id: "2026-11-08-curtidas",
+    title: "Agora dá para comentar e curtir",
     audience: "all",
     items: [
+      {
+        title: "Curtir comentários",
+        text: "Gostou de um comentário? Toque no coração para curtir. Você pode desfazer quando quiser.",
+      },
       {
         title: "Comentários nas campanhas",
         text: "Quem tem conta pode deixar seu apoio ou opinião embaixo do manifesto. Quem criou a campanha pode apagar qualquer comentário, e é possível denunciar abusos.",

@@ -47,6 +47,7 @@ export interface PublicComment {
   id: string;
   author_name: string;
   body: string;
+  like_count: number;
   created_at: string;
 }
 
@@ -56,7 +57,7 @@ export async function listComments(
 ): Promise<PublicComment[]> {
   const { data, error } = await admin
     .from("campaign_comments")
-    .select("id, author_name, body, created_at")
+    .select("id, author_name, body, like_count, created_at")
     .eq("campaign_id", campaignId)
     .order("created_at", { ascending: false })
     .limit(PAGE_LIMIT);
