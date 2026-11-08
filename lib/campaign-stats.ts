@@ -55,3 +55,36 @@ export function describeExpiry(expiresAt: string | null, now = Date.now()): { la
   const days = Math.ceil(hours / 24);
   return { label: `Encerra em ${days} ${days === 1 ? "dia" : "dias"}`, urgent: false, expired: false };
 }
+
+export interface NextStep {
+  tone: "action" | "info" | "warn";
+  text: string;
+}
+
+/** O que a pessoa deveria fazer agora com esta campanha (null = nada a sugerir). */
+export function nextStepFor(input: {
+  published: boolean;
+  checkoutStarted: boolean;
+  expired: boolean;
+  views: number;
+  clicks: number;
+}): NextStep | null {
+  if (!input.published) {
+    return input.checkoutStarted
+      ? { tone: "info", text: "Estamos aguardando a confirmação do seu pagamento." }
+      : { tone: "action", text: "Próximo passo: escolha o prazo e pague para publicar sua página." };
+  }
+  if (input.expired) {
+    return { tone: "warn", text: "Esta campanha encerrou. Renove para voltar ao ar." };
+  }
+  if (input.views === 0) {
+    return { tone: "action", text: "Compartilhe o link: ainda ninguém viu sua página." };
+  }
+  if (input.views >= 20 && clickRate(input.views, input.clicks) < 5) {
+    return {
+      tone: "warn",
+      text: "Muita gente vê, mas poucos enviam o e-mail. Experimente um texto mais curto e direto.",
+    };
+  }
+  return null;
+}

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listCampaignsForUser, isCampaignEditable } from "@/lib/campaigns";
 import { getCampaignStats, getDailyStats } from "@/lib/events";
-import { clickRate, describeExpiry } from "@/lib/campaign-stats";
+import { clickRate, describeExpiry, nextStepFor } from "@/lib/campaign-stats";
 import { duplicateCampaignAction } from "./actions";
 import { getReferralSummary, REFERRAL_DISCOUNT_PERCENT } from "@/lib/referral";
 import StatsSparkline from "@/components/StatsSparkline";
@@ -17,6 +17,7 @@ import {
 import ShareButtons from "@/components/ShareButtons";
 import DeleteCampaignButton from "@/components/DeleteCampaignButton";
 import AutoRefresh from "@/components/AutoRefresh";
+import FlashMessage from "@/components/FlashMessage";
 import VerifyPaymentButton from "@/components/VerifyPaymentButton";
 import type { CampaignStatus } from "@/lib/types";
 
@@ -173,9 +174,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </div>
 
       {copy === "error" && (
-        <p className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <FlashMessage tone="error" clearParams={["copy"]}>
           Não foi possível copiar a campanha agora. Tente de novo em instantes.
-        </p>
+        </FlashMessage>
       )}
       {publishedIds.length > 0 && (
         <div className="mb-6 grid grid-cols-3 gap-3">
@@ -208,14 +209,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </p>
       )}
       {edited === "1" && (
-        <p className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+        <FlashMessage tone="success" autoHideMs={8000} clearParams={["edited"]}>
           Campanha atualizada com sucesso.
-        </p>
+        </FlashMessage>
       )}
       {(releasedNow || verify === "ok") && (
-        <p className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+        <FlashMessage tone="success" clearParams={["verify"]}>
           Pagamento confirmado! Sua página já está no ar.
-        </p>
+        </FlashMessage>
       )}
       {!releasedNow && (checkout === "success" || checkout === "pending") && (
         <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
@@ -253,15 +254,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </p>
       )}
       {verify === "error" && (
-        <p className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <FlashMessage tone="error" clearParams={["verify"]}>
           Não conseguimos consultar o pagamento agora. Tente de novo em
           instantes.
-        </p>
+        </FlashMessage>
       )}
       {editExpired === "1" && (
-        <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+        <FlashMessage tone="warning" clearParams={["editExpired"]}>
           O prazo de 24 horas para editar essa campanha já passou.
-        </p>
+        </FlashMessage>
       )}
 
       {publishedIds.length > 0 && referral && (
@@ -280,7 +281,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           {campaigns.map((campaign) => (
             <li
               key={campaign.id}
-              className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-4"
+              className="flex flex-col gap-4 rounded-md border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <p className="font-medium">{campaign.title}</p>
@@ -321,8 +322,26 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                     )}
                   </>
                 )}
+                {(() => {
+                  const expiry = describeExpiry(campaign.expires_at);
+                  const step = nextStepFor({
+                    published: campaign.status === "published",
+                    checkoutStarted: campaign.duration_hours !== null,
+                    expired: !!expiry?.expired,
+                    views: stats[campaign.id]?.views ?? 0,
+                    clicks: stats[campaign.id]?.clicks ?? 0,
+                  });
+                  if (!step) return null;
+                  const tone =
+                    step.tone === "action"
+                      ? "bg-brand-50 text-brand-700"
+                      : step.tone === "warn"
+                        ? "bg-amber-50 text-amber-800"
+                        : "bg-blue-50 text-blue-800";
+                  return <p className={`mt-3 rounded-md px-3 py-2 text-xs font-medium ${tone}`}>{step.text}</p>;
+                })()}
               </div>
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-start gap-2 sm:items-end">
                 {campaign.status === "published" && campaign.slug ? (
                   <>
                     <Link
