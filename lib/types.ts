@@ -28,6 +28,8 @@ export interface Campaign {
   duration_hours: CampaignDuration | null;
   /** Calculado na publicação (published_at + duration_hours); null = nunca expira. */
   expires_at: string | null;
+  /** Quando o dono foi avisado (por e-mail) de que a campanha está para encerrar. */
+  expiry_notified_at: string | null;
   created_at: string;
 }
 
@@ -139,6 +141,16 @@ export interface Database {
         Row: Coupon;
         Insert: Partial<Coupon> & Pick<Coupon, "code" | "discount_type" | "discount_value">;
         Update: Partial<Coupon>;
+      };
+    };
+    Functions: {
+      campaign_totals: {
+        Args: { p_ids: string[] };
+        Returns: { campaign_id: string; views: number; clicks: number }[];
+      };
+      campaign_daily: {
+        Args: { p_ids: string[]; p_days: number };
+        Returns: { campaign_id: string; day: string; views: number; clicks: number }[];
       };
     };
   };

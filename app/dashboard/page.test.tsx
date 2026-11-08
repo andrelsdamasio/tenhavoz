@@ -26,11 +26,19 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
-vi.mock("@/lib/events", () => ({ getCampaignStats: async () => ({}) }));
+const getCampaignStats = vi.fn(async (): Promise<Record<string, unknown>> => ({}));
+vi.mock("@/lib/events", () => ({
+  getCampaignStats: (...a: []) => getCampaignStats(...a),
+  getDailyStats: async (_a: unknown, ids: string[]) =>
+    Object.fromEntries(ids.map((id) => [id, [{ date: "2026-11-08", views: 3, clicks: 1 }]])),
+}));
+// Componente assíncrono (gera o QR no servidor): o renderizador estático não o aceita.
+vi.mock("@/components/QrCodeDetails", () => ({ default: () => "QR-STUB" }));
 vi.mock("@/lib/campaigns", () => ({
   listCampaignsForUser: (...a: unknown[]) => listCampaignsForUser(...a),
   isCampaignEditable: () => false,
   deleteCampaign: vi.fn(),
+  duplicateCampaign: vi.fn(),
   getCampaignForOwner: vi.fn(),
 }));
 vi.mock("@/lib/payment-sync", () => ({
@@ -58,6 +66,7 @@ function campaign(overrides: Partial<Campaign> = {}): Campaign {
     status: "draft",
     duration_hours: 72,
     expires_at: null,
+    expiry_notified_at: null,
     created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
     ...overrides,
   };
@@ -184,5 +193,51 @@ describe("dashboard do cliente — liberação de quem pagou", () => {
     expect(await render({ verify: "notfound" })).toContain("Ainda não encontramos um pagamento");
     expect(await render({ verify: "error" })).toContain("Não conseguimos consultar o pagamento");
     expect(await render({ verify: "ok" })).toContain("Pagamento confirmado!");
+  });
+
+  describe("campanha publicada: números, prazo, renovar, duplicar e QR", () => {
+    const hoursFromNow = (h: number) => new Date(Date.now() + h * 3600 * 1000).toISOString();
+
+    beforeEach(() => {
+      getCampaignStats.mockResolvedValue({ "camp-1": { views: 200, clicks: 30 } });
+    });
+
+    it("mostra totais, % de cliques, gráfico, QR e 'Duplicar' enquanto está no ar", async () => {
+      listCampaignsForUser.mockResolvedValue([
+        campaign({ status: "published", expires_at: hoursFromNow(80) }),
+      ]);
+      const html = await render({});
+      expect(html).toContain("200 visualizações");
+      expect(html).toContain("15%");
+      expect(html).toContain("últimos 14 dias");
+      expect(html).toContain("QR-STUB");
+      expect(html).toContain("Encerra em 4 dias");
+      expect(html).toContain("Duplicar");
+      expect(html).not.toContain("Renovar campanha");
+    });
+
+    it("menos de 24h: avisa em horas", async () => {
+      listCampaignsForUser.mockResolvedValue([
+        campaign({ status: "published", expires_at: hoursFromNow(5) }),
+      ]);
+      expect(await render({})).toMatch(/Encerra em [45]h/);
+    });
+
+    it("encerrada: mostra 'Renovar campanha' no lugar de 'Duplicar'", async () => {
+      listCampaignsForUser.mockResolvedValue([
+        campaign({ status: "published", expires_at: hoursFromNow(-2) }),
+      ]);
+      const html = await render({});
+      expect(html).toContain("Encerrada");
+      expect(html).toContain("Renovar campanha");
+      expect(html).not.toContain(">Duplicar<");
+    });
+
+    it("rascunho não mostra números nem QR", async () => {
+      listCampaignsForUser.mockResolvedValue([campaign({ duration_hours: null })]);
+      const html = await render({});
+      expect(html).not.toContain("QR-STUB");
+      expect(html).not.toContain("últimos 14 dias");
+    });
   });
 });

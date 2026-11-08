@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listCampaignsForUser, isCampaignEditable } from "@/lib/campaigns";
-import { getCampaignStats } from "@/lib/events";
+import { getCampaignStats, getDailyStats } from "@/lib/events";
+import { clickRate, describeExpiry } from "@/lib/campaign-stats";
+import { duplicateCampaignAction } from "./actions";
+import StatsSparkline from "@/components/StatsSparkline";
+import QrCodeDetails from "@/components/QrCodeDetails";
 import {
   reconcileCampaignPayment,
   syncMercadoPagoPaymentById,
@@ -44,6 +48,7 @@ interface PageProps {
     payment_id?: string;
     collection_id?: string;
     verify?: string;
+    copy?: string;
   }>;
 }
 
@@ -56,6 +61,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     payment_id: paymentId,
     collection_id: collectionId,
     verify,
+    copy,
   } = await searchParams;
   const supabase = await createClient();
   const {
@@ -131,9 +137,21 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   // role escreve/lê) — os campaignIds já vieram de uma query com RLS
   // restrita a este user_id, então é seguro consultar as stats com o
   // client admin aqui.
-  const stats = await getCampaignStats(
-    createAdminClient(),
-    campaigns.map((c) => c.id)
+  const admin = createAdminClient();
+  const campaignIds = campaigns.map((c) => c.id);
+  const publishedIds = campaigns.filter((c) => c.status === "published").map((c) => c.id);
+  const stats = await getCampaignStats(admin, campaignIds);
+  // O gráfico é um extra: se falhar, a lista continua funcionando.
+  const daily = await getDailyStats(admin, publishedIds, 14).catch((err) => {
+    console.error("[dashboard] falha ao carregar o gráfico diário", err);
+    return {} as Awaited<ReturnType<typeof getDailyStats>>;
+  });
+  const totals = publishedIds.reduce(
+    (acc, id) => ({
+      views: acc.views + (stats[id]?.views ?? 0),
+      clicks: acc.clicks + (stats[id]?.clicks ?? 0),
+    }),
+    { views: 0, clicks: 0 }
   );
 
   return (
@@ -148,6 +166,28 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </Link>
       </div>
 
+      {copy === "error" && (
+        <p className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          Não foi possível copiar a campanha agora. Tente de novo em instantes.
+        </p>
+      )}
+      {publishedIds.length > 0 && (
+        <div className="mb-6 grid grid-cols-3 gap-3">
+          {[
+            { label: "Visualizações", value: totals.views.toLocaleString("pt-BR") },
+            { label: "Cliques no botão", value: totals.clicks.toLocaleString("pt-BR") },
+            {
+              label: "Cliques por visualização",
+              value: `${clickRate(totals.views, totals.clicks).toLocaleString("pt-BR")}%`,
+            },
+          ].map((item) => (
+            <div key={item.label} className="rounded-md border border-gray-200 bg-white p-3">
+              <p className="text-xs text-gray-500">{item.label}</p>
+              <p className="text-xl font-semibold">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
       {edited === "1" && (
         <p className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
           Campanha atualizada com sucesso.
@@ -229,11 +269,31 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                   </p>
                 )}
                 {campaign.status === "published" && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    {stats[campaign.id]?.views ?? 0} visualizações ·{" "}
-                    {stats[campaign.id]?.clicks ?? 0} cliques no botão de
-                    envio
-                  </p>
+                  <>
+                    {(() => {
+                      const expiry = describeExpiry(campaign.expires_at);
+                      return expiry ? (
+                        <p
+                          className={`mt-1 text-xs font-medium ${
+                            expiry.expired ? "text-red-600" : expiry.urgent ? "text-amber-600" : "text-gray-500"
+                          }`}
+                        >
+                          {expiry.label}
+                        </p>
+                      ) : null;
+                    })()}
+                    <p className="mt-1 text-xs text-gray-500">
+                      {stats[campaign.id]?.views ?? 0} visualizações ·{" "}
+                      {stats[campaign.id]?.clicks ?? 0} cliques no botão de envio ·{" "}
+                      {clickRate(stats[campaign.id]?.views ?? 0, stats[campaign.id]?.clicks ?? 0).toLocaleString("pt-BR")}%
+                    </p>
+                    {daily[campaign.id] && (
+                      <div className="mt-2">
+                        <StatsSparkline days={daily[campaign.id]!} />
+                        <p className="mt-0.5 text-[10px] text-gray-400">últimos 14 dias</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
               <div className="flex flex-col items-end gap-2">
@@ -251,6 +311,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                       title={campaign.title}
                       className="text-right"
                     />
+                    <QrCodeDetails url={`${SITE_URL}/${campaign.slug}`} name={campaign.slug} />
                   </>
                 ) : (
                   <>
@@ -279,6 +340,28 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                     Editar
                   </Link>
                 )}
+                <form action={duplicateCampaignAction}>
+                  <input type="hidden" name="campaignId" value={campaign.id} />
+                  {describeExpiry(campaign.expires_at)?.expired ? (
+                    <button
+                      type="submit"
+                      name="mode"
+                      value="renew"
+                      className="rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
+                    >
+                      Renovar campanha
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      name="mode"
+                      value="duplicate"
+                      className="text-sm text-gray-600 hover:underline"
+                    >
+                      Duplicar
+                    </button>
+                  )}
+                </form>
                 <DeleteCampaignButton
                   campaignId={campaign.id}
                   published={campaign.status === "published"}

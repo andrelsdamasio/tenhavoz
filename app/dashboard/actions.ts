@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { deleteCampaign, getCampaignForOwner } from "@/lib/campaigns";
+import { deleteCampaign, duplicateCampaign, getCampaignForOwner } from "@/lib/campaigns";
 import { reconcileCampaignPayment } from "@/lib/payment-sync";
 
 export async function deleteCampaignAction(formData: FormData) {
@@ -109,4 +109,37 @@ export async function verifyPaymentAction(formData: FormData) {
 
   revalidatePath("/dashboard");
   redirect(`/dashboard?verify=${result}`);
+}
+
+/**
+ * "Duplicar" abre o rascunho copiado para editar; "Renovar" (campanha
+ * encerrada) leva direto ao checkout da cópia, com o mesmo conteúdo e tema.
+ */
+export async function duplicateCampaignAction(formData: FormData) {
+  const campaignId = String(formData.get("campaignId") ?? "");
+  const mode = formData.get("mode") === "renew" ? "renew" : "duplicate";
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const source = await getCampaignForOwner(supabase, campaignId);
+  if (!source || source.user_id !== user.id) redirect("/dashboard");
+
+  let copyId: string;
+  try {
+    copyId = (await duplicateCampaign(supabase, user.id, source)).id;
+  } catch (err) {
+    console.error("[duplicate-campaign] falha ao copiar a campanha", { campaignId, err });
+    redirect("/dashboard?copy=error");
+  }
+
+  revalidatePath("/dashboard");
+  redirect(
+    mode === "renew"
+      ? `/dashboard/checkout?campaignId=${copyId}`
+      : `/dashboard/edit/${copyId}`
+  );
 }
