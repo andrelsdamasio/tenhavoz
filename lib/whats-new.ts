@@ -13,6 +13,17 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "2026-11-08-comentarios",
+    title: "Agora dá para comentar",
+    audience: "all",
+    items: [
+      {
+        title: "Comentários nas campanhas",
+        text: "Quem tem conta pode deixar seu apoio ou opinião embaixo do manifesto. Quem criou a campanha pode apagar qualquer comentário, e é possível denunciar abusos.",
+      },
+    ],
+  },
+  {
     id: "2026-11-08",
     title: "O que há de novo no TenhaVoz",
     audience: "all",
@@ -43,6 +54,10 @@ export const WHATS_NEW: WhatsNewEntry[] = [
       {
         title: "Busca e gestão de campanhas",
         text: "Encontre por título, link ou e-mail do dono. Em “Gerenciar” dá para estender o prazo e corrigir destinatários, com histórico de quem fez o quê.",
+      },
+      {
+        title: "Moderação de comentários",
+        text: "Comentários denunciados aparecem em “Comentários” no menu, com opção de apagar ou manter.",
       },
       {
         title: "Saúde do banco",

@@ -8,6 +8,9 @@ import { buildMailtoUrl } from "@/lib/mailto";
 import { parseDriveLink } from "@/lib/campaign-input";
 import { getTemplateComponent } from "@/components/templates";
 import ViewTracker from "@/components/ViewTracker";
+import CommentsSection from "@/components/CommentsSection";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { listComments, type PublicComment } from "@/lib/comments";
 
 export const revalidate = 60;
 
@@ -98,10 +101,19 @@ export default async function PublicCampaignPage({ params }: PageProps) {
     drive_link: driveLink.ok ? driveLink.value : null,
   };
 
+  // Comentários são um extra: se falharem, a página e o botão de envio seguem normais.
+  let comments: PublicComment[] = [];
+  try {
+    comments = await listComments(createAdminClient(), campaign.id);
+  } catch (err) {
+    console.error("[campanha] falha ao carregar os comentários", { slug, err });
+  }
+
   return (
     <>
       <ViewTracker campaignId={campaign.id} />
       <Template campaign={safeCampaign} mailtoUrl={mailtoUrl} />
+      <CommentsSection campaignId={campaign.id} slug={slug} comments={comments} />
       <CreateYourOwnLink refSlug={campaign.slug} />
     </>
   );

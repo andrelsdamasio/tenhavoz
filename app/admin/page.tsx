@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { getAdminDashboard } from "@/lib/admin-dashboard";
 import { auditMercadoPagoPayments } from "@/lib/payment-audit";
+import { countReportedComments } from "@/lib/comments";
 import { getHealthChecks, getOverviewExtras } from "@/lib/admin-overview";
 
 const TIME_ZONE = "America/Sao_Paulo";
@@ -44,6 +45,7 @@ export default async function AdminOverviewPage() {
     auditMercadoPagoPayments(admin, 7),
   ]);
   const { overview } = dashboard;
+  const reportedComments = await countReportedComments(admin).catch(() => 0);
   // Ping real no banco: as variáveis podem existir e o banco estar fora.
   const dbStart = Date.now();
   let dbPing: { ok: boolean; ms: number };
@@ -93,6 +95,15 @@ export default async function AdminOverviewPage() {
       text: `Configuração obrigatória faltando: ${criticalDown.map((h) => h.label).join(", ")}`,
       href: "#saude",
       cta: "Ver saúde do sistema",
+    });
+  }
+  if (reportedComments > 0) {
+    attention.push({
+      key: "comments",
+      tone: "amber",
+      text: `${reportedComments} comentário(s) denunciado(s) esperando análise`,
+      href: "/admin/comments",
+      cta: "Analisar",
     });
   }
   if (extras.unreadInbox > 0) {

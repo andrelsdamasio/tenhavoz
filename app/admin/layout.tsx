@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
+import { countReportedComments } from "@/lib/comments";
 import WhatsNew from "@/components/WhatsNew";
 import { entriesFor } from "@/lib/whats-new";
 import Logo from "@/components/Logo";
@@ -31,10 +32,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     unread = 0;
   }
 
+  // Selo de comentários denunciados. Se falhar, o menu aparece sem o selo.
+  let reportedComments = 0;
+  try {
+    reportedComments = await countReportedComments(createAdminClient());
+  } catch {
+    reportedComments = 0;
+  }
+
   const items: AdminNavItem[] = [
     { href: "/admin", label: "Visão geral", hint: "Alertas e resumo do dia" },
     { href: "/admin/reports", label: "Campanhas e vendas", hint: "Páginas, pagamentos e conciliação" },
     { href: "/admin/inbox", label: "Caixa de entrada", hint: "Ler e responder e-mails", badge: unread },
+    { href: "/admin/comments", label: "Comentários", hint: "Denúncias nas campanhas", badge: reportedComments },
     { href: "/admin/coupons", label: "Cupons", hint: "Descontos e compensações" },
     { href: "/admin/settings", label: "Configurações", hint: "Preço e templates" },
   ];

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { claimReferral, REFERRAL_COOKIE } from "@/lib/referral";
 
 export interface AuthActionState {
@@ -16,7 +17,7 @@ export async function signIn(
 ): Promise<AuthActionState> {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
-  const redirectTo = String(formData.get("redirectTo") ?? "/dashboard");
+  const redirectTo = safeRedirectPath(String(formData.get("redirectTo") ?? ""));
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -25,7 +26,7 @@ export async function signIn(
     return { error: error.message };
   }
 
-  redirect(redirectTo || "/dashboard");
+  redirect(redirectTo);
 }
 
 export async function signUp(
