@@ -41,7 +41,7 @@ describe("parseFundraiserForm", () => {
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.value.goalCents).toBe(500000);
-      expect(r.value.budget).toEqual([{ label: "Passagens", amountCents: 300000 }]);
+      expect(r.value.budget).toEqual([{ label: "Passagens", amountCents: 300000, description: null, row: 0 }]);
     }
   });
   it("recusa meta fora dos limites e data passada", () => {
@@ -60,5 +60,18 @@ describe("parseFundraiserForm", () => {
 describe("budgetGapCents", () => {
   it("positivo quando o orçamento passa da meta", () => {
     expect(budgetGapCents(1000, [{ label: "a", amountCents: 1500 }])).toBe(500);
+  });
+});
+
+describe("documentos do orçamento", () => {
+  it("aceita planilha e PDF, recusa executável", async () => {
+    const { safeDocName, validateDocs } = await import("./fundraisers");
+    expect(safeDocName("Orçamento Ônibus.xlsx")).toBe("Orcamento-Onibus.xlsx");
+    expect(safeDocName("nota.PDF")).toBe("nota.pdf");
+    expect(safeDocName("virus.exe")).toBeNull();
+    expect(validateDocs([{ name: "a.pdf", size: 1000 }])).toBeNull();
+    expect(validateDocs([{ name: "a.exe", size: 1000 }])).toContain("envie PDF");
+    expect(validateDocs([{ name: "a.pdf", size: 4 * 1024 * 1024 }])).toContain("3 MB");
+    expect(validateDocs([{ name: "a.pdf", size: 2.5 * 1024 * 1024 }, { name: "b.pdf", size: 2.5 * 1024 * 1024 }])).toContain("4 MB");
   });
 });

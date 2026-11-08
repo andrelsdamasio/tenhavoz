@@ -32,6 +32,41 @@ export function platformFeeCents(amountCents: number, feeBps: number = DEFAULT_F
 export interface BudgetLine {
   label: string;
   amountCents: number;
+  description?: string | null;
+  /** Posição da linha no formulário (para casar com o arquivo anexado). */
+  row?: number;
+}
+
+export const DOC_MAX_BYTES = 3 * 1024 * 1024; // 3 MB por documento
+export const DOC_MAX_TOTAL_BYTES = 4 * 1024 * 1024; // limite do corpo da requisição na Vercel é ~4,5 MB
+export const DOC_ALLOWED_EXT = ["pdf", "xlsx", "xls", "csv", "ods", "doc", "docx", "png", "jpg", "jpeg"];
+
+/** Nome seguro para guardar o arquivo; null se o tipo não for permitido. */
+export function safeDocName(name: string): string | null {
+  const dot = name.lastIndexOf(".");
+  const ext = dot >= 0 ? name.slice(dot + 1).toLowerCase() : "";
+  if (!DOC_ALLOWED_EXT.includes(ext)) return null;
+  const base = name
+    .slice(0, dot)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
+  return `${base || "documento"}.${ext}`;
+}
+
+/** Confere tipo e tamanho dos documentos do orçamento; devolve a mensagem de erro ou null. */
+export function validateDocs(files: { name: string; size: number }[]): string | null {
+  let total = 0;
+  for (const f of files) {
+    if (f.size === 0) continue;
+    if (!safeDocName(f.name)) return `"${f.name}": envie PDF, planilha (xlsx, xls, csv, ods), documento (doc, docx) ou imagem (png, jpg).`;
+    if (f.size > DOC_MAX_BYTES) return `"${f.name}" passa de 3 MB. Envie um arquivo menor.`;
+    total += f.size;
+  }
+  if (total > DOC_MAX_TOTAL_BYTES) return "Os documentos juntos passam de 4 MB. Anexe menos arquivos ou arquivos menores.";
+  return null;
 }
 
 export interface FundraiserInput {
@@ -81,6 +116,7 @@ export function parseFundraiserForm(form: FormData, now: Date = new Date()): Par
 
   const labels = form.getAll("budgetLabel").map((v) => String(v).trim());
   const amounts = form.getAll("budgetAmount").map((v) => String(v).trim());
+  const descriptions = form.getAll("budgetDescription").map((v) => String(v).trim());
   const budget: BudgetLine[] = [];
   for (let i = 0; i < Math.max(labels.length, amounts.length); i++) {
     const label = labels[i] ?? "";
@@ -89,7 +125,9 @@ export function parseFundraiserForm(form: FormData, now: Date = new Date()): Par
     if (label.length < 2 || label.length > 120) return { ok: false, error: `Orçamento, linha ${i + 1}: descreva o item (2 a 120 caracteres).` };
     const cents = parseBRLToCents(amountRaw);
     if (cents === null) return { ok: false, error: `Orçamento, linha ${i + 1}: informe o valor em reais.` };
-    budget.push({ label, amountCents: cents });
+    const description = descriptions[i] ?? "";
+    if (description.length > 300) return { ok: false, error: `Orçamento, linha ${i + 1}: a explicação pode ter no máximo 300 caracteres.` };
+    budget.push({ label, amountCents: cents, description: description || null, row: i });
   }
   if (budget.length > MAX_BUDGET_ITEMS) return { ok: false, error: `Use no máximo ${MAX_BUDGET_ITEMS} itens no orçamento.` };
 
@@ -152,7 +190,13 @@ export async function createFundraiserDraft(
 
   if (input.budget.length > 0) {
     const { error } = await supabase.from("fundraiser_budget_items").insert(
-      input.budget.map((b, i) => ({ fundraiser_id: fundraiser.id, position: i, label: b.label, amount_cents: b.amountCents }))
+      input.budget.map((b, i) => ({
+        fundraiser_id: fundraiser.id,
+        position: i,
+        label: b.label,
+        amount_cents: b.amountCents,
+        description: b.description ?? null,
+      }))
     );
     if (error) {
       await supabase.from("fundraisers").delete().eq("id", fundraiser.id);
@@ -189,4 +233,40 @@ export async function isFundraisingEnabled(supabase: SupabaseClient<Database>): 
   } catch {
     return false;
   }
+}
+
+/**
+ * Sobe os documentos do orçamento para o armazenamento e grava o link em cada item.
+ * Nunca derruba a criação da campanha: se um arquivo falhar, o item fica sem anexo.
+ */
+export async function attachBudgetDocs(
+  supabase: SupabaseClient<Database>,
+  fundraiserId: string,
+  budget: BudgetLine[],
+  files: (File | string)[]
+): Promise<number> {
+  let failed = 0;
+  for (let j = 0; j < budget.length; j++) {
+    const file = files[budget[j]!.row ?? j];
+    if (!file || typeof file === "string" || file.size === 0) continue;
+    const safe = safeDocName(file.name);
+    if (!safe) continue;
+    const path = `${fundraiserId}/${j}-${safe}`;
+    const up = await supabase.storage.from("fundraiser-docs").upload(path, await file.arrayBuffer(), {
+      contentType: file.type || undefined,
+      upsert: true,
+    });
+    if (up.error) {
+      failed++;
+      console.error("[doacoes] falha ao subir documento", up.error.message);
+      continue;
+    }
+    const { data } = supabase.storage.from("fundraiser-docs").getPublicUrl(path);
+    await supabase
+      .from("fundraiser_budget_items")
+      .update({ attachment_url: data.publicUrl, attachment_name: safe })
+      .eq("fundraiser_id", fundraiserId)
+      .eq("position", j);
+  }
+  return failed;
 }
