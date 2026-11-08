@@ -90,6 +90,9 @@ export interface FundraiserBudgetItem {
   position: number;
   label: string;
   amount_cents: number;
+  description: string | null;
+  attachment_url: string | null;
+  attachment_name: string | null;
 }
 
 export interface FundraiserDonation {

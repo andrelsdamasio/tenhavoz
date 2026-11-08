@@ -3,14 +3,47 @@
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createFundraiserAction, type FundraiserFormState } from "@/app/dashboard/doacoes/new/actions";
-import { budgetGapCents, formatCentsBRL, parseBRLToCents, platformFeeCents } from "@/lib/fundraisers";
+import { budgetGapCents, DOC_MAX_BYTES, formatCentsBRL, parseBRLToCents, platformFeeCents, safeDocName } from "@/lib/fundraisers";
+import { BASIC_COLORS } from "@/lib/color";
+import ColorPicker from "@/components/ColorPicker";
+import FundraiserView, { FUNDRAISER_THEMES, type FundraiserViewProps } from "@/components/FundraiserView";
 
-const STEPS = ["Sua história", "Meta e prazo", "Orçamento", "Revisar"] as const;
+const STEPS = ["Sua história", "Meta e prazo", "Orçamento", "Aparência", "Revisar"] as const;
 const initial: FundraiserFormState = { error: null };
 
 interface Line {
   label: string;
   amount: string;
+  description: string;
+  fileName: string;
+}
+
+const EMPTY_LINE: Line = { label: "", amount: "", description: "", fileName: "" };
+
+/** Bloco estático no lugar do formulário de doação, só para a prévia. */
+function PreviewDonate({ color }: { color: string }) {
+  return (
+    <div className="space-y-3" aria-hidden="true">
+      <p className="text-sm font-medium">Quanto você quer doar?</p>
+      <div className="grid grid-cols-4 gap-2 text-center text-sm">
+        {["R$ 20", "R$ 50", "R$ 100", "R$ 200"].map((v) => (
+          <span key={v} className="rounded-md border border-gray-300 py-2">{v}</span>
+        ))}
+      </div>
+      <span className="block rounded-md py-2.5 text-center font-semibold text-white" style={{ background: color }}>Doar agora</span>
+    </div>
+  );
+}
+
+/** Mostra a página da campanha reduzida, como na escolha de modelo da campanha de e-mail. */
+function Scaled({ width, scale, height, children }: { width: number; scale: number; height: number; children: React.ReactNode }) {
+  return (
+    <div className="relative overflow-hidden" style={{ height }}>
+      <div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width, transform: `scale(${scale})` }}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 function SubmitButton() {
@@ -44,12 +77,15 @@ export default function FundraiserForm() {
 
   const [goal, setGoal] = useState("");
   const [endsAt, setEndsAt] = useState("");
-  const [lines, setLines] = useState<Line[]>([{ label: "", amount: "" }]);
+  const [lines, setLines] = useState<Line[]>([{ ...EMPTY_LINE }]);
+  const [templateId, setTemplateId] = useState(1);
+  const [color, setColor] = useState<string | null>("#4338ca");
+  const [showPreview, setShowPreview] = useState(false);
 
   const goalCents = parseBRLToCents(goal);
   const budget = lines
     .filter((l) => l.label.trim() || l.amount.trim())
-    .map((l) => ({ label: l.label.trim(), amountCents: parseBRLToCents(l.amount) ?? 0 }));
+    .map((l) => ({ label: l.label.trim(), amountCents: parseBRLToCents(l.amount) ?? 0, description: l.description.trim() }));
   const gap = goalCents ? budgetGapCents(goalCents, budget) : 0;
 
   async function generateWithAI() {
@@ -102,7 +138,47 @@ export default function FundraiserForm() {
 
   const fee = goalCents ? platformFeeCents(goalCents) : 0;
 
+  const viewProps: FundraiserViewProps = {
+    templateId,
+    color,
+    title: title || "Título da sua campanha",
+    beneficiary: forWhom === "other" ? beneficiary || null : null,
+    summary: summary || null,
+    story: story || "A história da sua campanha aparece aqui. Conte o que aconteceu e por que a ajuda importa.",
+    goalCents: goalCents ?? 500000,
+    raisedCents: 0,
+    donationCount: 0,
+    daysLeft: endsAt ? Math.max(0, Math.ceil((new Date(`${endsAt}T23:59:59`).getTime() - Date.now()) / 86_400_000)) : null,
+    budget: budget.map((b, i) => ({
+      id: String(i),
+      label: b.label || "Item do orçamento",
+      amount_cents: b.amountCents,
+      description: b.description || null,
+      attachment_name: lines.filter((l) => l.label.trim() || l.amount.trim())[i]?.fileName || null,
+      attachment_url: lines.filter((l) => l.label.trim() || l.amount.trim())[i]?.fileName ? "#" : null,
+    })),
+    donations: [],
+    donateSlot: <PreviewDonate color={color ?? "#1d4ed8"} />,
+    notice: "Prévia: assim a página aparece para quem vai doar",
+  };
+
   return (
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="min-w-0 space-y-4">
+    <button
+      type="button"
+      onClick={() => setShowPreview((v) => !v)}
+      className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 lg:hidden"
+    >
+      {showPreview ? "Esconder prévia da página" : "Ver prévia da página"}
+    </button>
+    {showPreview && (
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white lg:hidden">
+        <Scaled width={1000} scale={0.34} height={520}>
+          <FundraiserView {...viewProps} />
+        </Scaled>
+      </div>
+    )}
     <form action={formAction} noValidate className="space-y-6">
       <ol className="flex gap-2 text-xs sm:text-sm" aria-label="Passos">
         {STEPS.map((name, i) => (
@@ -195,34 +271,74 @@ export default function FundraiserForm() {
       <section hidden={step !== 2} className="space-y-3">
         <p className="text-sm text-gray-700">Mostre para que o dinheiro será usado. Quem vê o orçamento confia mais e doa mais.</p>
         {lines.map((l, i) => (
-          <div key={i} className="flex gap-2">
-            <input
-              name="budgetLabel"
-              value={l.label}
-              onChange={(e) => setLine(i, { label: e.target.value })}
-              placeholder="Ex.: Aluguel do ônibus"
-              aria-label={`Item ${i + 1}`}
-              className={`${inputCls} flex-1`}
-              maxLength={120}
+          <div key={i} className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
+            <div className="flex gap-2">
+              <input
+                name="budgetLabel"
+                value={l.label}
+                onChange={(e) => setLine(i, { label: e.target.value })}
+                placeholder="Ex.: Aluguel do ônibus"
+                aria-label={`Item ${i + 1}`}
+                className={`${inputCls} flex-1`}
+                maxLength={120}
+              />
+              <input
+                name="budgetAmount"
+                value={l.amount}
+                onChange={(e) => setLine(i, { amount: e.target.value })}
+                placeholder="R$ 0,00"
+                aria-label={`Valor do item ${i + 1}`}
+                inputMode="decimal"
+                className={`${inputCls} w-28 sm:w-32`}
+              />
+              {lines.length > 1 && (
+                <button type="button" onClick={() => setLines((ls) => ls.filter((_, idx) => idx !== i))} aria-label={`Remover item ${i + 1}`} className="px-2 text-gray-500 hover:text-red-600">
+                  ✕
+                </button>
+              )}
+            </div>
+            <textarea
+              name="budgetDescription"
+              value={l.description}
+              onChange={(e) => setLine(i, { description: e.target.value })}
+              rows={2}
+              maxLength={300}
+              placeholder="Para que será usado? (opcional). Ex.: Ônibus de 44 lugares, saída dia 20 às 6h."
+              aria-label={`Explicação do item ${i + 1}`}
+              className={inputCls}
             />
-            <input
-              name="budgetAmount"
-              value={l.amount}
-              onChange={(e) => setLine(i, { amount: e.target.value })}
-              placeholder="R$ 0,00"
-              aria-label={`Valor do item ${i + 1}`}
-              inputMode="decimal"
-              className={`${inputCls} w-32`}
-            />
-            {lines.length > 1 && (
-              <button type="button" onClick={() => setLines((ls) => ls.filter((_, idx) => idx !== i))} aria-label={`Remover item ${i + 1}`} className="px-2 text-gray-500 hover:text-red-600">
-                ✕
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <label className="cursor-pointer rounded-md bg-gray-100 px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-200">
+                📎 {l.fileName ? "Trocar documento" : "Anexar documento"}
+                <input
+                  type="file"
+                  name="budgetFile"
+                  accept=".pdf,.xlsx,.xls,.csv,.ods,.doc,.docx,.png,.jpg,.jpeg"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return setLine(i, { fileName: "" });
+                    if (!safeDocName(f.name)) {
+                      e.target.value = "";
+                      setLine(i, { fileName: "" });
+                      return setStepError("Esse tipo de arquivo não é aceito. Envie PDF, planilha, documento ou imagem.");
+                    }
+                    if (f.size > DOC_MAX_BYTES) {
+                      e.target.value = "";
+                      setLine(i, { fileName: "" });
+                      return setStepError(`"${f.name}" passa de 3 MB. Envie um arquivo menor.`);
+                    }
+                    setStepError(null);
+                    setLine(i, { fileName: f.name });
+                  }}
+                />
+              </label>
+              <span className="text-xs text-gray-500">{l.fileName || "Nota fiscal, orçamento, planilha… (PDF, planilha ou imagem, até 3 MB)"}</span>
+            </div>
           </div>
         ))}
         {lines.length < 20 && (
-          <button type="button" onClick={() => setLines((ls) => [...ls, { label: "", amount: "" }])} className="text-sm font-medium text-brand-700 hover:underline">
+          <button type="button" onClick={() => setLines((ls) => [...ls, { ...EMPTY_LINE }])} className="text-sm font-medium text-brand-700 hover:underline">
             + Adicionar item
           </button>
         )}
@@ -236,8 +352,40 @@ export default function FundraiserForm() {
         )}
       </section>
 
-      {/* Passo 4 */}
-      <section hidden={step !== 3} className="space-y-3">
+      {/* Passo 4: aparência */}
+      <section hidden={step !== 3} className="space-y-4">
+        <input type="hidden" name="templateId" value={templateId} />
+        <input type="hidden" name="themeColor" value={color ?? ""} />
+        <div>
+          <p className="mb-2 text-sm font-medium">Escolha o modelo da página</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {FUNDRAISER_THEMES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTemplateId(t.id)}
+                aria-pressed={templateId === t.id}
+                className={`relative block overflow-hidden rounded-lg border-2 bg-white text-left transition ${templateId === t.id ? "border-brand-600 ring-2 ring-brand-100" : "border-gray-200 hover:border-gray-300"}`}
+              >
+                <Scaled width={1000} scale={0.2} height={150}>
+                  <FundraiserView {...viewProps} templateId={t.id} />
+                </Scaled>
+                <span className={`absolute bottom-1.5 right-1.5 rounded px-2 py-0.5 text-xs font-medium ${templateId === t.id ? "bg-brand-600 text-white" : "bg-white/90 text-gray-700 shadow-sm"}`}>
+                  {t.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-sm font-medium">Cor da página</p>
+          <ColorPicker value={color} onChange={setColor} advanced={false} suggested={BASIC_COLORS.map((c) => c.hex)} />
+        </div>
+        <p className="text-xs text-gray-500">A prévia mostra como a página fica para quem vai doar (no celular, toque em «Ver prévia da página» lá em cima).</p>
+      </section>
+
+      {/* Passo 5 */}
+      <section hidden={step !== 4} className="space-y-3">
         <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm">
           <p className="text-lg font-semibold">{title || "Sem título"}</p>
           {summary && <p className="mt-1 text-gray-600">{summary}</p>}
@@ -254,7 +402,7 @@ export default function FundraiserForm() {
           <strong>Como funciona o custo:</strong> o TenhaVoz fica com 4% de cada doação (
           {goalCents ? `${formatCentsBRL(fee)} se você atingir a meta` : "sobre o valor doado"}), além da tarifa do Mercado Pago. O doador pode, se quiser, deixar uma contribuição voluntária ao TenhaVoz. Não há taxa para abrir a campanha.
         </p>
-        <p className="text-xs text-gray-500">Ao salvar, a campanha fica como rascunho. Para recebê-la no ar você conectará sua conta Mercado Pago.</p>
+        <p className="text-xs text-gray-500">Ao salvar, a campanha fica como rascunho e você segue para conectar a sua conta do Mercado Pago, que é por onde o dinheiro vai chegar direto para você. É rápido: o Mercado Pago abre, você autoriza e volta. Depois é só publicar.</p>
         {state.error && <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">{state.error}</p>}
       </section>
 
@@ -280,5 +428,16 @@ export default function FundraiserForm() {
         )}
       </div>
     </form>
+    </div>
+
+    <aside className="hidden lg:sticky lg:top-6 lg:block lg:self-start">
+      <p className="mb-2 text-sm font-medium text-gray-700">Prévia da sua página</p>
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <Scaled width={1000} scale={0.4} height={640}>
+          <FundraiserView {...viewProps} />
+        </Scaled>
+      </div>
+    </aside>
+    </div>
   );
 }
