@@ -119,6 +119,8 @@ export interface LikeResult {
   ok: boolean;
   liked: boolean;
   error?: string;
+  /** A sessão não foi reconhecida: o cliente deve levar a pessoa ao login. */
+  needsLogin?: boolean;
 }
 
 /**
@@ -127,7 +129,7 @@ export interface LikeResult {
  */
 export async function toggleLikeAction(commentId: string): Promise<LikeResult> {
   const user = await currentUser();
-  if (!user) return { ok: false, liked: false, error: "Entre na sua conta para curtir." };
+  if (!user) return { ok: false, liked: false, error: "Entre na sua conta para curtir.", needsLogin: true };
   if (!/^[0-9a-f-]{36}$/i.test(commentId)) return { ok: false, liked: false, error: "Comentário inválido." };
 
   const admin = createAdminClient();

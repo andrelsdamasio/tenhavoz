@@ -41,6 +41,12 @@ describe("CommentsSection", () => {
     expect(html).toContain("3 curtidas");
   });
 
+  it("curtir é sempre um botão (nunca um link para o login), mesmo antes de saber a sessão", () => {
+    const html = renderToStaticMarkup(<CommentsSection campaignId="c1" slug="cumpra" comments={comments} />);
+    expect(html).toContain('aria-label="Curtir (3 curtidas)"');
+    expect(html).not.toContain('href="/login');
+  });
+
   it("sem comentários: convite para ser o primeiro", () => {
     const html = renderToStaticMarkup(<CommentsSection campaignId="c1" slug="cumpra" comments={[]} />);
     expect(html).toContain("Ainda não há comentários");

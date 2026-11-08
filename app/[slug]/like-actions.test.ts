@@ -70,7 +70,12 @@ describe("toggleLikeAction", () => {
     const r = await toggleLikeAction(ID);
     expect(r.ok).toBe(false);
     expect(r.error).toContain("Entre");
+    expect(r.needsLogin).toBe(true);
     expect(insertLike).not.toHaveBeenCalled();
+  });
+
+  it("logado: nunca pede login", async () => {
+    expect((await toggleLikeAction(ID)).needsLogin).toBeUndefined();
   });
 
   it("não curte o próprio comentário", async () => {

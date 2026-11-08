@@ -66,18 +66,17 @@ function LikeButton({
   commentId,
   count,
   liked,
-  loggedIn,
-  own,
+  sessionKnown,
   loginHref,
 }: {
   commentId: string;
   count: number;
   liked: boolean;
-  loggedIn: boolean;
-  own: boolean;
+  /** A checagem de sessão do navegador já respondeu e a pessoa está logada. */
+  sessionKnown: boolean;
   loginHref: string;
 }) {
-  // Resposta imediata: o coração muda na hora e volta atrás se o servidor recusar.
+  const router = useRouter();
   const [state, setState] = useState({ liked, count });
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -85,24 +84,31 @@ function LikeButton({
   useEffect(() => setState({ liked, count }), [liked, count]);
 
   const label = `${state.count} ${state.count === 1 ? "curtida" : "curtidas"}`;
-  const heart = state.liked ? "♥" : "♡";
 
-  if (own || !loggedIn) {
-    const content = (
-      <>
-        <span aria-hidden="true">{heart}</span> {state.count > 0 ? state.count : ""}
-      </>
-    );
-    return own || state.count > 0 ? (
-      <span className="text-xs text-gray-500" title={own ? "Você não pode curtir o seu comentário" : undefined}>
-        <span className="sr-only">{label}</span>
-        {content}
-      </span>
-    ) : (
-      <Link href={loginHref} className="text-xs text-gray-400 hover:underline" title="Entre para curtir">
-        {content} Curtir
-      </Link>
-    );
+  // Sempre um botão: quem decide se a pessoa está logada é o servidor, no clique.
+  // (Antes dependia da checagem do navegador, que demora alguns segundos e
+  // mandava gente já logada para a tela de login.)
+  function handleClick() {
+    const before = state;
+    setError(null);
+    // Resposta imediata só quando já sabemos que a pessoa está logada.
+    if (sessionKnown) {
+      setState({ liked: !before.liked, count: Math.max(0, before.count + (before.liked ? -1 : 1)) });
+    }
+    startTransition(async () => {
+      const result = await toggleLikeAction(commentId).catch(() => null);
+      if (result?.needsLogin) {
+        setState(before);
+        router.push(loginHref);
+        return;
+      }
+      if (!result?.ok) {
+        setState(before);
+        setError(result?.error ?? "Não foi possível curtir agora.");
+        return;
+      }
+      setState({ liked: result.liked, count: Math.max(0, before.count + (result.liked === before.liked ? 0 : result.liked ? 1 : -1)) });
+    });
   }
 
   return (
@@ -112,21 +118,10 @@ function LikeButton({
         disabled={pending}
         aria-pressed={state.liked}
         aria-label={`${state.liked ? "Descurtir" : "Curtir"} (${label})`}
-        onClick={() => {
-          const before = state;
-          setError(null);
-          setState({ liked: !before.liked, count: Math.max(0, before.count + (before.liked ? -1 : 1)) });
-          startTransition(async () => {
-            const result = await toggleLikeAction(commentId).catch(() => null);
-            if (!result?.ok) {
-              setState(before);
-              setError(result?.error ?? "Não foi possível curtir agora.");
-            }
-          });
-        }}
+        onClick={handleClick}
         className={`text-xs hover:underline disabled:opacity-60 ${state.liked ? "font-medium text-red-600" : "text-gray-500"}`}
       >
-        <span aria-hidden="true">{heart}</span> {state.count > 0 ? state.count : "Curtir"}
+        <span aria-hidden="true">{state.liked ? "♥" : "♡"}</span> {state.count > 0 ? state.count : "Curtir"}
       </button>
       {error && (
         <span role="alert" className="text-xs text-red-600">
@@ -254,8 +249,7 @@ export default function CommentsSection({
                       commentId={c.id}
                       count={c.like_count ?? 0}
                       liked={me?.myLikedIds?.includes(c.id) ?? false}
-                      loggedIn={!!me?.loggedIn}
-                      own={mine}
+                      sessionKnown={!!me?.loggedIn}
                       loginHref={loginHref}
                     />
                     {canDelete && <DeleteButton commentId={c.id} label={mine ? "Apagar o meu" : "Apagar"} />}
