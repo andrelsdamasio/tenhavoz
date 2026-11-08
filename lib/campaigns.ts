@@ -269,3 +269,27 @@ export async function setCampaignDuration(
 export function isCampaignExpired(campaign: Campaign): boolean {
   return !!campaign.expires_at && new Date(campaign.expires_at).getTime() < Date.now();
 }
+
+/**
+ * Cria um rascunho novo com o mesmo conteúdo de uma campanha existente
+ * (duplicar ou renovar uma encerrada). O link (slug) da original continua dela:
+ * o rascunho recebe o mesmo nome-base com sufixo, via createDraftCampaign.
+ */
+export async function duplicateCampaign(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  source: Campaign
+): Promise<Campaign> {
+  return createDraftCampaign(supabase, userId, {
+    title: source.title,
+    subtitle: source.subtitle,
+    manifestText: source.manifest_text,
+    subject: source.subject,
+    recipients: source.recipients,
+    sendMode: source.send_mode,
+    driveLink: source.drive_link,
+    templateId: source.template_id,
+    slug: source.slug ?? undefined,
+    themeColor: source.theme_color,
+  });
+}

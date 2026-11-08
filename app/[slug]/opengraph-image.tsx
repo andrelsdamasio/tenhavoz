@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getPublishedCampaignBySlug } from "@/lib/campaigns";
+import { deriveThemeShades, isValidHexColor } from "@/lib/color";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -22,6 +23,16 @@ export default async function OpengraphImage({
       : campaign.title
     : "TenhaVoz";
 
+  // Cor da campanha (a mesma da página). Sem cor, o roxo padrão do TenhaVoz.
+  const shades =
+    campaign?.theme_color && isValidHexColor(campaign.theme_color)
+      ? deriveThemeShades(campaign.theme_color)
+      : null;
+  const bgFrom = shades?.dark ?? "#4338ca";
+  const bgTo = shades?.base ?? "#4f46e5";
+  const ink = shades?.on ?? "#ffffff";
+  const inkSoft = shades?.onSoft ?? "rgba(255,255,255,0.8)";
+
   return new ImageResponse(
     (
       <div
@@ -32,7 +43,7 @@ export default async function OpengraphImage({
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px 90px",
-          background: "linear-gradient(135deg, #4338ca 0%, #4f46e5 100%)",
+          background: `linear-gradient(135deg, ${bgFrom} 0%, ${bgTo} 100%)`,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -44,7 +55,7 @@ export default async function OpengraphImage({
               alignItems: "center",
               justifyContent: "center",
               borderRadius: 12,
-              background: "rgba(255,255,255,0.18)",
+              background: "rgba(255,255,255,0.22)",
             }}
           >
             <svg
@@ -56,11 +67,11 @@ export default async function OpengraphImage({
             >
               <path
                 d="M24 4C13 4 4 11.6 4 21c0 5.4 2.9 10.2 7.5 13.3-.3 2.4-1.4 4.7-3.3 6.5 3.4-.2 6.6-1.5 9.2-3.6 2.1.6 4.3.9 6.6.9 11 0 20-7.6 20-17S35 4 24 4z"
-                fill="white"
+                fill={ink}
               />
-              <circle cx="16.5" cy="20" r="2.2" fill="#4338ca" />
-              <circle cx="24" cy="20" r="2.2" fill="#4338ca" />
-              <circle cx="31.5" cy="20" r="2.2" fill="#4338ca" />
+              <circle cx="16.5" cy="20" r="2.2" fill={bgFrom} />
+              <circle cx="24" cy="20" r="2.2" fill={bgFrom} />
+              <circle cx="31.5" cy="20" r="2.2" fill={bgFrom} />
             </svg>
           </div>
           <div
@@ -68,7 +79,7 @@ export default async function OpengraphImage({
               display: "flex",
               fontSize: 26,
               fontWeight: 700,
-              color: "rgba(255,255,255,0.85)",
+              color: inkSoft,
               letterSpacing: -0.5,
             }}
           >
@@ -83,7 +94,7 @@ export default async function OpengraphImage({
             fontSize: 60,
             fontWeight: 800,
             lineHeight: 1.15,
-            color: "white",
+            color: ink,
             letterSpacing: -1,
           }}
         >
@@ -95,7 +106,7 @@ export default async function OpengraphImage({
             display: "flex",
             marginTop: 32,
             fontSize: 26,
-            color: "rgba(255,255,255,0.8)",
+            color: inkSoft,
           }}
         >
           Clique e envie por e-mail em um clique

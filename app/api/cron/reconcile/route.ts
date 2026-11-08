@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyExpiringCampaigns } from "@/lib/expiry-notice";
 import {
   alertAdminAboutProblems,
   notifyCustomersAboutDelay,
@@ -36,7 +37,18 @@ export async function GET(request: Request) {
     const released = await releaseApprovedPayments(admin);
     const alerts = await alertAdminAboutProblems(admin);
     const customers = await notifyCustomersAboutDelay(admin);
-    return NextResponse.json({ ok: true, ...released, ...alerts, ...customers });
+    // Aviso de expiração é secundário: se falhar, não derruba a conciliação de pagamentos.
+    const expiring = await notifyExpiringCampaigns(admin).catch((err) => {
+      console.error("[cron] falha no aviso de expiração", err);
+      return { notified: 0 };
+    });
+    return NextResponse.json({
+      ok: true,
+      ...released,
+      ...alerts,
+      ...customers,
+      expiringNotified: expiring.notified,
+    });
   } catch (err) {
     console.error("[cron] falha na conciliação automática", err);
     return NextResponse.json({ error: "Falha na conciliação." }, { status: 500 });

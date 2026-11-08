@@ -481,6 +481,7 @@ export default function CampaignForm({
     status: "draft",
     duration_hours: null,
     expires_at: null,
+    expiry_notified_at: null,
     created_at: "1970-01-01T00:00:00.000Z",
   };
 
