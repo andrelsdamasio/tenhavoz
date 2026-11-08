@@ -115,3 +115,9 @@ export function judgePayment(
       return { kind: "pending" };
   }
 }
+
+/** E-mail de quem pagou, como o Mercado Pago informa (o formulário da doação não pede e-mail). */
+export function payerEmail(payment: { payer?: { email?: string | null } | null }): string | null {
+  const email = payment.payer?.email?.trim().toLowerCase() ?? "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 200 ? email : null;
+}

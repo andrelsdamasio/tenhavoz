@@ -49,7 +49,7 @@ const STATUS_NOTE: Record<string, string> = {
   ended: "Esta campanha foi encerrada.",
 };
 
-export default async function FundraiserPage({ params }: { params: { slug: string } }) {
+export default async function FundraiserPage({ params, searchParams }: { params: { slug: string }; searchParams?: { obrigado?: string } }) {
   const loaded = await load(params.slug);
   if (!loaded) notFound();
   const { view, preview } = loaded;
@@ -61,6 +61,11 @@ export default async function FundraiserPage({ params }: { params: { slug: strin
 
   return (
     <main className="min-h-screen">
+      {searchParams?.obrigado === "1" && (
+        <p role="status" className="bg-green-100 px-4 py-3 text-center text-sm font-medium text-green-900">
+          Obrigado pela sua doação! Se o pagamento foi aprovado, ele aparece na lista em instantes e você recebe um recibo por e-mail.
+        </p>
+      )}
       <FundraiserView
         templateId={f.template_id}
         color={f.theme_color}

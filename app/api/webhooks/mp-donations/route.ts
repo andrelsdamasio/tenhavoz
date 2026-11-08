@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidSignature } from "@/lib/mp-signature";
 import { getSellerAccessToken } from "@/lib/mp-oauth";
-import { judgePayment } from "@/lib/donations";
+import { judgePayment, payerEmail } from "@/lib/donations";
 import { sendEmail } from "@/lib/email";
 import { creatorNoticeEmail, donorReceiptEmail } from "@/lib/donation-emails";
 import { SITE_URL } from "@/lib/mp-oauth";
@@ -100,7 +100,8 @@ export async function POST(request: Request) {
   if (res.status === 404) return NextResponse.json({ received: true });
   if (!res.ok) return NextResponse.json({ error: "temporário" }, { status: 503 });
 
-  const verdict = judgePayment(await res.json(), donation);
+  const payment = await res.json();
+  const verdict = judgePayment(payment, donation);
   if (verdict.kind === "reject") {
     console.error(`[mp-donations] pagamento ${paymentId} recusado: ${verdict.reason}`);
     return NextResponse.json({ received: true });
@@ -111,12 +112,12 @@ export async function POST(request: Request) {
     // só muda se ainda não estava aprovada (idempotente)
     const { data: changed } = await admin
       .from("fundraiser_donations")
-      .update({ status: "approved", provider_payment_id: paymentId, approved_at: new Date().toISOString() })
+      .update({ status: "approved", provider_payment_id: paymentId, approved_at: new Date().toISOString(), donor_email: donation.donor_email ?? payerEmail(payment) })
       .eq("id", donation.id)
       .neq("status", "approved")
       .select("id");
     // e-mails só na primeira aprovação (avisos repetidos não reenviam)
-    if (changed && changed.length > 0) await notifyApproved(admin, donation, fundraiser.user_id);
+    if (changed && changed.length > 0) await notifyApproved(admin, { ...donation, donor_email: donation.donor_email ?? payerEmail(payment) }, fundraiser.user_id);
   } else {
     await admin
       .from("fundraiser_donations")
