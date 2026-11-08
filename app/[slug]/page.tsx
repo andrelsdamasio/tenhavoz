@@ -113,7 +113,14 @@ export default async function PublicCampaignPage({ params }: PageProps) {
     <>
       <ViewTracker campaignId={campaign.id} />
       <Template campaign={safeCampaign} mailtoUrl={mailtoUrl} />
-      <CommentsSection campaignId={campaign.id} slug={slug} comments={comments} />
+      <CommentsSection
+        campaignId={campaign.id}
+        campaignTitle={campaign.title}
+        slug={slug}
+        comments={comments}
+        templateId={campaign.template_id}
+        themeColor={campaign.theme_color}
+      />
       <CreateYourOwnLink refSlug={campaign.slug} />
     </>
   );

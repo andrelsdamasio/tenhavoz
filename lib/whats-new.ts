@@ -13,6 +13,25 @@ export interface WhatsNewEntry {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    id: "2026-11-08-instagram",
+    title: "Comentários ao estilo Instagram",
+    audience: "all",
+    items: [
+      {
+        title: "Responda e edite",
+        text: "Responda a qualquer comentário, edite o seu texto ou apague quando quiser.",
+      },
+      {
+        title: "Compartilhe seu comentário",
+        text: "Em “Editar”, envie seu comentário junto com o link da campanha pelo WhatsApp, Instagram ou outro app para chamar mais gente.",
+      },
+      {
+        title: "Visual de cada tema",
+        text: "Os comentários agora combinam com o modelo e a cor escolhidos para a campanha.",
+      },
+    ],
+  },
+  {
     id: "2026-11-08-curtidas",
     title: "Agora dá para comentar e curtir",
     audience: "all",

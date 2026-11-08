@@ -16,6 +16,8 @@ import {
 export interface CommentState {
   error: string | null;
   posted: boolean;
+  /** A sessão não foi reconhecida: o cliente leva a pessoa ao login. */
+  needsLogin?: boolean;
 }
 
 async function currentUser() {
@@ -28,7 +30,7 @@ async function currentUser() {
 
 export async function postCommentAction(_prev: CommentState, formData: FormData): Promise<CommentState> {
   const user = await currentUser();
-  if (!user) return { error: "Entre na sua conta para comentar.", posted: false };
+  if (!user) return { error: "Entre na sua conta para comentar.", posted: false, needsLogin: true };
 
   const campaignId = String(formData.get("campaignId") ?? "");
   const check = validateCommentBody(String(formData.get("body") ?? ""));
@@ -45,6 +47,22 @@ export async function postCommentAction(_prev: CommentState, formData: FormData)
     return { error: "Esta campanha não aceita comentários agora.", posted: false };
   }
 
+  // Resposta: um nível só (como no Instagram). Responder a uma resposta vira
+  // resposta ao comentário principal.
+  let parentId: string | null = null;
+  const requestedParent = String(formData.get("parentId") ?? "");
+  if (requestedParent) {
+    const { data: parent } = await admin
+      .from("campaign_comments")
+      .select("id, campaign_id, parent_id")
+      .eq("id", requestedParent)
+      .maybeSingle();
+    if (!parent || parent.campaign_id !== campaign.id) {
+      return { error: "O comentário que você quer responder não existe mais.", posted: false };
+    }
+    parentId = parent.parent_id ?? parent.id;
+  }
+
   try {
     if ((await countRecentComments(admin, user.id)) >= COMMENT_RATE_LIMIT) {
       const minutes = Math.round(COMMENT_RATE_WINDOW_MS / 60000);
@@ -56,6 +74,7 @@ export async function postCommentAction(_prev: CommentState, formData: FormData)
       user_id: user.id,
       author_name: displayNameFor(user),
       body: check.value,
+      parent_id: parentId,
     });
     if (error) throw error;
   } catch (err) {
@@ -176,4 +195,43 @@ export async function toggleLikeAction(commentId: string): Promise<LikeResult> {
     console.error("[comentarios] falha ao curtir", err);
     return { ok: false, liked: false, error: "Não foi possível curtir agora. Tente de novo." };
   }
+}
+
+export interface EditResult {
+  ok: boolean;
+  error?: string;
+  needsLogin?: boolean;
+}
+
+/** Só o autor edita o próprio comentário. Fica marcado como "Editado". */
+export async function editCommentAction(commentId: string, rawBody: string): Promise<EditResult> {
+  const user = await currentUser();
+  if (!user) return { ok: false, error: "Entre na sua conta para editar.", needsLogin: true };
+  if (!/^[0-9a-f-]{36}$/i.test(commentId)) return { ok: false, error: "Comentário inválido." };
+
+  const check = validateCommentBody(rawBody);
+  if (!check.ok) return { ok: false, error: check.error };
+
+  const admin = createAdminClient();
+  const { data: comment } = await admin
+    .from("campaign_comments")
+    .select("id, user_id, campaign_id, body")
+    .eq("id", commentId)
+    .maybeSingle();
+  if (!comment) return { ok: false, error: "Comentário não encontrado." };
+  if (comment.user_id !== user.id) return { ok: false, error: "Você só pode editar os seus comentários." };
+  if (comment.body === check.value) return { ok: true };
+
+  const { error } = await admin
+    .from("campaign_comments")
+    .update({ body: check.value, edited_at: new Date().toISOString() })
+    .eq("id", commentId);
+  if (error) {
+    console.error("[comentarios] falha ao editar", error);
+    return { ok: false, error: "Não foi possível salvar a edição agora. Tente de novo." };
+  }
+
+  const { data: campaign } = await admin.from("campaigns").select("slug").eq("id", comment.campaign_id).maybeSingle();
+  if (campaign?.slug) revalidatePath(`/${campaign.slug}`);
+  return { ok: true };
 }

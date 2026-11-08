@@ -115,6 +115,8 @@ export interface CampaignComment {
   body: string;
   reported_at: string | null;
   like_count: number;
+  parent_id: string | null;
+  edited_at: string | null;
   created_at: string;
 }
 
