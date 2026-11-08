@@ -63,6 +63,52 @@ export interface AppSettings {
   updated_at: string;
 }
 
+export type FundraiserStatus = "draft" | "active" | "ended" | "suspended";
+
+export interface Fundraiser {
+  id: string;
+  user_id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  story: string;
+  goal_cents: number;
+  ends_at: string | null;
+  beneficiary_name: string | null;
+  cover_image_url: string | null;
+  template_id: number;
+  theme_color: string | null;
+  status: FundraiserStatus;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FundraiserBudgetItem {
+  id: string;
+  fundraiser_id: string;
+  position: number;
+  label: string;
+  amount_cents: number;
+}
+
+export interface FundraiserDonation {
+  id: string;
+  fundraiser_id: string;
+  provider: string;
+  provider_payment_id: string | null;
+  status: "pending" | "approved" | "refunded" | "failed";
+  amount_cents: number;
+  platform_fee_cents: number;
+  tip_cents: number;
+  donor_name: string | null;
+  donor_email: string | null;
+  is_anonymous: boolean;
+  message: string | null;
+  created_at: string;
+  approved_at: string | null;
+}
+
 export interface Coupon {
   id: string;
   code: string;
@@ -193,6 +239,21 @@ export interface Database {
         Row: AdminAuditEntry;
         Insert: Partial<AdminAuditEntry> & Pick<AdminAuditEntry, "admin_email" | "action">;
         Update: Partial<AdminAuditEntry>;
+      };
+      fundraisers: {
+        Row: Fundraiser;
+        Insert: Partial<Fundraiser> & Pick<Fundraiser, "user_id" | "slug" | "title" | "story" | "goal_cents">;
+        Update: Partial<Fundraiser>;
+      };
+      fundraiser_budget_items: {
+        Row: FundraiserBudgetItem;
+        Insert: Partial<FundraiserBudgetItem> & Pick<FundraiserBudgetItem, "fundraiser_id" | "label" | "amount_cents">;
+        Update: Partial<FundraiserBudgetItem>;
+      };
+      fundraiser_donations: {
+        Row: FundraiserDonation;
+        Insert: Partial<FundraiserDonation> & Pick<FundraiserDonation, "fundraiser_id" | "amount_cents">;
+        Update: Partial<FundraiserDonation>;
       };
       coupons: {
         Row: Coupon;

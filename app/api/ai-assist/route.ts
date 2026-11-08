@@ -27,6 +27,25 @@ const AUTO_FILL_INSTRUCTION = [
   "Não invente fatos, números ou promessas que não estejam no texto original. Responda só com os três campos pedidos.",
 ].join(" ");
 
+const FUNDRAISER_INSTRUCTION = [
+  "Você ajuda pessoas a escreverem campanhas de arrecadação de dinheiro (vaquinhas) em português do Brasil, a partir do que elas contaram.",
+  "Gere:",
+  "- title: título claro e humano (5 a 90 caracteres) que diga para que o dinheiro será usado, sem aspas nem ponto final.",
+  "- summary: resumo de até 250 caracteres que faça a pessoa querer ajudar.",
+  "- story: a história da campanha em 3 a 5 parágrafos curtos (separados por linha em branco): quem está pedindo, por que, para que será usado o dinheiro e como cada ajuda faz diferença. Tom sincero e direto.",
+  "REGRAS: não invente fatos, nomes, valores, datas, doenças ou promessas que a pessoa não tenha dito. Se faltar informação, escreva de forma genérica em vez de inventar. Não prometa resultados. Responda só com os três campos.",
+].join(" ");
+
+const FUNDRAISER_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    title: { type: "STRING" },
+    summary: { type: "STRING" },
+    story: { type: "STRING" },
+  },
+  required: ["title", "summary", "story"],
+};
+
 const AUTO_FILL_SCHEMA = {
   type: "OBJECT",
   properties: {
@@ -120,7 +139,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { text?: string; task?: "shorten" | "title" | "auto_fill"; targetLength?: number };
+  let body: { text?: string; task?: "shorten" | "title" | "auto_fill" | "fundraiser_fill"; targetLength?: number };
   try {
     body = await request.json();
   } catch {
@@ -134,7 +153,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Texto vazio." }, { status: 400 });
   }
 
-  if (task !== "shorten" && task !== "title" && task !== "auto_fill") {
+  if (task !== "shorten" && task !== "title" && task !== "auto_fill" && task !== "fundraiser_fill") {
     return NextResponse.json({ error: "task inválida." }, { status: 400 });
   }
 
@@ -153,6 +172,22 @@ export async function POST(request: Request) {
     if (task === "title") {
       const result = await callGemini(apiKey, TITLE_INSTRUCTION, text, { maxOutputTokens: 500 });
       return NextResponse.json({ result });
+    }
+
+    if (task === "fundraiser_fill") {
+      const rawF = await callGemini(apiKey, FUNDRAISER_INSTRUCTION, text.slice(0, 4000), {
+        maxOutputTokens: 4096,
+        jsonSchema: FUNDRAISER_SCHEMA,
+      });
+      const cleanedF = rawF.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+      const p = JSON.parse(cleanedF) as { title: string; summary: string; story: string };
+      return NextResponse.json({
+        result: {
+          title: truncateToLimit(p.title, 90),
+          summary: truncateToLimit(p.summary, 280),
+          story: truncateToLimit(p.story, 6000),
+        },
+      });
     }
 
     const raw = await callGemini(apiKey, AUTO_FILL_INSTRUCTION, text, {

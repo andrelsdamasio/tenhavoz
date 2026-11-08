@@ -146,3 +146,17 @@ export async function resolvePaymentAction(formData: FormData) {
   revalidatePath("/admin/reports");
   redirect("/admin/reports");
 }
+
+/** Liga/desliga o recurso de campanhas de doação para o público. */
+export async function setFundraisingEnabledAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const enabled = formData.get("enabled") === "on";
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("app_settings")
+    .update({ fundraising_enabled: enabled } as never)
+    .eq("id", true);
+  if (error) console.error("[admin] falha ao alternar doações", error);
+  revalidatePath("/admin/settings");
+  revalidatePath("/dashboard");
+}

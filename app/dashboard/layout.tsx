@@ -2,6 +2,8 @@ import Link from "next/link";
 import { signOut } from "../(auth)/actions";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail, getSupportEmail } from "@/lib/admin";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isFundraisingEnabled } from "@/lib/fundraisers";
 import Logo from "@/components/Logo";
 import WhatsNew from "@/components/WhatsNew";
 import { entriesFor } from "@/lib/whats-new";
@@ -24,6 +26,7 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
   const showAdminLink = isAdminEmail(user?.email);
+  const showDonations = await isFundraisingEnabled(createAdminClient());
 
   return (
     <div className="min-h-screen">
@@ -37,6 +40,11 @@ export default async function DashboardLayout({
             <Link href="/dashboard" className="hover:underline">
               Minhas campanhas
             </Link>
+            {showDonations && (
+              <Link href="/dashboard/doacoes" className="hover:underline">
+                Doações
+              </Link>
+            )}
             <Link href="/dashboard/new" className="hover:underline">
               Nova campanha
             </Link>

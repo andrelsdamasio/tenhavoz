@@ -23,6 +23,8 @@ const RESERVED_SLUGS = new Set([
   "auth",
   "dashboard",
   "p",
+  "d",
+  "doar",
   "privacidade",
   "termos",
   "favicon.ico",
