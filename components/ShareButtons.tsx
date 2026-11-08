@@ -6,6 +6,8 @@ interface ShareButtonsProps {
   url: string;
   title: string;
   className?: string;
+  /** Texto da mensagem; padrão é o convite para campanhas de e-mail. */
+  message?: string;
 }
 
 /**
@@ -13,11 +15,11 @@ interface ShareButtonsProps {
  * por isso não tem botão próprio aqui: a pessoa copia o link e cola nos
  * stories/bio pelo app do Instagram mesmo.
  */
-export default function ShareButtons({ url, title, className = "" }: ShareButtonsProps) {
+export default function ShareButtons({ url, title, className = "", message }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
 
   const encodedUrl = encodeURIComponent(url);
-  const encodedText = encodeURIComponent(`Participe da campanha "${title}": envie seu e-mail em um clique.`);
+  const encodedText = encodeURIComponent(message ?? `Participe da campanha "${title}": envie seu e-mail em um clique.`);
 
   async function handleCopy() {
     try {
