@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const release = vi.fn();
 const alert = vi.fn();
+const notifyCustomers = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/payment-recovery", () => ({
   releaseApprovedPayments: (...a: unknown[]) => release(...a),
   alertAdminAboutProblems: (...a: unknown[]) => alert(...a),
+  notifyCustomersAboutDelay: (...a: unknown[]) => notifyCustomers(...a),
 }));
 
 import { GET } from "./route";
@@ -19,6 +21,7 @@ beforeEach(() => {
   process.env.CRON_SECRET = "segredo";
   release.mockResolvedValue({ checked: 1, released: 1 });
   alert.mockResolvedValue({ alerted: 0 });
+  notifyCustomers.mockResolvedValue({ notified: 2 });
 });
 
 describe("GET /api/cron/reconcile", () => {
@@ -33,10 +36,10 @@ describe("GET /api/cron/reconcile", () => {
     expect((await call("Bearer segredo")).status).toBe(500);
   });
 
-  it("com a credencial certa: roda a liberação e o alerta", async () => {
+  it("com a credencial certa: roda a liberação, o alerta ao admin e o aviso aos clientes", async () => {
     const res = await call("Bearer segredo");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, checked: 1, released: 1, alerted: 0 });
+    expect(await res.json()).toEqual({ ok: true, checked: 1, released: 1, alerted: 0, notified: 2 });
   });
 
   it("falha interna: 500", async () => {

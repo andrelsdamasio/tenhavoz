@@ -39,6 +39,16 @@ function isValidSignature(
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+/**
+ * O Mercado Pago responde 404 quando o id não existe (aviso de teste, id
+ * forjado ou pagamento de outra conta). Reenviar não adianta: respondemos 200
+ * para ele parar de tentar, e o log guarda o caso.
+ */
+function isPaymentNotFound(err: unknown): boolean {
+  const e = err as { status?: number; statusCode?: number; message?: string } | null;
+  return e?.status === 404 || e?.statusCode === 404 || /payment not found/i.test(e?.message ?? "");
+}
+
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const body = await request.json().catch(() => ({}) as Record<string, unknown>);
@@ -90,6 +100,10 @@ export async function POST(request: Request) {
       `[webhook:mercadopago] pagamento=${dataId} campanha=${result.campaignId} status=${result.paymentStatus} publicada=${result.published}`
     );
   } catch (err) {
+    if (isPaymentNotFound(err)) {
+      console.warn(`[webhook:mercadopago] pagamento ${dataId} não existe no Mercado Pago; ignorado`);
+      return NextResponse.json({ received: true, ignored: "payment_not_found" });
+    }
     // 500 faz o Mercado Pago reenviar o aviso mais tarde.
     console.error(`[webhook:mercadopago] falha ao processar o pagamento ${dataId}:`, err);
     return NextResponse.json({ error: "Falha ao processar o pagamento." }, { status: 500 });

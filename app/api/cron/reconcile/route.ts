@@ -1,7 +1,11 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { alertAdminAboutProblems, releaseApprovedPayments } from "@/lib/payment-recovery";
+import {
+  alertAdminAboutProblems,
+  notifyCustomersAboutDelay,
+  releaseApprovedPayments,
+} from "@/lib/payment-recovery";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +35,8 @@ export async function GET(request: Request) {
   try {
     const released = await releaseApprovedPayments(admin);
     const alerts = await alertAdminAboutProblems(admin);
-    return NextResponse.json({ ok: true, ...released, ...alerts });
+    const customers = await notifyCustomersAboutDelay(admin);
+    return NextResponse.json({ ok: true, ...released, ...alerts, ...customers });
   } catch (err) {
     console.error("[cron] falha na conciliação automática", err);
     return NextResponse.json({ error: "Falha na conciliação." }, { status: 500 });
