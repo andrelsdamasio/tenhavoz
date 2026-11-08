@@ -107,6 +107,15 @@ export interface InboxMessage {
   reply_to_id: string | null;
 }
 
+export interface AdminAuditEntry {
+  id: string;
+  admin_email: string;
+  action: string;
+  campaign_id: string | null;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -150,6 +159,11 @@ export interface Database {
         Row: Referral;
         Insert: Partial<Referral> & Pick<Referral, "referred_user_id" | "referrer_user_id" | "slug">;
         Update: Partial<Referral>;
+      };
+      admin_audit_log: {
+        Row: AdminAuditEntry;
+        Insert: Partial<AdminAuditEntry> & Pick<AdminAuditEntry, "admin_email" | "action">;
+        Update: Partial<AdminAuditEntry>;
       };
       coupons: {
         Row: Coupon;

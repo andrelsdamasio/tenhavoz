@@ -44,6 +44,14 @@ export default async function AdminOverviewPage() {
     auditMercadoPagoPayments(admin, 7),
   ]);
   const { overview } = dashboard;
+  // Ping real no banco: as variáveis podem existir e o banco estar fora.
+  const dbStart = Date.now();
+  const dbPing = await admin
+    .from("campaigns")
+    .select("id", { head: true, count: "exact" })
+    .limit(1)
+    .then((r) => ({ ok: !r.error, ms: Date.now() - dbStart }))
+    .catch(() => ({ ok: false, ms: Date.now() - dbStart }));
   const health = getHealthChecks();
   const criticalDown = health.filter((h) => h.critical && !h.ok);
   const otherDown = health.filter((h) => !h.critical && !h.ok);
@@ -66,6 +74,15 @@ export default async function AdminOverviewPage() {
       text: `Não foi possível conferir o Mercado Pago: ${audit.error}`,
       href: "/admin/reports",
       cta: "Ver detalhes",
+    });
+  }
+  if (!dbPing.ok) {
+    attention.push({
+      key: "db",
+      tone: "red",
+      text: "O banco de dados não respondeu agora",
+      href: "#saude",
+      cta: "Ver saúde do sistema",
     });
   }
   if (criticalDown.length > 0) {
@@ -236,6 +253,19 @@ export default async function AdminOverviewPage() {
           Saúde do sistema
         </h2>
         <ul className="divide-y divide-gray-100 rounded-md border border-gray-200 bg-white text-sm">
+          <li className="flex items-start justify-between gap-4 p-3">
+            <div>
+              <p className="font-medium text-gray-900">Banco de dados respondendo</p>
+              {!dbPing.ok && <p className="text-xs text-gray-600">O site não consegue ler o banco agora.</p>}
+            </div>
+            <span
+              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                dbPing.ok ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              }`}
+            >
+              {dbPing.ok ? `OK · ${dbPing.ms} ms` : "Fora do ar"}
+            </span>
+          </li>
           {health.map((h) => (
             <li key={h.key} className="flex items-start justify-between gap-4 p-3">
               <div>

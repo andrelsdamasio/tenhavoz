@@ -12,6 +12,8 @@ import {
   getAdminDashboard,
   getRowDetails,
   matchesFilter,
+  matchesSearch,
+  findOwnerIdsByEmail,
   parseFilter,
   type Billing,
   type CampaignFilter,
@@ -169,7 +171,7 @@ function deadlineLabel(campaign: ClassifiedCampaign): string {
 }
 
 interface PageProps {
-  searchParams: Promise<{ granularity?: string; filter?: string; page?: string; cupom?: string }>;
+  searchParams: Promise<{ granularity?: string; filter?: string; page?: string; cupom?: string; q?: string }>;
 }
 
 export default async function ReportsPage({ searchParams }: PageProps) {
@@ -182,7 +184,8 @@ export default async function ReportsPage({ searchParams }: PageProps) {
     redirect("/dashboard");
   }
 
-  const { granularity: granularityRaw, filter: filterRaw, page: pageRaw, cupom } = await searchParams;
+  const { granularity: granularityRaw, filter: filterRaw, page: pageRaw, cupom, q: qRaw } = await searchParams;
+  const q = (qRaw ?? "").trim().slice(0, 80);
   const granularity: ReportGranularity =
     granularityRaw === "day" || granularityRaw === "year" ? granularityRaw : "month";
   const filter = parseFilter(filterRaw);
@@ -196,7 +199,8 @@ export default async function ReportsPage({ searchParams }: PageProps) {
   const problems = audit.rows.filter((r) => r.status !== "ok");
   const { overview, totals } = dashboard;
 
-  const filtered = dashboard.campaigns.filter((c) => matchesFilter(c, filter));
+  const ownerIds = q ? await findOwnerIdsByEmail(admin, q) : new Set<string>();
+  const filtered = dashboard.campaigns.filter((c) => matchesFilter(c, filter) && matchesSearch(c, q, ownerIds));
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const requestedPage = Number.parseInt(pageRaw ?? "1", 10);
   const page = Math.min(pageCount, Math.max(1, Number.isNaN(requestedPage) ? 1 : requestedPage));
@@ -218,6 +222,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
     const query = new URLSearchParams();
     query.set("granularity", params.granularity ?? granularity);
     query.set("filter", params.filter ?? filter);
+    if (q) query.set("q", q);
     if (params.page && params.page > 1) query.set("page", String(params.page));
     return `/admin/reports?${query.toString()}`;
   }
@@ -394,6 +399,30 @@ export default async function ReportsPage({ searchParams }: PageProps) {
           Campanhas
         </h2>
 
+        <form action="/admin/reports" method="get" role="search" className="mb-3 flex gap-2">
+          <input type="hidden" name="granularity" value={granularity} />
+          <input type="hidden" name="filter" value={filter} />
+          <label htmlFor="busca" className="sr-only">
+            Buscar campanha
+          </label>
+          <input
+            id="busca"
+            name="q"
+            type="search"
+            defaultValue={q}
+            placeholder="Buscar por título, link, e-mail do dono ou código"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+          <button type="submit" className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+            Buscar
+          </button>
+          {q && (
+            <Link href={href({ page: 1 }).replace(/&q=[^&]*/, "")} className="self-center whitespace-nowrap text-sm text-gray-600 hover:underline">
+              Limpar
+            </Link>
+          )}
+        </form>
+
         <div className="mb-3 flex flex-wrap gap-2">
           {CAMPAIGN_FILTERS.map((f) => (
             <Link
@@ -413,7 +442,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
 
         {filtered.length === 0 ? (
           <p className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-600">
-            Nenhuma campanha nesse filtro.
+            {q ? `Nenhuma campanha encontrada para \"${q}\".` : "Nenhuma campanha nesse filtro."}
           </p>
         ) : (
           <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
@@ -427,6 +456,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                   <th className="px-4 py-2">Criada em</th>
                   <th className="px-4 py-2">Prazo</th>
                   <th className="px-4 py-2">Visitas / cliques</th>
+                  <th className="px-4 py-2"><span className="sr-only">Ações</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -476,6 +506,14 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                       <td className="px-4 py-2 text-xs text-gray-600">{deadlineLabel(campaign)}</td>
                       <td className="whitespace-nowrap px-4 py-2">
                         {detail ? `${detail.views} / ${detail.clicks}` : "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2">
+                        <Link
+                          href={`/admin/reports/campanha/${campaign.id}`}
+                          className="text-sm font-medium text-brand-600 hover:underline"
+                        >
+                          Gerenciar
+                        </Link>
                       </td>
                     </tr>
                   );
