@@ -20,7 +20,7 @@ export default function Template5({ campaign, mailtoUrl }: TemplateProps) {
     >
       <div className="mx-auto max-w-xl rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
         <div className="mb-4 flex justify-center">
-          <span className="rounded-full bg-[var(--tc-light,#e0e7ff)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--tc-dark,#3730a3)]">
+          <span className="rounded-full bg-[var(--tc-light,#e0e7ff)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--tc-accent,#3730a3)]">
             Manifesto público
           </span>
         </div>
@@ -40,7 +40,7 @@ export default function Template5({ campaign, mailtoUrl }: TemplateProps) {
         <TrackedMailtoLink
           campaignId={campaign.id}
           mailtoUrl={mailtoUrl}
-          className="mb-3 block w-full rounded-md bg-[var(--tc-base,#4338ca)] px-6 py-3.5 text-center text-lg font-semibold text-white hover:bg-[var(--tc-dark,#3730a3)]"
+          className="mb-3 block w-full rounded-md bg-[var(--tc-base,#4338ca)] px-6 py-3.5 text-center text-lg font-semibold text-[var(--tc-on,#ffffff)] hover:bg-[var(--tc-dark,#3730a3)]"
         >
           Enviar e-mail agora
         </TrackedMailtoLink>
@@ -85,7 +85,7 @@ function Badge({ children }: { children: React.ReactNode }) {
 function Step({ number, text }: { number: number; text: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--tc-base,#4338ca)] text-xs font-bold text-white">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--tc-base,#4338ca)] text-xs font-bold text-[var(--tc-on,#ffffff)]">
         {number}
       </span>
       <span>{text}</span>
