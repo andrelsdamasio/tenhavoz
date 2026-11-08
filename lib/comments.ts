@@ -6,7 +6,8 @@ export const COMMENT_MIN_LENGTH = 2;
 /** Limite por pessoa: evita enxurrada de mensagens. */
 export const COMMENT_RATE_LIMIT = 5;
 export const COMMENT_RATE_WINDOW_MS = 10 * 60 * 1000;
-const PAGE_LIMIT = 50;
+/** Máximo de comentários (com respostas) carregados por página. */
+export const COMMENTS_PAGE_LIMIT = 300;
 
 export type CommentCheck = { ok: true; value: string } | { ok: false; error: string };
 
@@ -48,6 +49,8 @@ export interface PublicComment {
   author_name: string;
   body: string;
   like_count: number;
+  parent_id: string | null;
+  edited_at: string | null;
   created_at: string;
 }
 
@@ -57,10 +60,10 @@ export async function listComments(
 ): Promise<PublicComment[]> {
   const { data, error } = await admin
     .from("campaign_comments")
-    .select("id, author_name, body, like_count, created_at")
+    .select("id, author_name, body, like_count, parent_id, edited_at, created_at")
     .eq("campaign_id", campaignId)
     .order("created_at", { ascending: false })
-    .limit(PAGE_LIMIT);
+    .limit(COMMENTS_PAGE_LIMIT);
   if (error) throw error;
   return data ?? [];
 }

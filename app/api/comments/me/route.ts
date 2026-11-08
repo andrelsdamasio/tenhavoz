@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
+import { COMMENTS_PAGE_LIMIT } from "@/lib/comments";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
         .select("id")
         .eq("campaign_id", campaignId)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(COMMENTS_PAGE_LIMIT);
       const ids = (all ?? []).map((c) => c.id);
       if (ids.length > 0) {
         const { data: likes } = await admin
