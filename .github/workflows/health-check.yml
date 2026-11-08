@@ -1,0 +1,16 @@
+name: Verificar saúde do site
+
+# Falha (e o GitHub avisa por e-mail) se o site ou o banco ficarem fora do ar.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /api/health
+        run: |
+          curl --fail --silent --show-error --max-time 30 --retry 2 --retry-delay 10 \
+            "https://www.tenhavoz.com.br/api/health"
