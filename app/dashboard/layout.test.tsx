@@ -6,6 +6,8 @@ vi.mock("@/lib/supabase/server", () => ({
     auth: { getUser: async () => ({ data: { user: { email: "maria@exemplo.com" } } }) },
   }),
 }));
+vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
+vi.mock("@/lib/fundraisers", () => ({ isFundraisingEnabled: async () => false }));
 vi.mock("../(auth)/actions", () => ({ signOut: async () => {} }));
 
 import DashboardLayout from "./layout";
