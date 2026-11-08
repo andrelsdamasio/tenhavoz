@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import WhatsNew from "@/components/WhatsNew";
+import { entriesFor } from "@/lib/whats-new";
 import Reveal from "@/components/Reveal";
 import WhatsAppSupportButton from "@/components/WhatsAppSupportButton";
 import ThemeShowcase from "@/components/ThemeShowcase";
@@ -110,6 +112,7 @@ export default async function HomePage() {
 
   return (
     <main className="relative overflow-hidden bg-gray-50">
+      <WhatsNew entries={entriesFor(false)} popupOnly />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, "\\u003c") }}
