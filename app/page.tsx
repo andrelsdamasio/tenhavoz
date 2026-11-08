@@ -9,6 +9,10 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { getAppSettings } from "@/lib/settings";
 import { formatBRL } from "@/lib/pricing";
 import { BENEFITS, FAQ, USE_CASES } from "@/lib/landing-content";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isFundraisingEnabled } from "@/lib/fundraisers";
+import { listActiveFundraisers } from "@/lib/fundraiser-public";
+import { ActiveFundraisers, FundraisingExplainer, TwoPathsSection } from "@/components/FundraisingHomeSections";
 
 export const revalidate = 60;
 
@@ -99,6 +103,16 @@ export default async function HomePage() {
     price_7d_brl_cents: price7dCents,
     enabled_templates: enabledTemplates,
   } = await getAppSettings(supabase);
+
+  let fundraisingOn = false;
+  let activeFundraisers: Awaited<ReturnType<typeof listActiveFundraisers>> = [];
+  try {
+    const admin = createAdminClient();
+    fundraisingOn = await isFundraisingEnabled(admin);
+    if (fundraisingOn) activeFundraisers = await listActiveFundraisers(admin);
+  } catch {
+    fundraisingOn = false;
+  }
 
   const faqJsonLd = {
     "@context": "https://schema.org",
@@ -211,6 +225,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {fundraisingOn && <TwoPathsSection />}
+
       <section id="como-funciona" className="relative mx-auto max-w-6xl scroll-mt-20 px-6 pb-24">
         <Reveal>
           <h2 className="text-center text-3xl font-bold text-gray-900">Do rascunho ao link em 3 passos</h2>
@@ -255,6 +271,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {fundraisingOn && <ActiveFundraisers items={activeFundraisers} />}
+      {fundraisingOn && <FundraisingExplainer />}
 
       <div id="temas" className="relative scroll-mt-20 pt-20">
         <ThemeShowcase enabled={enabledTemplates} />
