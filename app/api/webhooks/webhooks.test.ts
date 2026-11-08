@@ -56,6 +56,19 @@ describe("webhook Mercado Pago", () => {
     expect(syncMercadoPagoPaymentById).toHaveBeenCalledWith(expect.anything(), "123456");
   });
 
+  it("pagamento inexistente no Mercado Pago (404): responde 200 para ele não reenviar", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    syncMercadoPagoPaymentById.mockRejectedValue({ status: 404, message: "Payment not found" });
+    const res = await mercadoPagoPOST(mpRequest("data.id=123456&type=payment"));
+    expect(res.status).toBe(200);
+  });
+
+  it("erro inesperado ao processar: 500 para o Mercado Pago reenviar", async () => {
+    syncMercadoPagoPaymentById.mockRejectedValue(new Error("banco fora do ar"));
+    const res = await mercadoPagoPOST(mpRequest("data.id=123456&type=payment"));
+    expect(res.status).toBe(500);
+  });
+
   it("assinatura inválida: 400, não processa e registra o motivo no log", async () => {
     process.env.MERCADOPAGO_WEBHOOK_SECRET = "outro-segredo";
     const res = await mercadoPagoPOST(

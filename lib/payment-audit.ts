@@ -27,6 +27,8 @@ export interface AuditRow {
   campaignTitle: string | null;
   /** Já avisamos o admin por e-mail sobre este pagamento. */
   alerted: boolean;
+  /** Já avisamos o cliente que recebemos o pagamento e estamos liberando. */
+  customerAlerted: boolean;
 }
 
 export interface AuditResult {
@@ -92,6 +94,7 @@ export function classify(
     campaignId: ref,
     campaignTitle: campaign?.title ?? null,
     alerted: false,
+    customerAlerted: false,
   };
 }
 
@@ -151,16 +154,17 @@ export async function auditMercadoPagoPayments(
       }
     }
 
-    const followups = new Map<string, { alerted: boolean; resolved: boolean }>();
+    const followups = new Map<string, { alerted: boolean; customerAlerted: boolean; resolved: boolean }>();
     const ids = payments.map((p) => String(p.id));
     for (let i = 0; i < ids.length; i += 100) {
       const { data } = await admin
         .from("payment_followups")
-        .select("provider_payment_id, alerted_at, resolved_at")
+        .select("provider_payment_id, alerted_at, customer_alerted_at, resolved_at")
         .in("provider_payment_id", ids.slice(i, i + 100));
       for (const f of data ?? []) {
         followups.set(f.provider_payment_id, {
           alerted: !!f.alerted_at,
+          customerAlerted: !!f.customer_alerted_at,
           resolved: !!f.resolved_at,
         });
       }
@@ -183,6 +187,7 @@ export async function auditMercadoPagoPayments(
       const row = classify({ ...p, external_reference: ref }, campaigns);
       const follow = followups.get(row.paymentId);
       row.alerted = !!follow?.alerted;
+      row.customerAlerted = !!follow?.customerAlerted;
       if (row.status !== "ok") {
         if (follow?.resolved) {
           resolved += 1;

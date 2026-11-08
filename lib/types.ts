@@ -76,6 +76,7 @@ export interface Coupon {
 export interface PaymentFollowup {
   provider_payment_id: string;
   alerted_at: string | null;
+  customer_alerted_at: string | null;
   resolved_at: string | null;
   created_at: string;
 }

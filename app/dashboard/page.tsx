@@ -261,6 +261,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                       Pagar e publicar
                     </Link>
                     <VerifyPaymentButton campaignId={campaign.id} />
+                    {campaign.duration_hours !== null && (
+                      <Link
+                        href={`/dashboard/pagamento/${campaign.id}`}
+                        className="text-sm text-gray-600 hover:underline"
+                      >
+                        Acompanhar pagamento
+                      </Link>
+                    )}
                   </>
                 )}
                 {isCampaignEditable(campaign) && (

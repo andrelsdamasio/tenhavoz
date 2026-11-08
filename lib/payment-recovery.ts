@@ -97,3 +97,52 @@ export async function alertAdminAboutProblems(
   );
   return { alerted: fresh.length };
 }
+
+/**
+ * Avisa o CLIENTE que recebemos o pagamento dele quando a página ainda não
+ * está no ar depois de ALERT_AFTER_MS. Evita que ele ache que foi golpe e
+ * apague a campanha. Um aviso por pagamento; só vai se soubermos o e-mail da conta.
+ */
+export async function notifyCustomersAboutDelay(
+  admin: SupabaseClient<Database>,
+  now = Date.now()
+): Promise<{ notified: number }> {
+  const audit = await auditMercadoPagoPayments(admin, 7);
+  const due = audit.rows.filter(
+    (r) =>
+      (r.status === "release" || r.status === "campaign_deleted") &&
+      !r.customerAlerted &&
+      !!r.accountEmail &&
+      r.createdAt &&
+      now - new Date(r.createdAt).getTime() > ALERT_AFTER_MS
+  );
+
+  const done: string[] = [];
+  for (const r of due) {
+    const text =
+      r.status === "release"
+        ? `Recebemos o seu pagamento de R$ ${r.amount.toFixed(2)}${r.campaignTitle ? ` da campanha "${r.campaignTitle}"` : ""}.\n\n` +
+          `Estamos liberando a sua página e isso costuma levar poucos minutos. NÃO apague a campanha: o pagamento está registrado e nada será perdido.\n\n` +
+          `Acompanhe em ${siteBase()}/dashboard. Se em 1 hora a página não estiver no ar, responda este e-mail que a nossa equipe resolve.\n\nEquipe TenhaVoz`
+        : `Recebemos o seu pagamento de R$ ${r.amount.toFixed(2)}, mas a campanha ligada a ele não existe mais na sua conta.\n\n` +
+          `Nossa equipe já foi avisada e vai resolver com você (recriando a página ou reembolsando). Responda este e-mail se quiser agilizar.\n\nEquipe TenhaVoz`;
+    const sent = await sendEmail({
+      to: r.accountEmail!,
+      subject: "Recebemos o seu pagamento — TenhaVoz",
+      text,
+    });
+    if (sent) done.push(r.paymentId);
+  }
+
+  if (done.length > 0) {
+    await admin.from("payment_followups").upsert(
+      done.map((id) => ({ provider_payment_id: id, customer_alerted_at: new Date().toISOString() })),
+      { onConflict: "provider_payment_id" }
+    );
+  }
+  return { notified: done.length };
+}
+
+function siteBase(): string {
+  return (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.tenhavoz.com.br").replace(/\/$/, "");
+}

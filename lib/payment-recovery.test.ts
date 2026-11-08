@@ -14,7 +14,7 @@ vi.mock("@/lib/payment-sync", () => ({
 }));
 vi.mock("@/lib/email", () => ({ sendEmail: (...a: unknown[]) => sendEmail(...a) }));
 
-import { alertAdminAboutProblems, releaseApprovedPayments } from "./payment-recovery";
+import { alertAdminAboutProblems, notifyCustomersAboutDelay, releaseApprovedPayments } from "./payment-recovery";
 
 const UUID_A = "11111111-1111-1111-1111-111111111111";
 const UUID_B = "22222222-2222-2222-2222-222222222222";
@@ -100,6 +100,63 @@ describe("alertAdminAboutProblems", () => {
     audit.mockResolvedValue({ rows: [row({})], ignored: 0, resolved: 0, error: null });
     sendEmail.mockResolvedValue(false);
     expect(await alertAdminAboutProblems(admin([]))).toEqual({ alerted: 0 });
+    expect(upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("notifyCustomersAboutDelay", () => {
+  const OLD = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const row = (over: object) => ({
+    paymentId: "9", status: "release", amount: 59.9, createdAt: OLD,
+    payerEmail: null, accountEmail: "cliente@x.com", campaignId: UUID_A, campaignTitle: "Minha campanha",
+    alerted: false, customerAlerted: false,
+    ...over,
+  });
+
+  it("avisa o cliente, pede para não apagar e marca como avisado", async () => {
+    audit.mockResolvedValue({ rows: [row({})], ignored: 0, resolved: 0, error: null });
+    sendEmail.mockResolvedValue(true);
+
+    const result = await notifyCustomersAboutDelay(admin([]));
+
+    expect(result).toEqual({ notified: 1 });
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "cliente@x.com", text: expect.stringContaining("NÃO apague") })
+    );
+    expect(upsert).toHaveBeenCalledWith(
+      [expect.objectContaining({ provider_payment_id: "9", customer_alerted_at: expect.any(String) })],
+      { onConflict: "provider_payment_id" }
+    );
+  });
+
+  it("campanha apagada: texto diferente, sem prometer a página", async () => {
+    audit.mockResolvedValue({ rows: [row({ status: "campaign_deleted" })], ignored: 0, resolved: 0, error: null });
+    sendEmail.mockResolvedValue(true);
+    await notifyCustomersAboutDelay(admin([]));
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ text: expect.stringContaining("não existe mais") })
+    );
+  });
+
+  it("não avisa: já avisado, recente, sem e-mail ou pagamento ok", async () => {
+    audit.mockResolvedValue({
+      rows: [
+        row({ customerAlerted: true }),
+        row({ paymentId: "10", createdAt: new Date().toISOString() }),
+        row({ paymentId: "11", accountEmail: null }),
+        row({ paymentId: "12", status: "ok" }),
+      ],
+      ignored: 0, resolved: 0, error: null,
+    });
+    expect(await notifyCustomersAboutDelay(admin([]))).toEqual({ notified: 0 });
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("e-mail que falha não marca como avisado", async () => {
+    audit.mockResolvedValue({ rows: [row({})], ignored: 0, resolved: 0, error: null });
+    sendEmail.mockResolvedValue(false);
+    expect(await notifyCustomersAboutDelay(admin([]))).toEqual({ notified: 0 });
     expect(upsert).not.toHaveBeenCalled();
   });
 });
