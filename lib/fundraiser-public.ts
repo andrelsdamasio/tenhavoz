@@ -78,3 +78,63 @@ export async function loadFundraiserView(
     donationCount: rows.length,
   };
 }
+
+export interface ActiveFundraiserCard {
+  slug: string;
+  title: string;
+  summary: string | null;
+  beneficiaryName: string | null;
+  coverImageUrl: string | null;
+  goalCents: number;
+  raisedCents: number;
+  daysLeft: number | null;
+}
+
+/** Campanhas de doação no ar (ativas e dentro do prazo), com o valor arrecadado, para a home. */
+export async function listActiveFundraisers(
+  admin: SupabaseClient<Database>,
+  limit = 6
+): Promise<ActiveFundraiserCard[]> {
+  try {
+    const { data } = await admin
+      .from("fundraisers")
+      .select("id, slug, title, summary, beneficiary_name, cover_image_url, goal_cents, ends_at")
+      .eq("status", "active")
+      .order("published_at", { ascending: false })
+      .limit(limit * 2);
+    const rows = (data ?? []) as {
+      id: string;
+      slug: string;
+      title: string;
+      summary: string | null;
+      beneficiary_name: string | null;
+      cover_image_url: string | null;
+      goal_cents: number;
+      ends_at: string | null;
+    }[];
+    const open = rows.filter((r) => daysLeft(r.ends_at) !== 0).slice(0, limit);
+    if (open.length === 0) return [];
+
+    const { data: dons } = await admin
+      .from("fundraiser_donations")
+      .select("fundraiser_id, amount_cents")
+      .in("fundraiser_id", open.map((r) => r.id))
+      .eq("status", "approved");
+    const totals = new Map<string, number>();
+    for (const d of (dons ?? []) as { fundraiser_id: string; amount_cents: number }[]) {
+      totals.set(d.fundraiser_id, (totals.get(d.fundraiser_id) ?? 0) + d.amount_cents);
+    }
+    return open.map((r) => ({
+      slug: r.slug,
+      title: r.title,
+      summary: r.summary,
+      beneficiaryName: r.beneficiary_name,
+      coverImageUrl: r.cover_image_url,
+      goalCents: r.goal_cents,
+      raisedCents: totals.get(r.id) ?? 0,
+      daysLeft: daysLeft(r.ends_at),
+    }));
+  } catch {
+    return [];
+  }
+}

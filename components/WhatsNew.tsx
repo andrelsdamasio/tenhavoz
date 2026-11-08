@@ -61,7 +61,7 @@ export default function WhatsNew({
 
   useEffect(() => {
     if (!open) return;
-    closeRef.current?.focus();
+    closeRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
@@ -103,7 +103,7 @@ export default function WhatsNew({
             role="dialog"
             aria-modal="true"
             aria-labelledby="whats-new-title"
-            className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
+            className="max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
           >
             <h2 id="whats-new-title" className="text-lg font-semibold">
               {entries[0]!.title}
