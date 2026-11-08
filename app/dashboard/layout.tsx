@@ -3,6 +3,8 @@ import { signOut } from "../(auth)/actions";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail, getSupportEmail } from "@/lib/admin";
 import Logo from "@/components/Logo";
+import WhatsNew from "@/components/WhatsNew";
+import { entriesFor } from "@/lib/whats-new";
 import WhatsAppSupportButton from "@/components/WhatsAppSupportButton";
 
 function buildSupportMailto(userEmail: string | undefined): string {
@@ -43,6 +45,7 @@ export default async function DashboardLayout({
                 Admin
               </Link>
             )}
+            <WhatsNew entries={entriesFor(showAdminLink)} />
             <a href={buildSupportMailto(user?.email)} className="hover:underline">
               Suporte
             </a>
