@@ -3,6 +3,7 @@ import {
   buildOverview,
   classifyCampaign,
   matchesFilter,
+  matchesSearch,
   parseFilter,
   type CampaignLite,
   type PaymentLite,
@@ -279,4 +280,17 @@ describe("fetchAllRows", () => {
       fetchAllRows<number>(() => Promise.resolve({ data: null, error: { message: "boom" } }))
     ).rejects.toEqual({ message: "boom" });
   });
+});
+
+describe("matchesSearch", () => {
+  const c = { id: "ab12cd34-0000-0000-0000-000000000000", title: "Cumpra a Lei 15.326", slug: "goiania-cumpra-a-lei", user_id: "u1" };
+  it("vazio casa com tudo", () => expect(matchesSearch(c, "  ")).toBe(true));
+  it("por título, sem diferenciar maiúsculas", () => expect(matchesSearch(c, "CUMPRA")).toBe(true));
+  it("por link curto", () => expect(matchesSearch(c, "goiania")).toBe(true));
+  it("pelo início do id", () => expect(matchesSearch(c, "ab12cd")).toBe(true));
+  it("pelo dono", () => {
+    expect(matchesSearch(c, "maria@x.com", new Set(["u1"]))).toBe(true);
+    expect(matchesSearch(c, "maria@x.com", new Set(["u2"]))).toBe(false);
+  });
+  it("sem relação: não casa", () => expect(matchesSearch(c, "pizza")).toBe(false));
 });

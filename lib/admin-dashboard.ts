@@ -274,3 +274,39 @@ export async function getRowDetails(
 
   return Object.fromEntries(entries);
 }
+
+/**
+ * Busca de campanhas no admin: por título, link curto, id (início) ou dono.
+ * `ownerIds` são os ids de usuários cujo e-mail combina com a busca.
+ */
+export function matchesSearch(
+  campaign: Pick<CampaignLite, "id" | "title" | "slug" | "user_id">,
+  query: string,
+  ownerIds: ReadonlySet<string> = new Set()
+): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    campaign.title.toLowerCase().includes(q) ||
+    (campaign.slug ?? "").toLowerCase().includes(q) ||
+    campaign.id.toLowerCase().startsWith(q) ||
+    ownerIds.has(campaign.user_id)
+  );
+}
+
+/** Ids dos usuários cujo e-mail contém o texto buscado (poucos usuários: uma página basta). */
+export async function findOwnerIdsByEmail(
+  admin: SupabaseClient<Database>,
+  query: string
+): Promise<Set<string>> {
+  const q = query.trim().toLowerCase();
+  if (q.length < 3) return new Set();
+  try {
+    const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    return new Set(
+      (data?.users ?? []).filter((u) => (u.email ?? "").toLowerCase().includes(q)).map((u) => u.id)
+    );
+  } catch {
+    return new Set();
+  }
+}

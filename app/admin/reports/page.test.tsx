@@ -195,3 +195,18 @@ describe("página /admin/reports", () => {
     await expect(Page({ searchParams: Promise.resolve({}) })).rejects.toThrow("REDIRECT:/dashboard");
   });
 });
+
+describe("busca de campanhas", () => {
+  it("filtra pela busca e mostra o link para gerenciar", async () => {
+    const html = await render({ q: "slug-vencida", filter: "all" });
+    expect(html).toContain("Campanha vencida");
+    expect(html).not.toContain("Campanha gratis");
+    expect(html).toContain("/admin/reports/campanha/vencida");
+  });
+
+  it("sem resultado: mensagem com o termo", async () => {
+    const html = await render({ q: "pizza", filter: "all" });
+    expect(html).toContain("Nenhuma campanha encontrada para");
+    expect(html).toContain("pizza");
+  });
+});
