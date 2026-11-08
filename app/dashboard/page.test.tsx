@@ -32,6 +32,11 @@ vi.mock("@/lib/events", () => ({
   getDailyStats: async (_a: unknown, ids: string[]) =>
     Object.fromEntries(ids.map((id) => [id, [{ date: "2026-11-08", views: 3, clicks: 1 }]])),
 }));
+const getReferralSummary = vi.fn(async () => ({ invited: 0, rewarded: 0, availableCoupons: [] as string[] }));
+vi.mock("@/lib/referral", () => ({
+  REFERRAL_DISCOUNT_PERCENT: 20,
+  getReferralSummary: (...a: []) => getReferralSummary(...a),
+}));
 // Componente assíncrono (gera o QR no servidor): o renderizador estático não o aceita.
 vi.mock("@/components/QrCodeDetails", () => ({ default: () => "QR-STUB" }));
 vi.mock("@/lib/campaigns", () => ({
@@ -231,6 +236,22 @@ describe("dashboard do cliente — liberação de quem pagou", () => {
       expect(html).toContain("Encerrada");
       expect(html).toContain("Renovar campanha");
       expect(html).not.toContain(">Duplicar<");
+    });
+
+    it("mostra o cupom de indicação ganho e o contador de indicados", async () => {
+      listCampaignsForUser.mockResolvedValue([campaign({ status: "published", expires_at: hoursFromNow(80) })]);
+      getReferralSummary.mockResolvedValueOnce({ invited: 2, rewarded: 1, availableCoupons: ["INDICA-AB12CD34"] });
+      const html = await render({});
+      expect(html).toContain("INDICA-AB12CD34");
+      expect(html).toContain("20% de desconto");
+      expect(html).toContain("Você já indicou 2 pessoa(s)");
+    });
+
+    it("falha ao carregar indicações não derruba o painel", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      listCampaignsForUser.mockResolvedValue([campaign({ status: "published", expires_at: hoursFromNow(80) })]);
+      getReferralSummary.mockRejectedValueOnce(new Error("x"));
+      expect(await render({})).toContain("Minha campanha");
     });
 
     it("rascunho não mostra números nem QR", async () => {
