@@ -114,3 +114,64 @@ export async function reportCommentAction(formData: FormData) {
   if (error) console.error("[comentarios] falha ao denunciar", error);
   revalidatePath("/admin/comments");
 }
+
+export interface LikeResult {
+  ok: boolean;
+  liked: boolean;
+  error?: string;
+}
+
+/**
+ * Curtir / descurtir (alterna). Precisa de conta; não dá para curtir o próprio
+ * comentário (evita inflar o número) nem comentário de campanha fora do ar.
+ */
+export async function toggleLikeAction(commentId: string): Promise<LikeResult> {
+  const user = await currentUser();
+  if (!user) return { ok: false, liked: false, error: "Entre na sua conta para curtir." };
+  if (!/^[0-9a-f-]{36}$/i.test(commentId)) return { ok: false, liked: false, error: "Comentário inválido." };
+
+  const admin = createAdminClient();
+  const { data: comment } = await admin
+    .from("campaign_comments")
+    .select("id, user_id, campaign_id")
+    .eq("id", commentId)
+    .maybeSingle();
+  if (!comment) return { ok: false, liked: false, error: "Comentário não encontrado." };
+  if (comment.user_id === user.id) {
+    return { ok: false, liked: false, error: "Você não pode curtir o seu próprio comentário." };
+  }
+
+  const { data: campaign } = await admin
+    .from("campaigns")
+    .select("slug, status, expires_at")
+    .eq("id", comment.campaign_id)
+    .maybeSingle();
+  if (!campaign || campaign.status !== "published" || !campaign.slug || isCampaignExpired(campaign as never)) {
+    return { ok: false, liked: false, error: "Esta campanha não está mais no ar." };
+  }
+
+  try {
+    const { data: existing } = await admin
+      .from("comment_likes")
+      .select("comment_id")
+      .eq("comment_id", commentId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await admin.from("comment_likes").delete().eq("comment_id", commentId).eq("user_id", user.id);
+      if (error) throw error;
+      revalidatePath(`/${campaign.slug}`);
+      return { ok: true, liked: false };
+    }
+
+    const { error } = await admin.from("comment_likes").insert({ comment_id: commentId, user_id: user.id });
+    // 23505: clique duplo — a curtida já existe, então o resultado é o mesmo.
+    if (error && error.code !== "23505") throw error;
+    revalidatePath(`/${campaign.slug}`);
+    return { ok: true, liked: true };
+  } catch (err) {
+    console.error("[comentarios] falha ao curtir", err);
+    return { ok: false, liked: false, error: "Não foi possível curtir agora. Tente de novo." };
+  }
+}

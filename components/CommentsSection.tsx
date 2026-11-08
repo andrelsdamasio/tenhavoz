@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import {
   deleteCommentAction,
   postCommentAction,
   reportCommentAction,
+  toggleLikeAction,
   type CommentState,
 } from "@/app/[slug]/comment-actions";
 import { COMMENT_MAX_LENGTH, type PublicComment } from "@/lib/comments";
@@ -17,6 +18,7 @@ interface Me {
   isAdmin?: boolean;
   isOwner?: boolean;
   myCommentIds?: string[];
+  myLikedIds?: string[];
 }
 
 const initial: CommentState = { error: null, posted: false };
@@ -57,6 +59,81 @@ function DeleteButton({ commentId, label }: { commentId: string; label: string }
         Cancelar
       </button>
     </form>
+  );
+}
+
+function LikeButton({
+  commentId,
+  count,
+  liked,
+  loggedIn,
+  own,
+  loginHref,
+}: {
+  commentId: string;
+  count: number;
+  liked: boolean;
+  loggedIn: boolean;
+  own: boolean;
+  loginHref: string;
+}) {
+  // Resposta imediata: o coração muda na hora e volta atrás se o servidor recusar.
+  const [state, setState] = useState({ liked, count });
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => setState({ liked, count }), [liked, count]);
+
+  const label = `${state.count} ${state.count === 1 ? "curtida" : "curtidas"}`;
+  const heart = state.liked ? "♥" : "♡";
+
+  if (own || !loggedIn) {
+    const content = (
+      <>
+        <span aria-hidden="true">{heart}</span> {state.count > 0 ? state.count : ""}
+      </>
+    );
+    return own || state.count > 0 ? (
+      <span className="text-xs text-gray-500" title={own ? "Você não pode curtir o seu comentário" : undefined}>
+        <span className="sr-only">{label}</span>
+        {content}
+      </span>
+    ) : (
+      <Link href={loginHref} className="text-xs text-gray-400 hover:underline" title="Entre para curtir">
+        {content} Curtir
+      </Link>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <button
+        type="button"
+        disabled={pending}
+        aria-pressed={state.liked}
+        aria-label={`${state.liked ? "Descurtir" : "Curtir"} (${label})`}
+        onClick={() => {
+          const before = state;
+          setError(null);
+          setState({ liked: !before.liked, count: Math.max(0, before.count + (before.liked ? -1 : 1)) });
+          startTransition(async () => {
+            const result = await toggleLikeAction(commentId).catch(() => null);
+            if (!result?.ok) {
+              setState(before);
+              setError(result?.error ?? "Não foi possível curtir agora.");
+            }
+          });
+        }}
+        className={`text-xs hover:underline disabled:opacity-60 ${state.liked ? "font-medium text-red-600" : "text-gray-500"}`}
+      >
+        <span aria-hidden="true">{heart}</span> {state.count > 0 ? state.count : "Curtir"}
+      </button>
+      {error && (
+        <span role="alert" className="text-xs text-red-600">
+          {error}
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -173,6 +250,14 @@ export default function CommentsSection({
                   </p>
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-700">{c.body}</p>
                   <div className="mt-2 flex items-center gap-3">
+                    <LikeButton
+                      commentId={c.id}
+                      count={c.like_count ?? 0}
+                      liked={me?.myLikedIds?.includes(c.id) ?? false}
+                      loggedIn={!!me?.loggedIn}
+                      own={mine}
+                      loginHref={loginHref}
+                    />
                     {canDelete && <DeleteButton commentId={c.id} label={mine ? "Apagar o meu" : "Apagar"} />}
                     {me?.loggedIn && !mine && <ReportButton commentId={c.id} />}
                   </div>

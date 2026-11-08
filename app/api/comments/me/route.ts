@@ -21,6 +21,7 @@ export async function GET(request: Request) {
 
   let isOwner = false;
   let myCommentIds: string[] = [];
+  let myLikedIds: string[] = [];
   if (/^[0-9a-f-]{36}$/i.test(campaignId)) {
     try {
       const admin = createAdminClient();
@@ -30,13 +31,29 @@ export async function GET(request: Request) {
       ]);
       isOwner = campaign.data?.user_id === user.id;
       myCommentIds = (mine.data ?? []).map((c) => c.id);
+
+      const { data: all } = await admin
+        .from("campaign_comments")
+        .select("id")
+        .eq("campaign_id", campaignId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      const ids = (all ?? []).map((c) => c.id);
+      if (ids.length > 0) {
+        const { data: likes } = await admin
+          .from("comment_likes")
+          .select("comment_id")
+          .eq("user_id", user.id)
+          .in("comment_id", ids);
+        myLikedIds = (likes ?? []).map((l) => l.comment_id);
+      }
     } catch (err) {
       console.error("[comentarios] falha ao ler permissões", err);
     }
   }
 
   return NextResponse.json(
-    { loggedIn: true, isAdmin: isAdminEmail(user.email), isOwner, myCommentIds },
+    { loggedIn: true, isAdmin: isAdminEmail(user.email), isOwner, myCommentIds, myLikedIds },
     { headers }
   );
 }

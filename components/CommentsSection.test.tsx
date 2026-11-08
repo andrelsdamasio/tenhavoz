@@ -11,13 +11,14 @@ vi.mock("@/app/[slug]/comment-actions", () => ({
   postCommentAction: vi.fn(),
   deleteCommentAction: vi.fn(),
   reportCommentAction: vi.fn(),
+  toggleLikeAction: vi.fn(),
 }));
 
 import CommentsSection from "./CommentsSection";
 
 const comments = [
-  { id: "1", author_name: "Ana", body: "Apoio total!", created_at: "2026-11-08T15:00:00Z" },
-  { id: "2", author_name: "Beto", body: "<b>oi</b>", created_at: "2026-11-08T16:00:00Z" },
+  { id: "1", author_name: "Ana", body: "Apoio total!", like_count: 3, created_at: "2026-11-08T15:00:00Z" },
+  { id: "2", author_name: "Beto", body: "<b>oi</b>", like_count: 0, created_at: "2026-11-08T16:00:00Z" },
 ];
 
 describe("CommentsSection", () => {
@@ -33,6 +34,11 @@ describe("CommentsSection", () => {
     const html = renderToStaticMarkup(<CommentsSection campaignId="c1" slug="cumpra" comments={comments} />);
     expect(html).not.toContain("<b>oi</b>");
     expect(html).toContain("&lt;b&gt;oi&lt;/b&gt;");
+  });
+
+  it("mostra o número de curtidas", () => {
+    const html = renderToStaticMarkup(<CommentsSection campaignId="c1" slug="cumpra" comments={comments} />);
+    expect(html).toContain("3 curtidas");
   });
 
   it("sem comentários: convite para ser o primeiro", () => {
