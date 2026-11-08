@@ -7,7 +7,7 @@ const STATE_TTL_MS = 15 * 60 * 1000;
 /** Renova o token quando faltar menos que isso para vencer. */
 const REFRESH_MARGIN_MS = 14 * 86_400_000;
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br";
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.tenhavoz.com.br";
 export const MP_REDIRECT_URI = `${SITE_URL}/api/mp/oauth/callback`;
 
 function stateSecret(): string {
