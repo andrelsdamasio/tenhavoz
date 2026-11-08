@@ -42,7 +42,7 @@ export default async function DashboardLayout({
             </Link>
             {showDonations && (
               <Link href="/dashboard/doacoes" className="hover:underline">
-                Doações
+                Arrecadações
               </Link>
             )}
             <Link href="/dashboard/new" className="hover:underline">

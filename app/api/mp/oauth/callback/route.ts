@@ -6,7 +6,12 @@ import { exchangeCode, saveConnection, SITE_URL, verifyState } from "@/lib/mp-oa
 /** Volta do Mercado Pago: confere o `state`, troca o código pelos tokens e guarda a conexão. */
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const back = (flag: string) => NextResponse.redirect(`${SITE_URL}/dashboard/doacoes?mp=${flag}`);
+  const toWizard = request.headers.get("cookie")?.includes("mp_next=nova") ?? false;
+  const back = (flag: string) => {
+    const res = NextResponse.redirect(`${SITE_URL}/dashboard/doacoes${toWizard ? "/new" : ""}?mp=${flag}`);
+    if (toWizard) res.cookies.set("mp_next", "", { maxAge: 0, path: "/" });
+    return res;
+  };
 
   const supabase = await createClient();
   const {

@@ -193,7 +193,7 @@ export default async function HomePage() {
             style={{ animationDelay: "0.2s" }}
           >
             {fundraisingOn
-              ? "Crie uma campanha de e-mail para pressionar quem decide, ou uma campanha de doação para arrecadar com transparência. O dinheiro vai direto para a sua conta."
+              ? "Crie uma campanha de e-mail para pressionar quem decide, ou uma campanha de arrecadação para arrecadar com transparência. O dinheiro vai direto para a sua conta."
               : "Crie uma página com o seu manifesto e um botão que abre o e-mail já escrito e endereçado. É só compartilhar o link e quem apoia envia em segundos."}
           </p>
 
@@ -212,7 +212,7 @@ export default async function HomePage() {
                 href="/dashboard/doacoes/new"
                 className="rounded-full bg-gray-900 px-7 py-3 font-semibold text-white shadow-md transition hover:bg-gray-800"
               >
-                Campanha de doação
+                Campanha de arrecadação
               </Link>
             )}
             <a

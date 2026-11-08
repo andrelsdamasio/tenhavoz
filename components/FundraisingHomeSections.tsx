@@ -10,7 +10,7 @@ const DONATION_STEPS = [
   { title: "Compartilhe e acompanhe", text: "Divulgue o link, veja a barra de progresso subir e agradeça a quem ajudou." },
 ];
 
-/** Dois caminhos logo abaixo do topo: campanha de e-mail ou campanha de doação. */
+/** Dois caminhos logo abaixo do topo: campanha de e-mail ou campanha de arrecadação. */
 export function TwoPathsSection() {
   return (
     <section id="dois-caminhos" className="relative mx-auto max-w-6xl scroll-mt-20 px-4 pb-20 sm:px-6">
@@ -38,7 +38,7 @@ export function TwoPathsSection() {
         <Reveal>
           <div className="flex h-full flex-col rounded-2xl border-2 border-brand-600 bg-brand-50 p-6 shadow-lg shadow-brand-600/10">
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Arrecadar</p>
-            <h3 className="mt-1 text-xl font-bold text-gray-900">Campanha de doação</h3>
+            <h3 className="mt-1 text-xl font-bold text-gray-900">Campanha de arrecadação</h3>
             <p className="mt-2 flex-1 text-sm text-gray-700">
               Uma vaquinha com meta, prazo e orçamento detalhado. O dinheiro vai direto para a sua conta do Mercado Pago,
               sem taxa para abrir a campanha.
@@ -47,7 +47,7 @@ export function TwoPathsSection() {
               href="/dashboard/doacoes/new"
               className="mt-5 block rounded-full bg-brand-600 px-5 py-3 text-center font-semibold text-white transition hover:bg-brand-700"
             >
-              Criar campanha de doação
+              Criar campanha de arrecadação
             </Link>
           </div>
         </Reveal>
@@ -61,7 +61,7 @@ export function FundraisingExplainer() {
     <section id="doacoes" className="relative border-y border-gray-200 bg-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <Reveal>
-          <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">Doações: como funciona</h2>
+          <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">Arrecadação: como funciona</h2>
           <p className="mx-auto mt-2 max-w-2xl text-center text-gray-600">
             Você fica com o que arrecadar (a meta é flexível). Cobramos só 4% de cada doação e o doador pode, se quiser,
             contribuir com o TenhaVoz. Não existe taxa de abertura.
@@ -90,7 +90,7 @@ export function ActiveFundraisers({ items }: { items: ActiveFundraiserCard[] }) 
   return (
     <section id="campanhas-ativas" className="relative mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 sm:py-20">
       <Reveal>
-        <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">Campanhas de doação no ar</h2>
+        <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">Campanhas de arrecadação no ar</h2>
         <p className="mx-auto mt-2 max-w-xl text-center text-gray-600">Veja o orçamento de cada uma e ajude quem precisa.</p>
       </Reveal>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
