@@ -4,8 +4,8 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useState } from "react";
 import { updateSettingsAction, type UpdateSettingsState } from "./actions";
 import type { AppSettings, TemplateId } from "@/lib/types";
+import { ALL_TEMPLATE_IDS, TEMPLATE_NAMES } from "@/lib/template-names";
 
-const ALL_TEMPLATES: TemplateId[] = [1, 2, 3, 4, 5];
 
 const initialState: UpdateSettingsState = { error: null, success: false };
 
@@ -130,8 +130,8 @@ export default function AdminSettingsForm({
         <span className="mb-1 block text-sm font-medium">
           Temas disponíveis na criação de campanha
         </span>
-        <div className="flex gap-4">
-          {ALL_TEMPLATES.map((id) => (
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {ALL_TEMPLATE_IDS.map((id) => (
             <label key={id} className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -140,7 +140,7 @@ export default function AdminSettingsForm({
                 checked={enabledTemplates.includes(id)}
                 onChange={() => toggleTemplate(id)}
               />
-              Tema {id}
+              Tema {id} · {TEMPLATE_NAMES[id]}
             </label>
           ))}
         </div>

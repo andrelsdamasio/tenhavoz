@@ -2,7 +2,7 @@ export type SendMode = "bcc" | "to";
 export type CampaignStatus = "draft" | "paid" | "published";
 export type PaymentProvider = "stripe" | "mercadopago";
 export type PaymentStatus = "pending" | "confirmed" | "failed" | "refunded";
-export type TemplateId = 1 | 2 | 3 | 4 | 5;
+export type TemplateId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 export type EventType = "view" | "click";
 export type CouponDiscountType = "percent" | "fixed";
 /** Duração da campanha publicada, em horas: 72h ou 7 dias. */
