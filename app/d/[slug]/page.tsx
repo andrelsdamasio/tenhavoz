@@ -7,6 +7,7 @@ import { daysLeft, loadFundraiserView, progressPercent } from "@/lib/fundraiser-
 import { deriveThemeShades, themeShadesToCssVars, isValidHexColor } from "@/lib/color";
 import { relativeTime } from "@/lib/relative-time";
 import ShareButtons from "@/components/ShareButtons";
+import DonateForm from "@/components/DonateForm";
 
 // Depende de quem está vendo (rascunho só para o dono) e do total arrecadado.
 export const dynamic = "force-dynamic";
@@ -144,14 +145,13 @@ export default async function FundraiserPage({ params }: { params: { slug: strin
               </p>
               {left !== null && <p className="text-sm text-gray-700">{left === 0 ? "Prazo encerrado" : `Faltam ${left} ${left === 1 ? "dia" : "dias"}`}</p>}
 
-              <button
-                type="button"
-                disabled
-                className="w-full rounded-md px-4 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ background: "var(--tc-base)", color: "var(--tc-on)" }}
-              >
-                {canDonate ? "Doar agora" : "Doações em breve"}
-              </button>
+              {canDonate ? (
+                <DonateForm slug={f.slug} />
+              ) : (
+                <p className="rounded-md bg-gray-100 px-4 py-3 text-center text-sm font-medium text-gray-700">
+                  {preview ? "Doações só abrem depois que a campanha for publicada." : "Esta campanha não está recebendo doações."}
+                </p>
+              )}
               <p className="text-xs text-gray-500">
                 O dinheiro vai direto para a conta Mercado Pago de quem criou a campanha. O TenhaVoz não guarda o valor das doações.
               </p>

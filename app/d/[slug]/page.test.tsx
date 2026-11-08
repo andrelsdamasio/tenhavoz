@@ -8,6 +8,7 @@ vi.mock("next/navigation", () => ({ notFound: () => notFound() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { getUser: async () => ({ data: { user: null } }) } }) }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/components/ShareButtons", () => ({ default: () => <div>share</div> }));
+vi.mock("@/components/DonateForm", () => ({ default: () => <div>form-doar</div> }));
 
 let enabled = true;
 let view: unknown;
