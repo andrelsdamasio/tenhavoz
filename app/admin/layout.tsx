@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
+import WhatsNew from "@/components/WhatsNew";
+import { entriesFor } from "@/lib/whats-new";
 import Logo from "@/components/Logo";
 import AdminNav, { type AdminNavItem } from "@/components/AdminNav";
 
@@ -45,9 +47,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Logo className="h-5 w-5 text-brand-600" />
             TenhaVoz <span className="rounded bg-gray-900 px-1.5 py-0.5 text-xs font-medium text-white">Admin</span>
           </Link>
-          <Link href="/dashboard" className="text-sm text-gray-600 hover:underline">
-            ← Voltar para minhas campanhas
-          </Link>
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <WhatsNew entries={entriesFor(true)} />
+            <Link href="/dashboard" className="hover:underline">
+              ← Voltar para minhas campanhas
+            </Link>
+          </div>
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[14rem_1fr]">

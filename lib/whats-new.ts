@@ -1,0 +1,58 @@
+/**
+ * Novidades mostradas no pop-up. Para anunciar algo novo, ADICIONE uma entrada
+ * no topo com um `id` novo (a data serve): quem ainda não viu esse id vê o
+ * pop-up uma vez. O texto deve falar do que muda para a pessoa, sem jargão.
+ */
+export interface WhatsNewEntry {
+  id: string;
+  title: string;
+  /** Quem deve ver: criadores de campanha, só o admin, ou todos. */
+  audience: "all" | "admin";
+  items: { title: string; text: string }[];
+}
+
+export const WHATS_NEW: WhatsNewEntry[] = [
+  {
+    id: "2026-11-08",
+    title: "O que há de novo no TenhaVoz",
+    audience: "all",
+    items: [
+      {
+        title: "Criar campanha em 4 passos",
+        text: "Conteúdo, destinatários, visual e revisão, com a prévia da página ao lado. Seu rascunho é salvo sozinho.",
+      },
+      {
+        title: "Teste antes de publicar",
+        text: "No último passo, abra o e-mail exatamente como seus apoiadores vão ver, sem enviar nada.",
+      },
+      {
+        title: "E-mails conferidos na hora",
+        text: "Endereços com erro de digitação ficam em vermelho e podem ser removidos com um clique.",
+      },
+      {
+        title: "Próximo passo em cada campanha",
+        text: "O painel mostra o que fazer agora: pagar, compartilhar ou renovar.",
+      },
+    ],
+  },
+  {
+    id: "2026-11-08-admin",
+    title: "Novidades para o administrador",
+    audience: "admin",
+    items: [
+      {
+        title: "Busca e gestão de campanhas",
+        text: "Encontre por título, link ou e-mail do dono. Em “Gerenciar” dá para estender o prazo e corrigir destinatários, com histórico de quem fez o quê.",
+      },
+      {
+        title: "Saúde do banco",
+        text: "A visão geral agora testa o banco de verdade e avisa se ele não responder.",
+      },
+    ],
+  },
+];
+
+/** Entradas que a pessoa pode ver, da mais nova para a mais antiga. */
+export function entriesFor(isAdmin: boolean): WhatsNewEntry[] {
+  return WHATS_NEW.filter((e) => e.audience === "all" || isAdmin);
+}
