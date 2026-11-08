@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   BASIC_COLORS,
   hexToRgb,
-  isTooLightForWhiteText,
   parseHexInput,
   rgbToHex,
   type Rgb,
@@ -77,7 +76,6 @@ export default function ColorPicker({ value, onChange, advanced, suggested = [] 
   }
 
   const hexInvalid = hexDraft.trim() !== "" && parseHexInput(hexDraft) === null;
-  const tooLight = value !== null && isTooLightForWhiteText(value);
 
   return (
     <div className="space-y-3">
@@ -180,11 +178,6 @@ export default function ColorPicker({ value, onChange, advanced, suggested = [] 
               </div>
             </div>
           </div>
-          {tooLight && (
-            <p className="mt-3 text-xs text-amber-700">
-              Essa cor é muito clara: o texto branco pode ficar difícil de ler. Prefira um tom mais escuro.
-            </p>
-          )}
         </div>
       )}
     </div>

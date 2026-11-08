@@ -1,3 +1,4 @@
+import CreateYourOwnLink from "@/components/CreateYourOwnLink";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -85,6 +86,7 @@ export default async function PublicCampaignPage({ params }: PageProps) {
     <>
       <ViewTracker campaignId={campaign.id} />
       <Template campaign={safeCampaign} mailtoUrl={mailtoUrl} />
+      <CreateYourOwnLink />
     </>
   );
 }

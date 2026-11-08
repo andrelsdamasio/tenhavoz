@@ -12,7 +12,7 @@ export default function Template3({ campaign, mailtoUrl }: TemplateProps) {
   return (
     <main style={style} className="min-h-screen bg-gray-100 px-4 py-16">
       <div className="mx-auto max-w-xl rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--tc-base,#4338ca)]">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--tc-accent,#4338ca)]">
           Manifesto público
         </p>
         <h1 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl">
@@ -35,7 +35,7 @@ export default function Template3({ campaign, mailtoUrl }: TemplateProps) {
           <TrackedMailtoLink
             campaignId={campaign.id}
             mailtoUrl={mailtoUrl}
-            className="flex-1 rounded-md bg-[var(--tc-base,#4338ca)] px-6 py-3 text-center font-medium text-white hover:bg-[var(--tc-dark,#3730a3)]"
+            className="flex-1 rounded-md bg-[var(--tc-base,#4338ca)] px-6 py-3 text-center font-medium text-[var(--tc-on,#ffffff)] hover:bg-[var(--tc-dark,#3730a3)]"
           >
             Enviar e-mail agora
           </TrackedMailtoLink>

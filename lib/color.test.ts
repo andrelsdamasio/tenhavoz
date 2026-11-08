@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BASIC_COLORS,
   contrastWithWhite,
+  deriveThemeShades,
   hexToRgb,
   isBasicColor,
   isTooLightForWhiteText,
@@ -50,7 +51,16 @@ describe("cores", () => {
     expect(isBasicColor("#123456")).toBe(false);
   });
 
-  it("as cores básicas funcionam com texto branco", () => {
-    expect(BASIC_COLORS.filter((c) => isTooLightForWhiteText(c.hex))).toEqual([]);
+  it("amarelo vivo usa texto escuro; azul usa texto branco", () => {
+    const yellow = BASIC_COLORS.find((c) => c.name === "Amarelo")!;
+    expect(yellow.hex).toBe("#facc15");
+    expect(deriveThemeShades(yellow.hex).on).toBe("#111827");
+    expect(deriveThemeShades("#2563eb").on).toBe("#ffffff");
+  });
+
+  it("o tom de destaque sempre é legível sobre branco", () => {
+    for (const c of [...BASIC_COLORS.map((b) => b.hex), "#ffffff", "#fde047", "#a3e635"]) {
+      expect(contrastWithWhite(deriveThemeShades(c).accent)).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });

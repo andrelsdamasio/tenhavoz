@@ -34,7 +34,7 @@ export default function Template1({ campaign, mailtoUrl }: TemplateProps) {
         <TrackedMailtoLink
           campaignId={campaign.id}
           mailtoUrl={mailtoUrl}
-          className="rounded-md bg-[var(--tc-base,#111827)] px-6 py-3 text-center font-medium text-white hover:bg-[var(--tc-dark,#374151)]"
+          className="rounded-md bg-[var(--tc-base,#111827)] px-6 py-3 text-center font-medium text-[var(--tc-on,#ffffff)] hover:bg-[var(--tc-dark,#374151)]"
         >
           Enviar e-mail agora
         </TrackedMailtoLink>

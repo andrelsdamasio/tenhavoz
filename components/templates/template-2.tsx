@@ -12,17 +12,17 @@ export default function Template2({ campaign, mailtoUrl }: TemplateProps) {
   return (
     <main
       style={style}
-      className="min-h-screen bg-gradient-to-br from-[var(--tc-dark,#3730a3)] via-[var(--tc-base,#4338ca)] to-[var(--tc-base,#4f46e5)] text-white"
+      className="min-h-screen bg-gradient-to-br from-[var(--tc-dark,#3730a3)] via-[var(--tc-base,#4338ca)] to-[var(--tc-base,#4f46e5)] text-[var(--tc-on,#ffffff)]"
     >
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-8 px-6 py-16 text-center">
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
           {campaign.title}
         </h1>
-        <p className="whitespace-pre-wrap text-lg leading-relaxed text-[var(--tc-lighter,#eef2ff)]">
+        <p className="whitespace-pre-wrap text-lg leading-relaxed text-[var(--tc-on-soft,#eef2ff)]">
           {campaign.subtitle ?? campaign.manifest_text}
         </p>
-        <div className="w-full max-w-xl rounded-xl bg-white/10 p-4 text-sm text-[var(--tc-lighter,#eef2ff)]">
-          <p className="mb-1 font-semibold text-white">Como participar</p>
+        <div className="w-full max-w-xl rounded-xl bg-white/10 p-4 text-sm text-[var(--tc-on-soft,#eef2ff)]">
+          <p className="mb-1 font-semibold text-[var(--tc-on,#ffffff)]">Como participar</p>
           <p>
             Clique no botão abaixo, confira a mensagem que abrir no seu app de
             e-mail e toque em enviar.
@@ -32,7 +32,7 @@ export default function Template2({ campaign, mailtoUrl }: TemplateProps) {
           <TrackedMailtoLink
             campaignId={campaign.id}
             mailtoUrl={mailtoUrl}
-            className="rounded-full bg-white px-8 py-3.5 text-lg font-semibold text-[var(--tc-dark,#3730a3)] shadow-lg hover:bg-[var(--tc-lighter,#eef2ff)]"
+            className="rounded-full bg-[var(--tc-on,#ffffff)] px-8 py-3.5 text-lg font-semibold text-[var(--tc-on-text,#3730a3)] shadow-lg hover:opacity-90"
           >
             Enviar e-mail agora
           </TrackedMailtoLink>
@@ -41,7 +41,7 @@ export default function Template2({ campaign, mailtoUrl }: TemplateProps) {
               href={campaign.drive_link}
               target="_blank"
               rel="noreferrer noopener"
-              className="rounded-full border border-white/60 px-8 py-3.5 text-lg font-medium hover:bg-white/10"
+              className="rounded-full border-2 border-[var(--tc-on,#ffffff)] px-8 py-3.5 text-lg font-medium hover:bg-white/10"
             >
               Material de apoio
             </a>

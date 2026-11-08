@@ -68,6 +68,14 @@ export interface ThemeShades {
   dark: string;
   light: string;
   lighter: string;
+  /** Cor do texto sobre a cor base: branco, ou quase preto se a base for clara (ex.: amarelo). */
+  on: string;
+  /** Versão suave de `on`, para textos secundários sobre a base. */
+  onSoft: string;
+  /** Cor do texto de um botão que usa `on` como fundo. */
+  onText: string;
+  /** Tom da cor legível como texto sobre fundo branco (contraste mínimo 4,5). */
+  accent: string;
 }
 
 /** base = a cor escolhida; dark = pra hover; light/lighter = fundos suaves. */
@@ -76,13 +84,28 @@ export function deriveThemeShades(hex: string): ThemeShades {
     throw new Error(`Cor hex inválida: "${hex}"`);
   }
 
-  const [h, s] = hexToHsl(hex);
+  const [h, s, l] = hexToHsl(hex);
+  const lighter = hslToHex(h, Math.max(10, s * 0.25), 97);
+  const lightBase = isTooLightForWhiteText(hex);
+  const dark = hslToHex(h, Math.min(100, s), 40);
+
+  // Escurece até o texto na cor do tema ficar legível sobre branco.
+  let accentL = Math.min(l, 40);
+  let accent = hslToHex(h, Math.min(100, s), accentL);
+  while (contrastWithWhite(accent) < 4.5 && accentL > 5) {
+    accentL -= 2;
+    accent = hslToHex(h, Math.min(100, s), accentL);
+  }
 
   return {
     base: hex,
-    dark: hslToHex(h, Math.min(100, s), 40),
+    dark,
     light: hslToHex(h, Math.max(15, s * 0.3), 94),
-    lighter: hslToHex(h, Math.max(10, s * 0.25), 97),
+    lighter,
+    on: lightBase ? "#111827" : "#ffffff",
+    onSoft: lightBase ? "#374151" : lighter,
+    onText: lightBase ? hex : dark,
+    accent,
   };
 }
 
@@ -93,6 +116,10 @@ export function themeShadesToCssVars(shades: ThemeShades): Record<string, string
     "--tc-dark": shades.dark,
     "--tc-light": shades.light,
     "--tc-lighter": shades.lighter,
+    "--tc-on": shades.on,
+    "--tc-on-soft": shades.onSoft,
+    "--tc-on-text": shades.onText,
+    "--tc-accent": shades.accent,
   };
 }
 
@@ -100,7 +127,7 @@ export function themeShadesToCssVars(shades: ThemeShades): Record<string, string
 export const BASIC_COLORS: { name: string; hex: string }[] = [
   { name: "Vermelho", hex: "#dc2626" },
   { name: "Laranja", hex: "#ea580c" },
-  { name: "Amarelo", hex: "#a16207" },
+  { name: "Amarelo", hex: "#facc15" },
   { name: "Verde", hex: "#16a34a" },
   { name: "Turquesa", hex: "#0d9488" },
   { name: "Azul-claro", hex: "#0284c7" },
