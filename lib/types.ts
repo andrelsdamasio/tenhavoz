@@ -107,6 +107,16 @@ export interface InboxMessage {
   reply_to_id: string | null;
 }
 
+export interface CampaignComment {
+  id: string;
+  campaign_id: string;
+  user_id: string;
+  author_name: string;
+  body: string;
+  reported_at: string | null;
+  created_at: string;
+}
+
 export interface AdminAuditEntry {
   id: string;
   admin_email: string;
@@ -159,6 +169,11 @@ export interface Database {
         Row: Referral;
         Insert: Partial<Referral> & Pick<Referral, "referred_user_id" | "referrer_user_id" | "slug">;
         Update: Partial<Referral>;
+      };
+      campaign_comments: {
+        Row: CampaignComment;
+        Insert: Partial<CampaignComment> & Pick<CampaignComment, "campaign_id" | "user_id" | "author_name" | "body">;
+        Update: Partial<CampaignComment>;
       };
       admin_audit_log: {
         Row: AdminAuditEntry;

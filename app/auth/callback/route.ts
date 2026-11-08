@@ -1,3 +1,4 @@
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +13,7 @@ import { claimReferral, REFERRAL_COOKIE } from "@/lib/referral";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
+  const redirectTo = safeRedirectPath(searchParams.get("redirectTo"));
 
   if (code) {
     const supabase = await createClient();

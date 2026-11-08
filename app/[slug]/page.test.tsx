@@ -9,6 +9,12 @@ vi.mock("@/lib/campaigns", () => ({
   isCampaignExpired: () => false,
 }));
 vi.mock("@/components/ViewTracker", () => ({ default: () => null }));
+vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
+const listComments = vi.fn();
+vi.mock("@/lib/comments", () => ({ listComments: (...a: unknown[]) => listComments(...a) }));
+vi.mock("@/components/CommentsSection", () => ({
+  default: ({ comments }: { comments: { body: string }[] }) => `COMENTARIOS:${comments.map((c) => c.body).join("|")}`,
+}));
 
 import Page from "./page";
 
@@ -20,6 +26,7 @@ const base = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  listComments.mockResolvedValue([]);
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -40,5 +47,22 @@ describe("página pública: destinatários inválidos", () => {
     getPublished.mockResolvedValue({ ...base, recipients: ["a@x.gov.br", "b@y.com"] });
     const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ slug: "cumpra" }) }));
     expect(html).toContain("bcc=a@x.gov.br,b@y.com");
+  });
+});
+
+describe("página pública: comentários", () => {
+  it("mostra os comentários da campanha", async () => {
+    getPublished.mockResolvedValue({ ...base, recipients: ["a@x.gov.br"] });
+    listComments.mockResolvedValue([{ id: "1", author_name: "Ana", body: "Apoio!", created_at: "2026-11-08T12:00:00Z" }]);
+    const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ slug: "cumpra" }) }));
+    expect(html).toContain("COMENTARIOS:Apoio!");
+  });
+
+  it("falha ao carregar comentários não derruba a página nem o botão de envio", async () => {
+    getPublished.mockResolvedValue({ ...base, recipients: ["a@x.gov.br"] });
+    listComments.mockRejectedValue(new Error("banco fora"));
+    const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ slug: "cumpra" }) }));
+    expect(html).toContain("mailto:?bcc=a@x.gov.br");
+    expect(html).toContain("COMENTARIOS:");
   });
 });
