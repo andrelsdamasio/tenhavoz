@@ -8,6 +8,8 @@ import { buildMailtoUrl } from "@/lib/mailto";
 import { parseDriveLink } from "@/lib/campaign-input";
 import { getTemplateComponent } from "@/components/templates";
 import ViewTracker from "@/components/ViewTracker";
+import WhatsNew from "@/components/WhatsNew";
+import { entriesFor } from "@/lib/whats-new";
 import CommentsSection from "@/components/CommentsSection";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listComments, type PublicComment } from "@/lib/comments";
@@ -122,6 +124,7 @@ export default async function PublicCampaignPage({ params }: PageProps) {
         themeColor={campaign.theme_color}
       />
       <CreateYourOwnLink refSlug={campaign.slug} />
+      <WhatsNew entries={entriesFor(false)} popupOnly />
     </>
   );
 }
