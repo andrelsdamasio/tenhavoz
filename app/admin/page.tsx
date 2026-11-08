@@ -46,12 +46,13 @@ export default async function AdminOverviewPage() {
   const { overview } = dashboard;
   // Ping real no banco: as variáveis podem existir e o banco estar fora.
   const dbStart = Date.now();
-  const dbPing = await admin
-    .from("campaigns")
-    .select("id", { head: true, count: "exact" })
-    .limit(1)
-    .then((r) => ({ ok: !r.error, ms: Date.now() - dbStart }))
-    .catch(() => ({ ok: false, ms: Date.now() - dbStart }));
+  let dbPing: { ok: boolean; ms: number };
+  try {
+    const r = await admin.from("campaigns").select("id", { head: true, count: "exact" }).limit(1);
+    dbPing = { ok: !r.error, ms: Date.now() - dbStart };
+  } catch {
+    dbPing = { ok: false, ms: Date.now() - dbStart };
+  }
   const health = getHealthChecks();
   const criticalDown = health.filter((h) => h.critical && !h.ok);
   const otherDown = health.filter((h) => !h.critical && !h.ok);
