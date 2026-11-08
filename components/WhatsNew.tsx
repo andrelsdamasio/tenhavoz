@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { WhatsNewEntry } from "@/lib/whats-new";
-import { createClient } from "@/lib/supabase/client";
 
 const STORAGE_KEY = "tenhavoz:whats-new-seen";
 
@@ -32,7 +31,7 @@ export default function WhatsNew({
   popupOnly = false,
 }: {
   entries: WhatsNewEntry[];
-  /** Páginas públicas (em cache): sem botão; o pop-up só abre se a pessoa estiver logada. */
+  /** Página inicial: sem botão; o pop-up abre sozinho uma vez para cada novidade, para qualquer visitante. */
   popupOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -41,7 +40,6 @@ export default function WhatsNew({
   const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
     const seen = readSeen();
     if (seen === null) return;
     const unseen = entries.some((e) => !seen.includes(e.id));
@@ -51,15 +49,7 @@ export default function WhatsNew({
       setOpen(true);
       return;
     }
-    createClient()
-      .auth.getSession()
-      .then(({ data }) => {
-        if (!cancelled && data.session) setOpen(true);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
+    setOpen(true);
   }, [entries, popupOnly]);
 
   const close = useCallback(() => {
