@@ -4,6 +4,18 @@
 
 html {
   color-scheme: light;
+  scroll-behavior: smooth;
+}
+
+/* Transições suaves em tudo que é clicável (cor, sombra, leve movimento). */
+a,
+button,
+input,
+select,
+textarea {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
@@ -44,6 +56,36 @@ body {
   }
 }
 
+/* Só opacidade: sem transform, para não quebrar elementos sticky/fixed. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-page-in {
+  animation: page-in 0.35s ease-out both;
+}
+
+.animate-fade-in {
+  opacity: 0;
+  animation: fade-in 0.4s ease-out forwards;
+}
+
 .animate-fade-in-up {
   opacity: 0;
   animation: fade-in-up 0.7s ease-out forwards;
@@ -58,6 +100,12 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-page-in,
+  .animate-fade-in,
   .animate-fade-in-up,
   .animate-float,
   .animate-blob {

@@ -5,6 +5,9 @@ import { useFormState, useFormStatus, flushSync } from "react-dom";
 import { buildMailtoUrl } from "@/lib/mailto";
 import { sanitizeSlug } from "@/lib/slug";
 import { getTemplateComponent } from "@/components/templates";
+import { TEMPLATE_NAMES } from "@/lib/template-names";
+import ColorPicker from "@/components/ColorPicker";
+import { isBasicColor } from "@/lib/color";
 import type { Campaign, SendMode, TemplateId } from "@/lib/types";
 import { createCampaignAction, type NewCampaignState } from "@/app/dashboard/new/actions";
 import { updateCampaignAction } from "@/app/dashboard/edit/actions";
@@ -95,7 +98,7 @@ function TemplatePreviewCard({
           selected ? "bg-brand-600 text-white" : "bg-white/90 text-gray-700 shadow-sm"
         }`}
       >
-        Tema {id}
+        {TEMPLATE_NAMES[id]}
       </span>
     </button>
   );
@@ -152,7 +155,9 @@ export default function CampaignForm({
   const lastAutoFilledTextRef = useRef<string>(editCampaign?.manifest_text ?? "");
   const [mode, setMode] = useState<"basico" | "avancado">(
     editCampaign &&
-      (editCampaign.drive_link || editCampaign.theme_color || editCampaign.send_mode !== "bcc")
+      (editCampaign.drive_link ||
+        (editCampaign.theme_color && !isBasicColor(editCampaign.theme_color)) ||
+        editCampaign.send_mode !== "bcc")
       ? "avancado"
       : "basico"
   );
@@ -165,13 +170,13 @@ export default function CampaignForm({
   const modeRef = useRef(mode);
   modeRef.current = mode;
 
-  // No modo básico, forma de envio, link do Drive e cor ficam no padrão. Os
+  // No modo básico, forma de envio e link do Drive ficam no padrão (a cor vem das cores básicas). Os
   // valores escolhidos no avançado continuam guardados no estado (trocar de
   // modo sem querer não apaga nada), mas só valem no avançado — o envio do
   // formulário e a pré-visualização usam estes valores "efetivos".
   const effectiveSendMode: SendMode = mode === "avancado" ? sendMode : "bcc";
   const effectiveDriveLink = mode === "avancado" ? driveLink : "";
-  const effectiveThemeColor = mode === "avancado" ? themeColor : null;
+  const effectiveThemeColor = themeColor;
 
   function handleModeChange(next: "basico" | "avancado") {
     if (next === "basico" && title.trim() && subject.trim()) {
@@ -714,8 +719,8 @@ export default function CampaignForm({
         </div>
         <p className="mt-1 text-xs text-gray-500">
           {mode === "basico"
-            ? "Você só escolhe o tema da página. Cor, link do Drive e forma de envio ficam no padrão recomendado."
-            : "Escolha a cor do tema, adicione um link do Drive e defina como os e-mails são enviados."}
+            ? "Você escolhe o tema e uma das cores básicas. Link do Drive e forma de envio ficam no padrão recomendado."
+            : "Escolha qualquer cor por RGB ou código, adicione um link do Drive e defina como os e-mails são enviados."}
         </p>
       </div>
 
@@ -788,47 +793,21 @@ export default function CampaignForm({
         </div>
       </div>
 
-      {mode === "avancado" && (
-        <div>
-          <span className="mb-1 block text-sm font-medium">
-            Cor do tema (opcional)
-          </span>
-          <input type="hidden" name="themeColor" value={themeColor ?? ""} />
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setThemeColor(null)}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border-2 bg-white text-xs text-gray-400 ${
-                themeColor === null ? "border-brand-600" : "border-gray-200 hover:border-gray-300"
-              }`}
-              aria-label="Cor padrão do tema"
-              title="Cor padrão"
-            >
-              ✕
-            </button>
-            {colorPalette.map((color) => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => setThemeColor(color)}
-                className={`h-9 w-9 rounded-full border-2 ${
-                  themeColor === color ? "border-brand-600" : "border-transparent"
-                }`}
-                style={{ backgroundColor: color }}
-                aria-label={`Usar a cor ${color}`}
-                title={color}
-              />
-            ))}
-          </div>
-          <p className="mt-1 text-xs text-gray-500">
-            Muda a cor de destaque (botão, acentos) do tema escolhido acima.
-          </p>
-        </div>
-      )}
-
-      {mode === "basico" && (
-        <input type="hidden" name="themeColor" value="" />
-      )}
+      <div>
+        <span className="mb-1 block text-sm font-medium">
+          Cor do tema (opcional)
+        </span>
+        <input type="hidden" name="themeColor" value={themeColor ?? ""} />
+        <ColorPicker
+          value={themeColor}
+          onChange={setThemeColor}
+          advanced={mode === "avancado"}
+          suggested={colorPalette}
+        />
+        <p className="mt-2 text-xs text-gray-500">
+          Muda a cor de destaque (botão, acentos) do tema escolhido acima.
+        </p>
+      </div>
 
       {preview.warnings.filter((warning) => !warning.startsWith("A URL gerada tem")).length >
         0 && (
