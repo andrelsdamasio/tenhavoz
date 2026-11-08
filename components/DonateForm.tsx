@@ -27,7 +27,7 @@ function Submit({ label }: { label: string }) {
 export default function DonateForm({ slug }: { slug: string }) {
   const [state, action] = useFormState(donateAction.bind(null, slug), initial);
   const [amount, setAmount] = useState("50,00");
-  const [tipPct, setTipPct] = useState(5);
+  const [tipPct, setTipPct] = useState(0);
 
   useEffect(() => {
     if (state.checkoutUrl) window.location.assign(state.checkoutUrl);
@@ -75,7 +75,7 @@ export default function DonateForm({ slug }: { slug: string }) {
           ))}
         </div>
         <input type="hidden" name="tip" value={tipStr} />
-        <p className="mt-1 text-xs text-gray-500">Opcional. Ajuda a manter o TenhaVoz; não sai do valor da campanha.</p>
+        <p className="mt-1 text-xs text-gray-500">Totalmente opcional: é um extra, além da doação, só para quem quiser ajudar a manter o TenhaVoz no ar. Não sai do valor da campanha.</p>
       </div>
 
       <input name="donorName" placeholder="Seu nome (opcional)" maxLength={60} className={inputCls} />
@@ -85,9 +85,16 @@ export default function DonateForm({ slug }: { slug: string }) {
       <textarea name="message" rows={2} maxLength={300} placeholder="Mensagem de apoio (opcional, sem links)" className={inputCls} />
 
       {charge && (
-        <p className="text-xs text-gray-600">
-          Você paga <strong>{formatCentsBRL(charge.totalCents)}</strong>. A campanha recebe o valor da doação menos a tarifa do Mercado Pago e 4% do TenhaVoz.
-        </p>
+        <div className="space-y-1 text-xs text-gray-600">
+          <p>
+            Você paga <strong>{formatCentsBRL(charge.totalCents)}</strong>. A campanha recebe o valor da doação menos a tarifa
+            do Mercado Pago (processamento do pagamento) e a taxa de 4% do TenhaVoz.
+          </p>
+          <p>
+            Os 4% cobrem os custos de manter a plataforma: hospedagem, segurança e prevenção de fraudes, moderação das
+            campanhas, suporte e envio dos e-mails de aviso e recibo. Não cobramos nada para abrir a campanha.
+          </p>
+        </div>
       )}
       {state.error && <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-700">{state.error}</p>}
       <Submit label={charge ? `Doar ${formatCentsBRL(charge.totalCents)}` : "Doar agora"} />
