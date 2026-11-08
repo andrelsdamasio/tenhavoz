@@ -15,6 +15,9 @@ import { updateCampaignAction } from "@/app/dashboard/edit/actions";
 
 const initialState: NewCampaignState = { error: null };
 
+const STEPS = ["Conteúdo", "Destinatários", "Visual", "Revisar"] as const;
+const LAST_STEP = STEPS.length - 1;
+
 const DRAFT_STORAGE_KEY = "tenhavoz:new-campaign-draft";
 
 interface StoredDraft {
@@ -163,6 +166,10 @@ export default function CampaignForm({
       : "basico"
   );
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [step, setStep] = useState(0);
+  const [maxStep, setMaxStep] = useState(isEditing ? LAST_STEP : 0);
+  const [stepError, setStepError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -294,6 +301,12 @@ export default function CampaignForm({
   // na hora e só então deixamos o formulário seguir; se a IA falhar, damos
   // um erro específico em vez do genérico.
   async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
+    // Enter num campo nos passos anteriores só avança; o envio real é no último.
+    if (step < LAST_STEP) {
+      e.preventDefault();
+      goNext();
+      return;
+    }
     if (mode === "basico") {
       const trimmed = manifestText.trim();
       if (trimmed && (!title.trim() || !subject.trim())) {
@@ -493,12 +506,58 @@ export default function CampaignForm({
 
   const SelectedTemplate = getTemplateComponent(templateId);
 
+  function validateStep(n: number): string | null {
+    if (n === 0) {
+      if (!manifestText.trim()) return "Escreva o texto do manifesto para continuar.";
+      if (bodyOverLimitBlocking) return "O texto passou do limite. Encurte (ou use \"Encurtar com IA\") para continuar.";
+      if (mode === "avancado") {
+        if (!title.trim()) return "Preencha o título da campanha.";
+        if (!subject.trim()) return "Preencha o assunto do e-mail.";
+        if (!slug.trim()) return "Preencha o link curto da página.";
+      }
+    }
+    if (n === 1) {
+      if (preview.recipients.length === 0) return "Adicione pelo menos um e-mail de destino.";
+      if (invalidRecipients.length > 0) return "Corrija os e-mails em vermelho antes de continuar.";
+    }
+    return null;
+  }
+
+  function goTo(target: number) {
+    if (target > step) {
+      for (let n = step; n < target; n++) {
+        const err = validateStep(n);
+        if (err) {
+          setStepError(err);
+          if (n !== step) setStep(n);
+          return;
+        }
+      }
+    }
+    setStepError(null);
+    setStep(target);
+    setMaxStep((m) => Math.max(m, target));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goNext() {
+    goTo(Math.min(step + 1, LAST_STEP));
+  }
+
+  function removeRecipient(email: string) {
+    setRecipientsRaw(preview.recipients.filter((r) => r !== email).join(", "));
+  }
+
+  const validRecipients = preview.recipients.filter((r) => !invalidRecipients.includes(r));
+
+
   return (
     <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_440px]">
     <form
       ref={formRef}
       action={formAction}
       onSubmit={handleFormSubmit}
+      noValidate
       className="flex flex-col gap-6"
     >
       {isEditing && <input type="hidden" name="campaignId" value={editCampaign.id} />}
@@ -510,17 +569,50 @@ export default function CampaignForm({
           <p className="font-medium">Não foi possível continuar:</p>
           <p className="mt-1">{state.error}</p>
           <p className="mt-1 text-xs text-red-600">
-            Nada foi perdido — os dados que você digitou continuam preenchidos abaixo.
+            Nada foi perdido — os dados que você digitou continuam preenchidos.
           </p>
         </div>
       )}
 
-      {!isEditing && (
-        <p className="text-xs text-gray-400">
-          Rascunho salvo automaticamente neste navegador.
-        </p>
-      )}
+      <nav aria-label="Passos da campanha">
+        <ol className="flex items-center gap-2">
+          {STEPS.map((label, i) => {
+            const reachable = i <= maxStep;
+            const current = i === step;
+            return (
+              <li key={label} className="flex flex-1 items-center gap-2">
+                <button
+                  type="button"
+                  disabled={!reachable}
+                  onClick={() => goTo(i)}
+                  aria-current={current ? "step" : undefined}
+                  className={`flex w-full items-center gap-2 rounded-md border px-2 py-1.5 text-left text-xs sm:text-sm transition ${
+                    current
+                      ? "border-brand-600 bg-brand-50 font-semibold text-brand-700"
+                      : reachable
+                        ? "border-gray-200 text-gray-700 hover:bg-gray-50"
+                        : "border-gray-100 text-gray-400"
+                  }`}
+                >
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
+                      current ? "bg-brand-600 text-white" : i < step ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {i < step ? "✓" : i + 1}
+                  </span>
+                  <span className="truncate">{label}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+        {!isEditing && (
+          <p className="mt-2 text-xs text-gray-400">Rascunho salvo automaticamente neste navegador.</p>
+        )}
+      </nav>
 
+      <div hidden={step !== 0} className="flex flex-col gap-6">
       {mode === "avancado" && (
         <div>
           <div className="mb-1 flex items-baseline justify-between">
@@ -674,7 +766,9 @@ export default function CampaignForm({
           </p>
         )}
       </div>
+      </div>
 
+      <div hidden={step !== 1} className="flex flex-col gap-6">
       <div>
         <label className="mb-1 block text-sm font-medium" htmlFor="recipients">
           E-mails de destino
@@ -700,6 +794,31 @@ export default function CampaignForm({
         <p id="recipients-status" className="mt-1 text-xs text-gray-500">
           {preview.recipients.length} destinatário(s) reconhecido(s).
         </p>
+        {preview.recipients.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-2" aria-label="Destinatários">
+            {preview.recipients.map((email, i) => {
+              const bad = invalidRecipients.includes(email);
+              return (
+                <li
+                  key={`${email}-${i}`}
+                  className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${
+                    bad ? "border-red-300 bg-red-50 text-red-700" : "border-gray-200 bg-gray-50 text-gray-700"
+                  }`}
+                >
+                  <span>{email}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeRecipient(email)}
+                    aria-label={`Remover ${email}`}
+                    className="ml-1 rounded-full px-1 text-gray-500 hover:bg-gray-200 hover:text-gray-800"
+                  >
+                    ×
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
         {invalidRecipients.length > 0 && (
           <p role="alert" className="mt-1 text-sm text-red-600">
             {invalidRecipients.length === 1 ? "Este e-mail parece incorreto" : "Estes e-mails parecem incorretos"}:{" "}
@@ -708,7 +827,9 @@ export default function CampaignForm({
           </p>
         )}
       </div>
+      </div>
 
+      <div hidden={step !== 2} className="flex flex-col gap-6">
       <div>
         <span className="mb-1 block text-sm font-medium">Personalização</span>
         <div className="inline-flex rounded-md border border-gray-300 p-0.5">
@@ -822,40 +943,94 @@ export default function CampaignForm({
           Muda a cor de destaque (botão, acentos) do tema escolhido acima.
         </p>
       </div>
+      </div>
 
-      {preview.warnings.filter((warning) => !warning.startsWith("A URL gerada tem")).length >
-        0 && (
-        <div className="rounded-md border border-gray-200 bg-white p-4">
-          <p className="mb-2 text-sm font-medium">
-            Pré-visualização do link de e-mail
-          </p>
-          {preview.warnings
-            .filter((warning) => !warning.startsWith("A URL gerada tem"))
-            .map((warning) => (
-              <p key={warning} className="text-xs text-amber-700">
-                {warning}
+      <div hidden={step !== 3} className="flex flex-col gap-6">
+        <section className="rounded-lg border border-gray-200 bg-white p-4">
+          <h2 className="mb-3 text-base font-semibold">Confira antes de continuar</h2>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+            <dt className="text-gray-500">Título</dt>
+            <dd>{title || "Gerado automaticamente ao salvar"}</dd>
+            <dt className="text-gray-500">Assunto</dt>
+            <dd>{subject || "Gerado automaticamente ao salvar"}</dd>
+            <dt className="text-gray-500">Destinatários</dt>
+            <dd>{preview.recipients.length} e-mail(s)</dd>
+            <dt className="text-gray-500">Tema</dt>
+            <dd>{TEMPLATE_NAMES[templateId]}</dd>
+            <dt className="text-gray-500">Link</dt>
+            <dd className="break-all">{SITE_HOST}/{slug || "seu-link"}</dd>
+          </dl>
+          <div className="mt-4 rounded-md bg-gray-50 p-3 text-sm">
+            <p className="font-medium">Teste antes de publicar</p>
+            <p className="mt-1 text-xs text-gray-600">
+              Abre o seu app de e-mail com a mensagem montada exatamente como seus apoiadores vão
+              ver. Nada é enviado até você apertar enviar lá.
+            </p>
+            {validRecipients.length > 0 && invalidRecipients.length === 0 ? (
+              <a
+                href={preview.url}
+                className="mt-2 inline-block rounded-md border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
+              >
+                Abrir e-mail de teste
+              </a>
+            ) : (
+              <p className="mt-2 text-xs text-amber-700">
+                Corrija os destinatários no passo 2 para liberar o teste.
               </p>
-            ))}
-        </div>
-      )}
+            )}
+          </div>
+        </section>
+      </div>
 
-      {aiError && <p className="text-sm text-red-600">{aiError}</p>}
-
-      {mode === "basico" && aiAutoFillLoading && (
-        <p className="text-xs text-gray-500">
-          Gerando título e assunto com IA antes de continuar...
+      {stepError && (
+        <p role="alert" className="text-sm text-red-600">
+          {stepError}
         </p>
       )}
+      {aiError && <p className="text-sm text-red-600">{aiError}</p>}
+      {mode === "basico" && aiAutoFillLoading && (
+        <p className="text-xs text-gray-500">Gerando título e assunto com IA antes de continuar...</p>
+      )}
 
-      <SubmitButton
-        blocked={bodyOverLimitBlocking || aiAutoFillLoading || invalidRecipients.length > 0}
-        idleLabel={isEditing ? "Salvar alterações" : "Salvar rascunho e ir para pagamento"}
-        pendingLabel="Salvando..."
-      />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex gap-2">
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={() => goTo(step - 1)}
+              className="rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
+            >
+              Voltar
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowPreview((v) => !v)}
+            className="rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 lg:hidden"
+          >
+            {showPreview ? "Esconder prévia" : "Ver prévia"}
+          </button>
+        </div>
+        {step < LAST_STEP ? (
+          <button
+            type="button"
+            onClick={goNext}
+            className="rounded-md bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700"
+          >
+            Continuar
+          </button>
+        ) : (
+          <SubmitButton
+            blocked={bodyOverLimitBlocking || aiAutoFillLoading || invalidRecipients.length > 0}
+            idleLabel={isEditing ? "Salvar alterações" : "Salvar rascunho e ir para pagamento"}
+            pendingLabel="Salvando..."
+          />
+        )}
+      </div>
     </form>
 
-    <aside className="lg:sticky lg:top-6">
-      <p className="mb-2 text-sm font-medium text-gray-700">
+    <aside className={`${showPreview ? "block" : "hidden"} lg:sticky lg:top-6 lg:block`}>
+<p className="mb-2 text-sm font-medium text-gray-700">
         Pré-visualização ao vivo
       </p>
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
