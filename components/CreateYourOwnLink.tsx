@@ -4,11 +4,14 @@ import Link from "next/link";
  * Rodapé discreto no fim das páginas públicas: quem viu a campanha pode criar
  * a sua. Fica fora do tema (faixa neutra) para ler bem em qualquer cor.
  */
-export default function CreateYourOwnLink() {
+export default function CreateYourOwnLink({ refSlug }: { refSlug?: string | null }) {
+  const href = refSlug
+    ? `/signup?origem=campanha&ref=${encodeURIComponent(refSlug)}`
+    : "/signup?origem=campanha";
   return (
     <footer className="border-t border-gray-200 bg-white px-4 py-4 text-center">
       <Link
-        href="/signup?origem=campanha"
+        href={href}
         className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-gray-500 transition duration-200 hover:bg-gray-100 hover:text-gray-800"
       >
         Quer fazer uma campanha como esta?

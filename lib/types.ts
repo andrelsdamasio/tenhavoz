@@ -83,6 +83,15 @@ export interface PaymentFollowup {
   created_at: string;
 }
 
+export interface Referral {
+  referred_user_id: string;
+  referrer_user_id: string;
+  slug: string;
+  created_at: string;
+  rewarded_at: string | null;
+  coupon_code: string | null;
+}
+
 export interface InboxMessage {
   id: string;
   resend_email_id: string;
@@ -136,6 +145,11 @@ export interface Database {
         Row: PaymentFollowup;
         Insert: Partial<PaymentFollowup> & Pick<PaymentFollowup, "provider_payment_id">;
         Update: Partial<PaymentFollowup>;
+      };
+      referrals: {
+        Row: Referral;
+        Insert: Partial<Referral> & Pick<Referral, "referred_user_id" | "referrer_user_id" | "slug">;
+        Update: Partial<Referral>;
       };
       coupons: {
         Row: Coupon;

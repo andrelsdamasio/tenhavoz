@@ -6,6 +6,7 @@ import { listCampaignsForUser, isCampaignEditable } from "@/lib/campaigns";
 import { getCampaignStats, getDailyStats } from "@/lib/events";
 import { clickRate, describeExpiry } from "@/lib/campaign-stats";
 import { duplicateCampaignAction } from "./actions";
+import { getReferralSummary, REFERRAL_DISCOUNT_PERCENT } from "@/lib/referral";
 import StatsSparkline from "@/components/StatsSparkline";
 import QrCodeDetails from "@/components/QrCodeDetails";
 import {
@@ -146,6 +147,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     console.error("[dashboard] falha ao carregar o gráfico diário", err);
     return {} as Awaited<ReturnType<typeof getDailyStats>>;
   });
+  // Indicação é um extra: se falhar, o painel segue normal.
+  const referral = await getReferralSummary(admin, user.id).catch((err) => {
+    console.error("[dashboard] falha ao carregar as indicações", err);
+    return null;
+  });
   const totals = publishedIds.reduce(
     (acc, id) => ({
       views: acc.views + (stats[id]?.views ?? 0),
@@ -187,6 +193,19 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             </div>
           ))}
         </div>
+      )}
+      {referral && referral.availableCoupons.length > 0 && (
+        <p className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+          <strong>Você ganhou {REFERRAL_DISCOUNT_PERCENT}% de desconto por indicar o TenhaVoz!</strong>{" "}
+          Use o cupom{" "}
+          {referral.availableCoupons.map((code, i) => (
+            <span key={code}>
+              {i > 0 && ", "}
+              <code className="rounded bg-white px-1.5 py-0.5 font-mono">{code}</code>
+            </span>
+          ))}{" "}
+          no pagamento da sua próxima campanha.
+        </p>
       )}
       {edited === "1" && (
         <p className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
@@ -245,6 +264,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </p>
       )}
 
+      {publishedIds.length > 0 && referral && (
+        <p className="mb-4 text-xs text-gray-500">
+          Indique e ganhe: quem criar uma conta pelo link no rodapé da sua página e pagar a primeira campanha
+          rende {REFERRAL_DISCOUNT_PERCENT}% de desconto para você.
+          {referral.invited > 0 && ` Você já indicou ${referral.invited} pessoa(s).`}
+        </p>
+      )}
       {campaigns.length === 0 ? (
         <p className="text-gray-600">
           Você ainda não criou nenhuma campanha.

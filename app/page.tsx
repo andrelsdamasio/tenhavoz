@@ -4,6 +4,7 @@ import WhatsAppSupportButton from "@/components/WhatsAppSupportButton";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getAppSettings } from "@/lib/settings";
 import { formatBRL } from "@/lib/pricing";
+import ThemeShowcase from "@/components/ThemeShowcase";
 
 export const revalidate = 60;
 
@@ -27,7 +28,8 @@ const STEPS = [
 
 export default async function HomePage() {
   const supabase = createPublicClient();
-  const { price_72h_brl_cents: price72hCents } = await getAppSettings(supabase);
+  const { price_72h_brl_cents: price72hCents, enabled_templates: enabledTemplates } =
+    await getAppSettings(supabase);
 
   return (
     <main className="relative overflow-hidden bg-gray-50">
@@ -99,6 +101,8 @@ export default async function HomePage() {
           A partir de {formatBRL(price72hCents)}, pagamento único por campanha.
         </p>
       </section>
+
+      <ThemeShowcase enabled={enabledTemplates} />
 
       <section className="relative mx-auto max-w-5xl px-6 pb-24">
         <div className="grid gap-6 sm:grid-cols-3">

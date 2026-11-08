@@ -86,7 +86,7 @@ export default async function PublicCampaignPage({ params }: PageProps) {
     <>
       <ViewTracker campaignId={campaign.id} />
       <Template campaign={safeCampaign} mailtoUrl={mailtoUrl} />
-      <CreateYourOwnLink />
+      <CreateYourOwnLink refSlug={campaign.slug} />
     </>
   );
 }

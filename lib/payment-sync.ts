@@ -7,6 +7,7 @@ import { redeemCoupon } from "@/lib/coupons";
 import { getStripe } from "@/lib/stripe";
 import { getMercadoPagoPaymentClient } from "@/lib/mercadopago";
 import { notifyCustomerPaymentConfirmed } from "@/lib/notifications";
+import { rewardReferrerIfAny } from "@/lib/referral";
 
 /**
  * Confirmação de pagamento, num lugar só.
@@ -61,12 +62,20 @@ async function recordKeepingRefunds(
 async function publishAndRedeem(
   admin: Admin,
   campaignId: string,
-  couponCode: string | null
+  couponCode: string | null,
+  paidAmount: number
 ): Promise<void> {
   const { campaign, alreadyPublished } = await publishCampaignAfterConfirmedPayment(admin, campaignId);
   if (alreadyPublished) return;
 
   if (couponCode) await redeemCoupon(admin, couponCode);
+  // Indicação: o dono veio pelo link "Crie a sua" de outra campanha? O
+  // indicador ganha um cupom. Nunca derruba a liberação.
+  try {
+    await rewardReferrerIfAny(admin, campaign.user_id, paidAmount);
+  } catch (err) {
+    console.error("[payment-sync] falha ao gerar a recompensa de indicação", err);
+  }
   // Só na primeira publicação: avisa a pessoa que está no ar (evita ela achar
   // que "não liberou"). Nunca derruba a liberação.
   await notifyCustomerPaymentConfirmed(admin, campaign);
@@ -101,7 +110,7 @@ export async function processStripeSession(
   });
 
   const releasable = paid && status === "confirmed";
-  if (releasable) await publishAndRedeem(admin, campaignId, couponCode);
+  if (releasable) await publishAndRedeem(admin, campaignId, couponCode, (session.amount_total ?? 0) / 100);
 
   return { campaignId, paymentStatus: status, published: releasable };
 }
@@ -168,7 +177,7 @@ export async function processMercadoPagoPayment(
   });
 
   const approved = status === "confirmed";
-  if (approved) await publishAndRedeem(admin, campaignId, couponCode);
+  if (approved) await publishAndRedeem(admin, campaignId, couponCode, payment.transaction_amount ?? 0);
 
   return { campaignId, paymentStatus: status, published: approved };
 }

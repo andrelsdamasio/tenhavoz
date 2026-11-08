@@ -1,9 +1,11 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
+import { Suspense } from "react";
 import Link from "next/link";
 import { signUp, type AuthActionState } from "../actions";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import ReferralCapture from "@/components/ReferralCapture";
 
 const initialState: AuthActionState = { error: null };
 
@@ -25,6 +27,9 @@ export default function SignupPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
+      <Suspense fallback={null}>
+        <ReferralCapture />
+      </Suspense>
       <h1 className="mb-6 text-2xl font-semibold">Criar conta</h1>
       <GoogleSignInButton />
       <div className="my-4 flex items-center gap-3 text-xs text-gray-400">

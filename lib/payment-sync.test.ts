@@ -9,6 +9,7 @@ const mpSearch = vi.fn();
 const stripeRetrieve = vi.fn();
 const stripeList = vi.fn();
 const notifyCustomer = vi.fn();
+const rewardReferrer = vi.fn();
 
 vi.mock("@/lib/payments", () => ({ recordPayment: (...a: unknown[]) => recordPayment(...a) }));
 vi.mock("@/lib/campaigns", () => ({
@@ -16,6 +17,9 @@ vi.mock("@/lib/campaigns", () => ({
 }));
 vi.mock("@/lib/notifications", () => ({
   notifyCustomerPaymentConfirmed: (...a: unknown[]) => notifyCustomer(...a),
+}));
+vi.mock("@/lib/referral", () => ({
+  rewardReferrerIfAny: (...a: unknown[]) => rewardReferrer(...a),
 }));
 vi.mock("@/lib/coupons", () => ({ redeemCoupon: (...a: unknown[]) => redeemCoupon(...a) }));
 vi.mock("@/lib/mercadopago", () => ({
@@ -79,7 +83,8 @@ function stripeSession(overrides: Partial<Stripe.Checkout.Session> = {}): Stripe
 
 beforeEach(() => {
   vi.clearAllMocks();
-  publishCampaign.mockResolvedValue({ campaign: {}, alreadyPublished: false });
+  publishCampaign.mockResolvedValue({ campaign: { user_id: "user-1" }, alreadyPublished: false });
+  rewardReferrer.mockResolvedValue(null);
   delete process.env.STRIPE_SECRET_KEY;
   delete process.env.MERCADOPAGO_ACCESS_TOKEN;
   vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -101,6 +106,24 @@ describe("processStripeSession", () => {
     );
     expect(publishCampaign).toHaveBeenCalledWith(expect.anything(), "camp-1");
     expect(result).toEqual({ campaignId: "camp-1", paymentStatus: "confirmed", published: true });
+    expect(notifyCustomer).toHaveBeenCalledTimes(1);
+  });
+
+  it("primeira publicação paga: tenta premiar o indicador com o valor pago", async () => {
+    await processStripeSession(fakeAdmin({}), stripeSession());
+    expect(rewardReferrer).toHaveBeenCalledWith(expect.anything(), "user-1", 49.9);
+  });
+
+  it("reprocessar (já publicada) não premia de novo", async () => {
+    publishCampaign.mockResolvedValue({ campaign: { user_id: "user-1" }, alreadyPublished: true });
+    await processStripeSession(fakeAdmin({}), stripeSession());
+    expect(rewardReferrer).not.toHaveBeenCalled();
+  });
+
+  it("falha na recompensa não derruba a liberação da página", async () => {
+    rewardReferrer.mockRejectedValue(new Error("banco"));
+    const result = await processStripeSession(fakeAdmin({}), stripeSession());
+    expect(result.published).toBe(true);
     expect(notifyCustomer).toHaveBeenCalledTimes(1);
   });
 

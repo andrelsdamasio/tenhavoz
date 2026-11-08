@@ -1,7 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { claimReferral, REFERRAL_COOKIE } from "@/lib/referral";
 
 export interface AuthActionState {
   error: string | null;
@@ -37,10 +40,23 @@ export async function signUp(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({ email, password });
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Veio pelo "Crie a sua" de uma campanha? Registra a indicação (nunca bloqueia o cadastro).
+  if (data.user) {
+    try {
+      await claimReferral(createAdminClient(), {
+        userId: data.user.id,
+        userCreatedAt: data.user.created_at,
+        slug: (await cookies()).get(REFERRAL_COOKIE)?.value,
+      });
+    } catch (err) {
+      console.error("[signup] falha ao registrar a indicação", err);
+    }
   }
 
   redirect("/dashboard");
