@@ -31,12 +31,12 @@ export default async function DashboardLayout({
   return (
     <div className="tv-app min-h-screen">
       <header className="border-b-2 border-ink bg-paper">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-4xl flex-col items-start gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Logo className="h-7 w-7 text-ink" />
             <span className="display text-2xl">TenhaVoz</span>
           </Link>
-          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold">
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold leading-6">
             <Link href="/dashboard" className="underline-offset-4 hover:underline">
               Minhas campanhas
             </Link>

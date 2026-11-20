@@ -281,10 +281,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           {campaigns.map((campaign) => (
             <li
               key={campaign.id}
-              className="flex flex-col gap-4 rounded-md border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-4 rounded-md border-2 border-ink/80 bg-white p-4 md:flex-row md:items-start md:justify-between"
             >
-              <div>
-                <p className="font-medium">{campaign.title}</p>
+              <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
+                <p className="text-base font-extrabold leading-snug">{campaign.title}</p>
                 <span
                   className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[campaign.status]}`}
                 >
@@ -341,7 +341,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                   return <p className={`mt-3 rounded-md px-3 py-2 text-xs font-medium ${tone}`}>{step.text}</p>;
                 })()}
               </div>
-              <div className="flex flex-col items-start gap-2 sm:items-end">
+              <div className="flex flex-col items-start gap-2 md:max-w-[16rem] md:shrink-0 md:items-end md:text-right">
                 {campaign.status === "published" && campaign.slug ? (
                   <>
                     <Link
@@ -354,7 +354,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                     <ShareButtons
                       url={`${SITE_URL}/${campaign.slug}`}
                       title={campaign.title}
-                      className="text-right"
+                      className="md:text-right"
                     />
                     <QrCodeDetails url={`${SITE_URL}/${campaign.slug}`} name={campaign.slug} />
                   </>

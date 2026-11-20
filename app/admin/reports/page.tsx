@@ -116,7 +116,7 @@ function StatCard({
   return (
     <div className="rounded-md border border-gray-200 bg-white p-4">
       <p className="text-xs text-gray-500">{label}</p>
-      <p className={`text-xl font-semibold ${valueClassName}`}>{value}</p>
+      <p className={`display text-2xl sm:text-3xl ${valueClassName}`}>{value}</p>
       {hint && <p className="mt-0.5 text-xs text-gray-500">{hint}</p>}
     </div>
   );

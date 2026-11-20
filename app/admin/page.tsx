@@ -23,9 +23,9 @@ const STATUS_LABEL: Record<string, { label: string; className: string }> = {
 
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
-    <div className="rounded-md border border-gray-200 bg-white p-4">
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className="text-xl font-semibold text-gray-900">{value}</p>
+    <div className="rounded-md border-2 border-ink/80 bg-white p-4">
+      <p className="text-xs font-semibold text-gray-500">{label}</p>
+      <p className="display mt-0.5 text-2xl text-gray-900 sm:text-3xl">{value}</p>
       {hint && <p className="mt-0.5 text-xs text-gray-500">{hint}</p>}
     </div>
   );
