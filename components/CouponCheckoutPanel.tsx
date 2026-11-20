@@ -36,7 +36,7 @@ function PayButton({ label, variant }: { label: string; variant: "primary" | "se
   const { pending } = useFormStatus();
   const className =
     variant === "primary"
-      ? "w-full rounded-md bg-brand-600 px-4 py-2.5 font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      ? "w-full rounded-md bg-ink px-4 py-2.5 font-medium text-white hover:bg-brand-600 disabled:opacity-60"
       : "w-full rounded-md border border-gray-300 px-4 py-2.5 font-medium hover:bg-gray-100 disabled:opacity-60";
   return (
     <button type="submit" disabled={pending} className={className}>

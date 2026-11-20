@@ -12,7 +12,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
     >
       {pending ? "Criando..." : "Criar cupom"}
     </button>

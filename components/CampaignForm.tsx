@@ -61,7 +61,7 @@ function SubmitButton({
     <button
       type="submit"
       disabled={pending || blocked}
-      className="rounded-md bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      className="rounded-md bg-ink px-5 py-2.5 font-medium text-white hover:bg-brand-600 disabled:opacity-60"
     >
       {pending ? pendingLabel : idleLabel}
     </button>
@@ -99,7 +99,7 @@ function TemplatePreviewCard({
       </div>
       <span
         className={`absolute bottom-1.5 right-1.5 rounded px-2 py-0.5 text-xs font-medium ${
-          selected ? "bg-brand-600 text-white" : "bg-white/90 text-gray-700 shadow-sm"
+          selected ? "bg-ink text-white" : "bg-white/90 text-gray-700 shadow-sm"
         }`}
       >
         {TEMPLATE_NAMES[id]}
@@ -596,7 +596,7 @@ export default function CampaignForm({
                 >
                   <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
-                      current ? "bg-brand-600 text-white" : i < step ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+                      current ? "bg-ink text-white" : i < step ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
                     }`}
                   >
                     {i < step ? "✓" : i + 1}
@@ -837,7 +837,7 @@ export default function CampaignForm({
             type="button"
             onClick={() => handleModeChange("basico")}
             className={`rounded px-3 py-1.5 text-sm font-medium ${
-              mode === "basico" ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"
+              mode === "basico" ? "bg-ink text-white" : "text-gray-600 hover:bg-gray-100"
             }`}
           >
             Modo básico
@@ -846,7 +846,7 @@ export default function CampaignForm({
             type="button"
             onClick={() => handleModeChange("avancado")}
             className={`rounded px-3 py-1.5 text-sm font-medium ${
-              mode === "avancado" ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"
+              mode === "avancado" ? "bg-ink text-white" : "text-gray-600 hover:bg-gray-100"
             }`}
           >
             Modo avançado
@@ -1015,7 +1015,7 @@ export default function CampaignForm({
           <button
             type="button"
             onClick={goNext}
-            className="rounded-md bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700"
+            className="rounded-md bg-ink px-5 py-2.5 font-medium text-white hover:bg-brand-600"
           >
             Continuar
           </button>

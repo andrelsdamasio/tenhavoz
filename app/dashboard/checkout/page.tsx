@@ -50,7 +50,7 @@ export default async function CheckoutPage({
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="mb-2 text-2xl font-semibold">Pagamento</h1>
+      <h1 className="mb-2 display text-4xl sm:text-5xl">Pagamento</h1>
       <p className="mb-1 text-sm text-gray-500">
         Campanha <strong className="text-gray-700">{campaign.title}</strong>
       </p>

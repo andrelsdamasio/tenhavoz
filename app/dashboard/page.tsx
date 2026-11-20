@@ -164,10 +164,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Minhas campanhas</h1>
+        <h1 className="display text-4xl sm:text-5xl">Minhas campanhas</h1>
         <Link
           href="/dashboard/new"
-          className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
         >
           Nova campanha
         </Link>
@@ -188,9 +188,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               value: `${clickRate(totals.views, totals.clicks).toLocaleString("pt-BR")}%`,
             },
           ].map((item) => (
-            <div key={item.label} className="rounded-md border border-gray-200 bg-white p-3">
-              <p className="text-xs text-gray-500">{item.label}</p>
-              <p className="text-xl font-semibold">{item.value}</p>
+            <div key={item.label} className="rounded-md border-2 border-ink bg-white p-3">
+              <p className="text-xs font-semibold text-gray-500">{item.label}</p>
+              <p className="display mt-1 text-4xl">{item.value}</p>
             </div>
           ))}
         </div>
@@ -392,7 +392,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                       type="submit"
                       name="mode"
                       value="renew"
-                      className="rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
+                      className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600"
                     >
                       Renovar campanha
                     </button>

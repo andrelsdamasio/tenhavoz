@@ -3,8 +3,8 @@ import LoginForm from "./login-form";
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
-      <h1 className="mb-6 text-2xl font-semibold">Entrar</h1>
+    <main className="tv-app mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
+      <h1 className="mb-6 display text-4xl sm:text-5xl">Entrar</h1>
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>

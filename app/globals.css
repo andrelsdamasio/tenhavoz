@@ -192,3 +192,34 @@ body {
     transform: none;
   }
 }
+
+
+/* Áreas logadas (painel, admin, entrar): os cinzas viram tons quentes de papel e tinta. */
+.tv-app .bg-gray-50 { background-color: #f4eee2; }
+.tv-app .bg-gray-100 { background-color: #e9e0cf; }
+.tv-app .bg-gray-200 { background-color: #d9cfbb; }
+.tv-app .border-gray-100 { border-color: #e2d9c6; }
+.tv-app .border-gray-200,
+.tv-app .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #cdc1aa; }
+.tv-app .border-gray-300 { border-color: #a89c86; }
+.tv-app .text-gray-400 { color: #7a6f62; }
+.tv-app .text-gray-500 { color: #5f564c; }
+.tv-app .text-gray-600 { color: #4a423a; }
+.tv-app .text-gray-700,
+.tv-app .text-gray-800 { color: #2b251f; }
+.tv-app .text-gray-900 { color: #16120f; }
+.tv-app .bg-gray-900 { background-color: #16120f; }
+.tv-app input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+.tv-app select,
+.tv-app textarea {
+  background-color: #fffdf8;
+}
+.tv-app input:focus-visible,
+.tv-app select:focus-visible,
+.tv-app textarea:focus-visible {
+  outline: 3px solid #ffc61a;
+  outline-offset: 1px;
+  border-color: #16120f;
+}
+.tv-app h2,
+.tv-app h3 { letter-spacing: -0.01em; }

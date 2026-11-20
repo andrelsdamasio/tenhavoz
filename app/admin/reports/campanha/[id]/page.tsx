@@ -59,7 +59,7 @@ export default async function AdminCampaignPage({ params, searchParams }: PagePr
       <Link href="/admin/reports" className="text-sm text-brand-600 hover:underline">
         ← Campanhas e vendas
       </Link>
-      <h1 className="mb-1 mt-2 text-2xl font-semibold">{campaign.title}</h1>
+      <h1 className="mb-1 mt-2 text-3xl font-extrabold tracking-tight">{campaign.title}</h1>
       <p className="mb-6 text-sm text-gray-600">
         {campaign.status === "published" && campaign.slug ? (
           <Link href={`/${campaign.slug}`} target="_blank" className="text-brand-600 hover:underline">
@@ -146,7 +146,7 @@ export default async function AdminCampaignPage({ params, searchParams }: PagePr
           <div>
             <button
               type="submit"
-              className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
             >
               Salvar destinatários
             </button>

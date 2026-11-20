@@ -231,7 +231,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="mb-6 text-2xl font-semibold">Campanhas e vendas</h1>
+      <h1 className="mb-6 display text-4xl sm:text-5xl">Campanhas e vendas</h1>
 
       <section aria-labelledby="conciliacao" className="mb-8">
         <h2 id="conciliacao" className="mb-3 text-sm font-semibold uppercase text-gray-500">
@@ -297,7 +297,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                         <div className="flex flex-col items-start gap-1">
                           <form action={issueCompensationCouponAction}>
                             <input type="hidden" name="paymentId" value={r.paymentId} />
-                            <button type="submit" className="rounded bg-brand-600 px-2 py-1 text-xs font-medium text-white">
+                            <button type="submit" className="rounded bg-ink px-2 py-1 text-xs font-medium text-white">
                               Gerar cupom 100%
                             </button>
                           </form>
@@ -413,7 +413,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
             placeholder="Buscar por título, link, e-mail do dono ou código"
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
           />
-          <button type="submit" className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+          <button type="submit" className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">
             Buscar
           </button>
           {q && (
@@ -431,7 +431,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
               aria-current={filter === f ? "true" : undefined}
               className={`rounded-md border px-3 py-1.5 text-sm font-medium ${
                 filter === f
-                  ? "border-brand-600 bg-brand-600 text-white"
+                  ? "border-brand-600 bg-ink text-white"
                   : "border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
             >
@@ -595,7 +595,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
               href={href({ granularity: g.value })}
               className={`rounded-md border px-3 py-1.5 text-sm font-medium ${
                 granularity === g.value
-                  ? "border-brand-600 bg-brand-600 text-white"
+                  ? "border-brand-600 bg-ink text-white"
                   : "border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
             >

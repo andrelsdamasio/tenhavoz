@@ -37,7 +37,7 @@ export default async function EditCampaignPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="mb-2 text-2xl font-semibold">Editar campanha</h1>
+      <h1 className="mb-2 display text-4xl sm:text-5xl">Editar campanha</h1>
       <p className="mb-6 text-sm text-gray-500">
         Você pode editar essa campanha até 24 horas depois de criada. Depois
         disso, as alterações ficam bloqueadas.
