@@ -20,7 +20,7 @@ export default async function AdminCommentsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-1 text-2xl font-semibold">Comentários denunciados</h1>
+      <h1 className="mb-1 display text-4xl sm:text-5xl">Comentários denunciados</h1>
       <p className="mb-6 text-sm text-gray-600">
         Comentários que alguém denunciou. Apague os que forem abusivos ou mantenha os que estiverem certos.
       </p>

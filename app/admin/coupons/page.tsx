@@ -26,7 +26,7 @@ export default async function CouponsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-2xl font-semibold">Cupons de desconto</h1>
+      <h1 className="mb-6 display text-4xl sm:text-5xl">Cupons de desconto</h1>
 
       <div className="mb-8">
         <CouponForm />

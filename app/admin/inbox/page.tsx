@@ -80,7 +80,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     <Link
       href={`/admin/inbox?box=${value}`}
       className={`rounded-md border px-3 py-1.5 text-sm font-medium ${
-        box === value ? "border-brand-600 bg-brand-600 text-white" : "border-gray-300 text-gray-700 hover:bg-gray-50"
+        box === value ? "border-brand-600 bg-ink text-white" : "border-gray-300 text-gray-700 hover:bg-gray-50"
       }`}
     >
       {label}
@@ -91,7 +91,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     <div className="mx-auto max-w-5xl">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-semibold">Caixa de entrada</h1>
+          <h1 className="display text-4xl sm:text-5xl">Caixa de entrada</h1>
           <p className="text-sm text-gray-600">
             E-mails de @tenhavoz.com.br. Cada recebido também é encaminhado aos e-mails de administrador.
             {box === "in" && (unread > 0 ? ` ${unread} não lido(s).` : " Tudo lido.")}
@@ -99,7 +99,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         </div>
         <Link
           href="/admin/inbox?compose=1"
-          className="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          className="rounded-md bg-ink px-3 py-2 text-sm font-medium text-white hover:bg-brand-600"
         >
           Nova mensagem
         </Link>
@@ -153,7 +153,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                 <span className="text-xs text-gray-500">Mensagem</span>
                 <textarea name="body" required rows={8} maxLength={20000} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2" />
               </label>
-              <button type="submit" className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white">
+              <button type="submit" className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white">
                 Enviar
               </button>
             </form>
@@ -208,7 +208,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                     className="w-full rounded-md border border-gray-300 px-3 py-2"
                   />
                   <div className="flex items-center gap-4">
-                    <button type="submit" className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white">
+                    <button type="submit" className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white">
                       Enviar resposta
                     </button>
                     {!original.read_at && (

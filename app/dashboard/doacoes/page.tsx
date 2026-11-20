@@ -37,8 +37,8 @@ export default async function FundraisersPage({ searchParams }: { searchParams: 
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Campanhas de arrecadação</h1>
-        <Link href="/dashboard/doacoes/new" className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+        <h1 className="display text-4xl sm:text-5xl">Campanhas de arrecadação</h1>
+        <Link href="/dashboard/doacoes/new" className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">
           Nova campanha
         </Link>
       </div>
@@ -62,7 +62,7 @@ export default async function FundraisersPage({ searchParams }: { searchParams: 
             <p className="mt-1 text-sm text-gray-600">
               O dinheiro das doações cai direto na sua conta Mercado Pago. Você entra no site oficial deles e autoriza; o TenhaVoz nunca vê a sua senha e não guarda o dinheiro.
             </p>
-            <a href="/api/mp/oauth/start" className="mt-3 inline-block rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+            <a href="/api/mp/oauth/start" className="mt-3 inline-block rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">
               Conectar com Mercado Pago
             </a>
           </>

@@ -29,18 +29,18 @@ export default function AdminNav({ items }: { items: AdminNavItem[] }) {
             aria-current={active ? "page" : undefined}
             className={`flex shrink-0 items-center justify-between gap-2 rounded-md px-3 py-2 text-sm ${
               active
-                ? "bg-brand-600 font-medium text-white"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-ink font-bold text-paper"
+                : "font-semibold text-ink hover:bg-paper-deep"
             }`}
           >
             <span>
               {item.label}
-              <span className={`hidden text-xs md:block ${active ? "text-white/80" : "text-gray-400"}`}>
+              <span className={`hidden text-xs md:block ${active ? "text-paper/70" : "text-ink-soft"}`}>
                 {item.hint}
               </span>
             </span>
             {item.badge ? (
-              <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold text-white">
+              <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-xs font-semibold text-white">
                 {item.badge}
               </span>
             ) : null}

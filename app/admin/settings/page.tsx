@@ -21,7 +21,7 @@ export default async function AdminPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="mb-2 text-2xl font-semibold">Configurações</h1>
+      <h1 className="mb-2 display text-4xl sm:text-5xl">Configurações</h1>
       <p className="mb-6 text-sm text-gray-600">
         Preço da campanha e templates disponíveis no formulário de criação.
         Mudanças valem para novas campanhas — as já criadas não são afetadas.

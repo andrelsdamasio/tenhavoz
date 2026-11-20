@@ -66,7 +66,7 @@ export default async function PaymentStatusPage({ params }: { params: Promise<{ 
   return (
     <div className="mx-auto max-w-xl">
       {(state === "pending" || state === "not_found") && <AutoRefresh />}
-      <h1 className="mb-1 text-2xl font-semibold">Status do pagamento</h1>
+      <h1 className="mb-1 display text-4xl sm:text-5xl">Status do pagamento</h1>
       <p className="mb-6 text-sm text-gray-500">
         Campanha <strong className="text-gray-700">{campaign.title}</strong>
       </p>
@@ -82,7 +82,7 @@ export default async function PaymentStatusPage({ params }: { params: Promise<{ 
             href={`${SITE_URL}/${campaign.slug}`}
             target="_blank"
             rel="noreferrer noopener"
-            className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
           >
             Abrir minha página
           </a>
@@ -90,7 +90,7 @@ export default async function PaymentStatusPage({ params }: { params: Promise<{ 
         {state === "not_started" && (
           <Link
             href={`/dashboard/checkout?campaignId=${campaign.id}`}
-            className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
           >
             Pagar e publicar
           </Link>

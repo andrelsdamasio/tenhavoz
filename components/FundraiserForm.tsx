@@ -52,7 +52,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-md bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      className="rounded-md bg-ink px-5 py-2.5 font-medium text-white hover:bg-brand-600 disabled:opacity-60"
     >
       {pending ? "Salvando…" : "Salvar campanha"}
     </button>
@@ -186,7 +186,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
           <li
             key={name}
             aria-current={i === step ? "step" : undefined}
-            className={`flex-1 rounded-md px-2 py-1.5 text-center ${i === step ? "bg-brand-600 text-white" : i < step ? "bg-brand-100 text-brand-700" : "bg-gray-100 text-gray-500"}`}
+            className={`flex-1 rounded-md px-2 py-1.5 text-center ${i === step ? "bg-ink text-white" : i < step ? "bg-brand-100 text-brand-700" : "bg-gray-100 text-gray-500"}`}
           >
             {i + 1}. {name}
           </li>
@@ -395,7 +395,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
                 <Scaled width={1000} scale={0.2} height={150}>
                   <FundraiserView {...viewProps} templateId={t.id} />
                 </Scaled>
-                <span className={`absolute bottom-1.5 right-1.5 rounded px-2 py-0.5 text-xs font-medium ${templateId === t.id ? "bg-brand-600 text-white" : "bg-white/90 text-gray-700 shadow-sm"}`}>
+                <span className={`absolute bottom-1.5 right-1.5 rounded px-2 py-0.5 text-xs font-medium ${templateId === t.id ? "bg-ink text-white" : "bg-white/90 text-gray-700 shadow-sm"}`}>
                   {t.name}
                 </span>
               </button>
@@ -445,7 +445,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
           ← Voltar
         </button>
         {step < STEPS.length - 1 ? (
-          <button type="button" onClick={next} className="rounded-md bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700">
+          <button type="button" onClick={next} className="rounded-md bg-ink px-5 py-2.5 font-medium text-white hover:bg-brand-600">
             Continuar
           </button>
         ) : (

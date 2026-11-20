@@ -125,7 +125,7 @@ export default function WhatsNew({
               ref={closeRef}
               type="button"
               onClick={close}
-              className="mt-6 w-full rounded-md bg-brand-600 px-4 py-2.5 font-medium text-white hover:bg-brand-700"
+              className="mt-6 w-full rounded-md bg-ink px-4 py-2.5 font-medium text-white hover:bg-brand-600"
             >
               Entendi
             </button>

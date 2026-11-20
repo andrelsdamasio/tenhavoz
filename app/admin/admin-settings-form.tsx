@@ -15,7 +15,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-md bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      className="rounded-md bg-ink px-5 py-2.5 font-medium text-white hover:bg-brand-600 disabled:opacity-60"
     >
       {pending ? "Salvando..." : "Salvar configurações"}
     </button>

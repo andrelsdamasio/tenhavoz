@@ -15,7 +15,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-md bg-brand-600 px-4 py-2 font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+      className="w-full rounded-md bg-ink px-4 py-2 font-medium text-white hover:bg-brand-600 disabled:opacity-60"
     >
       {pending ? "Criando conta..." : "Criar conta"}
     </button>
@@ -26,11 +26,11 @@ export default function SignupPage() {
   const [state, formAction] = useFormState(signUp, initialState);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
+    <main className="tv-app mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
       <Suspense fallback={null}>
         <ReferralCapture />
       </Suspense>
-      <h1 className="mb-6 text-2xl font-semibold">Criar conta</h1>
+      <h1 className="mb-6 display text-4xl sm:text-5xl">Criar conta</h1>
       <GoogleSignInButton />
       <div className="my-4 flex items-center gap-3 text-xs text-gray-400">
         <div className="h-px flex-1 bg-gray-200" />

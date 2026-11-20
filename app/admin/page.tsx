@@ -127,7 +127,7 @@ export default async function AdminOverviewPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="mb-1 text-2xl font-semibold">Visão geral</h1>
+      <h1 className="mb-1 display text-4xl sm:text-5xl">Visão geral</h1>
       <p className="mb-6 text-sm text-gray-600">O que precisa de atenção e como o negócio está hoje.</p>
 
       <section aria-labelledby="atencao" className="mb-8">

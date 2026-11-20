@@ -29,43 +29,43 @@ export default async function DashboardLayout({
   const showDonations = await isFundraisingEnabled(createAdminClient());
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-gray-200 bg-white">
+    <div className="tv-app min-h-screen">
+      <header className="border-b-2 border-ink bg-paper">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-            <Logo className="h-5 w-5 text-brand-600" />
-            TenhaVoz
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Logo className="h-7 w-7 text-ink" />
+            <span className="display text-2xl">TenhaVoz</span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/dashboard" className="hover:underline">
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold">
+            <Link href="/dashboard" className="underline-offset-4 hover:underline">
               Minhas campanhas
             </Link>
             {showDonations && (
-              <Link href="/dashboard/doacoes" className="hover:underline">
+              <Link href="/dashboard/doacoes" className="underline-offset-4 hover:underline">
                 Arrecadações
               </Link>
             )}
-            <Link href="/dashboard/new" className="hover:underline">
+            <Link href="/dashboard/new" className="underline-offset-4 hover:underline">
               Nova campanha
             </Link>
             {showAdminLink && (
-              <Link href="/admin" className="hover:underline">
+              <Link href="/admin" className="underline-offset-4 hover:underline">
                 Admin
               </Link>
             )}
             <WhatsNew entries={entriesFor(showAdminLink)} />
-            <a href={buildSupportMailto(user?.email)} className="hover:underline">
+            <a href={buildSupportMailto(user?.email)} className="underline-offset-4 hover:underline">
               Suporte
             </a>
             <form action={signOut}>
-              <button type="submit" className="text-gray-500 hover:underline">
+              <button type="submit" className="text-ink-soft underline-offset-4 hover:underline">
                 Sair
               </button>
             </form>
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-4xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-4xl px-4 py-10">{children}</main>
       <WhatsAppSupportButton userEmail={user?.email} />
     </div>
   );

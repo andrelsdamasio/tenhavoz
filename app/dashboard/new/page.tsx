@@ -13,7 +13,7 @@ export default async function NewCampaignPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="mb-6 text-2xl font-semibold">Nova campanha</h1>
+      <h1 className="mb-6 display text-4xl sm:text-5xl">Nova campanha</h1>
       <CampaignForm
         enabledTemplates={enabledTemplates}
         manifestCharLimit={manifestCharLimit}

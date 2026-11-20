@@ -50,16 +50,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
+    <div className="tv-app min-h-screen bg-paper">
+      <header className="border-b-2 border-ink bg-paper">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <Link href="/admin" className="flex items-center gap-2 font-semibold">
-            <Logo className="h-5 w-5 text-brand-600" />
-            TenhaVoz <span className="rounded bg-gray-900 px-1.5 py-0.5 text-xs font-medium text-white">Admin</span>
+          <Link href="/admin" className="flex items-center gap-2">
+            <Logo className="h-7 w-7 text-ink" />
+            <span className="display text-2xl">TenhaVoz</span>
+            <span className="rounded bg-sol px-1.5 py-0.5 text-xs font-extrabold uppercase tracking-wide text-ink">Admin</span>
           </Link>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4 text-sm font-semibold text-ink">
             <WhatsNew entries={entriesFor(true)} />
-            <Link href="/dashboard" className="hover:underline">
+            <Link href="/dashboard" className="underline-offset-4 hover:underline">
               ← Voltar para minhas campanhas
             </Link>
           </div>
