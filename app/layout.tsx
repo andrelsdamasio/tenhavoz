@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/archivo/wdth.css";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br";
@@ -28,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className="bg-gray-50 text-gray-900">{children}</body>
+      <body className="bg-paper font-sans text-ink antialiased">{children}</body>
     </html>
   );
 }

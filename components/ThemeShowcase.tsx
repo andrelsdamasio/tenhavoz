@@ -42,14 +42,14 @@ export default function ThemeShowcase({ enabled }: { enabled: TemplateId[] }) {
   if (ids.length === 0) return null;
 
   return (
-    <section className="relative mx-auto max-w-5xl px-6 pb-20" aria-labelledby="temas-titulo">
-      <h2 id="temas-titulo" className="mb-2 text-center text-2xl font-bold text-gray-900">
+    <section className="relative mx-auto max-w-6xl px-4 pb-20 sm:px-6" aria-labelledby="temas-titulo">
+      <h2 id="temas-titulo" className="display mb-3 text-5xl text-ink sm:text-6xl">
         Escolha o visual da sua página
       </h2>
-      <p className="mb-8 text-center text-gray-600">
+      <p className="mb-8 text-lg font-medium text-ink-soft">
         {ids.length} temas e qualquer cor. Você vê a prévia enquanto escreve.
       </p>
-      <ul className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 [scrollbar-width:thin]">
+      <ul className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 [scrollbar-width:thin]">
         {ids.map((id) => {
           const Template = getTemplateComponent(id);
           return (
@@ -58,7 +58,7 @@ export default function ThemeShowcase({ enabled }: { enabled: TemplateId[] }) {
               className="w-80 shrink-0 snap-start transition duration-200 hover:-translate-y-1"
             >
               <div
-                className="relative h-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+                className="relative h-56 overflow-hidden rounded-xl border-2 border-ink bg-white"
                 aria-hidden="true"
                 {...({ inert: "" } as object)}
               >
@@ -72,7 +72,7 @@ export default function ThemeShowcase({ enabled }: { enabled: TemplateId[] }) {
                   />
                 </div>
               </div>
-              <p className="mt-2 text-center text-sm font-medium text-gray-700">{TEMPLATE_NAMES[id]}</p>
+              <p className="mt-2 text-sm font-bold text-ink">{TEMPLATE_NAMES[id]}</p>
             </li>
           );
         })}

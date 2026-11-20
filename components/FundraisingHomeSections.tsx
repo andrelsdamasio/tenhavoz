@@ -13,39 +13,37 @@ const DONATION_STEPS = [
 /** Dois caminhos logo abaixo do topo: campanha de e-mail ou campanha de arrecadação. */
 export function TwoPathsSection() {
   return (
-    <section id="dois-caminhos" className="relative mx-auto max-w-6xl scroll-mt-20 px-4 pb-20 sm:px-6">
+    <section id="dois-caminhos" className="relative mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6">
       <Reveal>
-        <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">O que você quer fazer?</h2>
-        <p className="mx-auto mt-2 max-w-xl text-center text-gray-600">Escolha o caminho. Os dois são simples.</p>
+        <h2 className="display text-5xl text-ink sm:text-6xl">O que você quer fazer?</h2>
+        <p className="mt-3 max-w-xl text-lg font-medium text-ink-soft">Escolha o caminho. Os dois são simples.</p>
       </Reveal>
-      <div className="mt-8 grid gap-4 sm:gap-6 md:grid-cols-2">
+      <div className="mt-10 grid gap-5 md:grid-cols-2">
         <Reveal>
-          <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">Mobilizar</p>
-            <h3 className="mt-1 text-xl font-bold text-gray-900">Campanha de e-mail</h3>
-            <p className="mt-2 flex-1 text-sm text-gray-600">
+          <div className="flex h-full flex-col rounded-xl border-2 border-ink bg-sol p-7">
+            <h3 className="display text-4xl text-ink">Mobilizar: campanha de e-mail</h3>
+            <p className="mt-3 flex-1 font-medium text-ink">
               Uma página com o seu manifesto e um botão que abre o e-mail já escrito e endereçado. Quem apoia envia em
               segundos.
             </p>
             <Link
               href="/signup"
-              className="mt-5 block rounded-full bg-brand-600 px-5 py-3 text-center font-semibold text-white transition hover:bg-brand-700"
+              className="mt-6 block rounded-full bg-ink px-5 py-3 text-center font-bold text-paper hover:bg-brand-600"
             >
               Criar campanha de e-mail
             </Link>
           </div>
         </Reveal>
         <Reveal>
-          <div className="flex h-full flex-col rounded-2xl border-2 border-brand-600 bg-brand-50 p-6 shadow-lg shadow-brand-600/10">
-            <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Arrecadar</p>
-            <h3 className="mt-1 text-xl font-bold text-gray-900">Campanha de arrecadação</h3>
-            <p className="mt-2 flex-1 text-sm text-gray-700">
+          <div className="flex h-full flex-col rounded-xl border-2 border-ink bg-folha p-7 text-paper">
+            <h3 className="display text-4xl">Arrecadar: campanha de arrecadação</h3>
+            <p className="mt-3 flex-1 font-medium text-paper/90">
               Uma vaquinha com meta, prazo e orçamento detalhado. O dinheiro vai direto para a sua conta do Mercado Pago,
               sem taxa para abrir a campanha.
             </p>
             <Link
               href="/dashboard/doacoes/new"
-              className="mt-5 block rounded-full bg-brand-600 px-5 py-3 text-center font-semibold text-white transition hover:bg-brand-700"
+              className="mt-6 block rounded-full bg-paper px-5 py-3 text-center font-bold text-ink hover:bg-sol"
             >
               Criar campanha de arrecadação
             </Link>
@@ -58,28 +56,28 @@ export function TwoPathsSection() {
 
 export function FundraisingExplainer() {
   return (
-    <section id="doacoes" className="relative border-y border-gray-200 bg-white py-16 sm:py-20">
+    <section id="doacoes" className="relative border-y-2 border-ink bg-folha-light py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <Reveal>
-          <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">Arrecadação: como funciona</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-center text-gray-600">
+          <h2 className="display text-5xl text-folha sm:text-6xl">Arrecadação: como funciona</h2>
+          <p className="mt-3 max-w-2xl text-lg font-medium text-ink-soft">
             Você fica com o que arrecadar (a meta é flexível). Cobramos só 4% de cada doação e o doador pode, se quiser,
             contribuir com o TenhaVoz. Não existe taxa de abertura.
           </p>
         </Reveal>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-12 grid gap-x-8 gap-y-10 border-t-2 border-folha pt-10 sm:grid-cols-2 lg:grid-cols-4">
           {DONATION_STEPS.map((s, i) => (
-            <Reveal key={s.title}>
-              <div className="h-full rounded-2xl border border-gray-200 bg-gray-50 p-5">
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 font-bold text-white">
+            <li key={s.title}>
+              <Reveal>
+                <p className="display text-7xl text-folha" aria-hidden="true">
                   {i + 1}
-                </div>
-                <h3 className="font-semibold text-gray-900">{s.title}</h3>
-                <p className="mt-1 text-sm text-gray-600">{s.text}</p>
-              </div>
-            </Reveal>
+                </p>
+                <h3 className="mt-2 text-lg font-extrabold text-ink">{s.title}</h3>
+                <p className="mt-1.5 text-ink-soft">{s.text}</p>
+              </Reveal>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   );
@@ -90,8 +88,8 @@ export function ActiveFundraisers({ items }: { items: ActiveFundraiserCard[] }) 
   return (
     <section id="campanhas-ativas" className="relative mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 sm:py-20">
       <Reveal>
-        <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">Campanhas de arrecadação no ar</h2>
-        <p className="mx-auto mt-2 max-w-xl text-center text-gray-600">Veja o orçamento de cada uma e ajude quem precisa.</p>
+        <h2 className="display text-5xl text-ink sm:text-6xl">Campanhas de arrecadação no ar</h2>
+        <p className="mt-3 max-w-xl text-lg font-medium text-ink-soft">Veja o orçamento de cada uma e ajude quem precisa.</p>
       </Reveal>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
         {items.map((f) => {
@@ -100,28 +98,28 @@ export function ActiveFundraisers({ items }: { items: ActiveFundraiserCard[] }) 
             <Reveal key={f.slug}>
               <Link
                 href={`/d/${f.slug}`}
-                className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                className="flex h-full flex-col overflow-hidden rounded-xl border-2 border-ink bg-paper transition hover:-translate-y-1 hover:shadow-xl hover:shadow-ink/15"
               >
                 {f.coverImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={f.coverImageUrl} alt="" className="h-40 w-full object-cover" loading="lazy" />
                 ) : (
-                  <div className="h-2 bg-brand-600" aria-hidden="true" />
+                  <div className="h-3 bg-sol" aria-hidden="true" />
                 )}
                 <div className="flex flex-1 flex-col p-5">
-                  <h3 className="line-clamp-2 font-semibold text-gray-900">{f.title}</h3>
-                  {f.beneficiaryName && <p className="mt-0.5 text-xs text-gray-500">Para {f.beneficiaryName}</p>}
-                  {f.summary && <p className="mt-2 line-clamp-2 text-sm text-gray-600">{f.summary}</p>}
+                  <h3 className="line-clamp-2 font-extrabold text-ink">{f.title}</h3>
+                  {f.beneficiaryName && <p className="mt-0.5 text-xs font-medium text-ink-soft">Para {f.beneficiaryName}</p>}
+                  {f.summary && <p className="mt-2 line-clamp-2 text-sm text-ink-soft">{f.summary}</p>}
                   <div className="mt-auto pt-4">
-                    <div className="h-2 overflow-hidden rounded-full bg-gray-100" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-                      <div className="h-full rounded-full bg-brand-600" style={{ width: `${pct}%` }} />
+                    <div className="h-2 overflow-hidden rounded-full border border-ink bg-paper-deep" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                      <div className="h-full bg-folha" style={{ width: `${pct}%` }} />
                     </div>
                     <div className="mt-2 flex items-baseline justify-between text-sm">
-                      <span className="font-semibold text-gray-900">{formatCentsBRL(f.raisedCents)}</span>
-                      <span className="text-gray-500">{pct}% de {formatCentsBRL(f.goalCents)}</span>
+                      <span className="font-extrabold text-ink">{formatCentsBRL(f.raisedCents)}</span>
+                      <span className="text-ink-soft">{pct}% de {formatCentsBRL(f.goalCents)}</span>
                     </div>
                     {f.daysLeft !== null && (
-                      <p className="mt-1 text-xs text-gray-500">{f.daysLeft === 1 ? "Falta 1 dia" : `Faltam ${f.daysLeft} dias`}</p>
+                      <p className="mt-1 text-xs font-medium text-ink-soft">{f.daysLeft === 1 ? "Falta 1 dia" : `Faltam ${f.daysLeft} dias`}</p>
                     )}
                   </div>
                 </div>
@@ -144,12 +142,12 @@ const TRUST = [
 /** Faixa de confiança logo abaixo do topo, como nos sites de vaquinha. */
 export function TrustStrip() {
   return (
-    <section aria-label="Por que confiar" className="relative mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-      <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <section aria-label="Por que confiar" className="relative mx-auto max-w-6xl px-4 pt-14 sm:px-6">
+      <ul className="grid grid-cols-2 gap-x-6 gap-y-6 border-b-2 border-ink pb-10 lg:grid-cols-4">
         {TRUST.map((t) => (
-          <li key={t.title} className="rounded-xl border border-gray-200 bg-white p-4">
-            <p className="text-sm font-semibold text-gray-900">{t.title}</p>
-            <p className="mt-1 text-xs text-gray-600 sm:text-sm">{t.text}</p>
+          <li key={t.title} className="border-t-2 border-ink pt-3">
+            <p className="text-base font-extrabold text-ink">{t.title}</p>
+            <p className="mt-1 text-sm text-ink-soft">{t.text}</p>
           </li>
         ))}
       </ul>
