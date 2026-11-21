@@ -44,7 +44,7 @@ export default async function FundraisersPage({ searchParams }: { searchParams: 
       </div>
       {searchParams.criada && (
         <p role="status" className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800">
-          Campanha salva como rascunho. Conecte sua conta Mercado Pago abaixo para poder publicar.
+          Campanha salva como rascunho. Dê uma olhada na prévia e clique em Publicar quando estiver pronta.
         </p>
       )}
       {searchParams.publicada && (
@@ -53,14 +53,14 @@ export default async function FundraisersPage({ searchParams }: { searchParams: 
       {MP_MESSAGES[searchParams.mp ?? ""] && (
         <p role="status" className="mb-4 rounded-md bg-amber-50 p-3 text-sm text-amber-900">{MP_MESSAGES[searchParams.mp ?? ""]}</p>
       )}
-      <section className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
+      <section className="mb-6 rounded-lg border-2 border-ink/80 bg-white p-4">
         <h2 className="font-semibold">Sua conta Mercado Pago</h2>
         {connected ? (
           <p className="mt-1 text-sm text-green-700">✓ Conectada. As doações caem direto na sua conta.</p>
         ) : (
           <>
             <p className="mt-1 text-sm text-gray-600">
-              O dinheiro das doações cai direto na sua conta Mercado Pago. Você entra no site oficial deles e autoriza; o TenhaVoz nunca vê a sua senha e não guarda o dinheiro.
+              Para receber doações, conecte sua conta. O dinheiro cai direto nela e o TenhaVoz nunca vê a sua senha.
             </p>
             <a href="/api/mp/oauth/start" className="mt-3 inline-block rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">
               Conectar com Mercado Pago
@@ -75,9 +75,9 @@ export default async function FundraisersPage({ searchParams }: { searchParams: 
       ) : (
         <ul className="space-y-3">
           {items.map((f) => (
-            <li key={f.id} className="rounded-lg border border-gray-200 bg-white p-4">
+            <li key={f.id} className="rounded-lg border-2 border-ink/80 bg-white p-4">
               <div className="flex items-start justify-between gap-3">
-                <p className="font-medium">{f.title}</p>
+                <p className="min-w-0 font-bold [overflow-wrap:anywhere]">{f.title}</p>
                 <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">{STATUS[f.status] ?? f.status}</span>
               </div>
               <p className="mt-1 text-sm text-gray-600">Meta: {formatCentsBRL(f.goal_cents)}</p>

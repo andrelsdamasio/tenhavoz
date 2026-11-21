@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createFundraiserAction, type FundraiserFormState } from "@/app/dashboard/doacoes/new/actions";
 import { budgetGapCents, DOC_MAX_BYTES, formatCentsBRL, parseBRLToCents, platformFeeCents, safeDocName } from "@/lib/fundraisers";
@@ -8,7 +8,7 @@ import { BASIC_COLORS } from "@/lib/color";
 import ColorPicker from "@/components/ColorPicker";
 import FundraiserView, { FUNDRAISER_THEMES, type FundraiserViewProps } from "@/components/FundraiserView";
 
-const STEPS = ["Receber", "Sua história", "Meta e prazo", "Orçamento", "Aparência", "Revisar"] as const;
+const STEPS = ["Receber", "História", "Meta", "Orçamento", "Aparência", "Revisar"] as const;
 const initial: FundraiserFormState = { error: null };
 
 interface Line {
@@ -35,11 +35,22 @@ function PreviewDonate({ color }: { color: string }) {
   );
 }
 
-/** Mostra a página da campanha reduzida, como na escolha de modelo da campanha de e-mail. */
-function Scaled({ width, scale, height, children }: { width: number; scale: number; height: number; children: React.ReactNode }) {
+/** Mostra a página da campanha reduzida. A altura acompanha o conteúdo, sem faixa em branco. */
+function Scaled({ width, scale, height, fixed, children }: { width: number; scale: number; height: number; fixed?: boolean; children: React.ReactNode }) {
+  const inner = useRef<HTMLDivElement>(null);
+  const [h, setH] = useState(height);
+  useEffect(() => {
+    const el = inner.current;
+    if (!el || fixed) return;
+    const measure = () => setH(Math.min(height, Math.ceil(el.scrollHeight * scale)));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [height, scale, fixed]);
   return (
-    <div className="relative overflow-hidden" style={{ height }}>
-      <div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width, transform: `scale(${scale})` }}>
+    <div className="relative overflow-hidden" style={{ height: fixed ? height : h }}>
+      <div ref={inner} className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width, transform: `scale(${scale})` }}>
         {children}
       </div>
     </div>
@@ -79,7 +90,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
   const [endsAt, setEndsAt] = useState("");
   const [lines, setLines] = useState<Line[]>([{ ...EMPTY_LINE }]);
   const [templateId, setTemplateId] = useState(1);
-  const [color, setColor] = useState<string | null>("#4338ca");
+  const [color, setColor] = useState<string | null>(BASIC_COLORS[0]?.hex ?? "#d23a18");
   const [showPreview, setShowPreview] = useState(false);
 
   const goalCents = parseBRLToCents(goal);
@@ -266,7 +277,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
           <input name="title" value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} maxLength={90} />
         </label>
         <label className="block text-sm">
-          <span className="mb-1 block font-medium">Resumo (aparece nos compartilhamentos)</span>
+          <span className="mb-1 block font-medium">Resumo (opcional, aparece ao compartilhar)</span>
           <textarea name="summary" value={summary} onChange={(e) => setSummary(e.target.value)} rows={2} maxLength={300} className={inputCls} />
         </label>
         <label className="block text-sm">
@@ -288,13 +299,13 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
           <span className="text-xs text-gray-500">Sem data, a campanha fica aberta até você encerrar.</span>
         </label>
         <p className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">
-          Você recebe o que for doado, mesmo que não atinja a meta. O dinheiro cai direto na sua conta Mercado Pago.
+          Você recebe tudo o que for doado, mesmo que a meta não seja atingida.
         </p>
       </section>
 
       {/* Passo 3 */}
       <section hidden={step !== 3} className="space-y-3">
-        <p className="text-sm text-gray-700">Mostre para que o dinheiro será usado. Quem vê o orçamento confia mais e doa mais.</p>
+        <p className="text-sm text-gray-700">Mostre para que o dinheiro será usado. É opcional, mas quem vê o orçamento confia mais.</p>
         {lines.map((l, i) => (
           <div key={i} className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
             <div className="flex gap-2">
@@ -390,12 +401,12 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
                 type="button"
                 onClick={() => setTemplateId(t.id)}
                 aria-pressed={templateId === t.id}
-                className={`relative block overflow-hidden rounded-lg border-2 bg-white text-left transition ${templateId === t.id ? "border-brand-600 ring-2 ring-brand-100" : "border-gray-200 hover:border-gray-300"}`}
+                className={`block overflow-hidden rounded-lg border-2 bg-white text-left transition ${templateId === t.id ? "border-ink ring-2 ring-sol" : "border-gray-200 hover:border-gray-400"}`}
               >
-                <Scaled width={1000} scale={0.2} height={150}>
+                <Scaled width={1000} scale={0.2} height={150} fixed>
                   <FundraiserView {...viewProps} templateId={t.id} />
                 </Scaled>
-                <span className={`absolute bottom-1.5 right-1.5 rounded px-2 py-0.5 text-xs font-medium ${templateId === t.id ? "bg-ink text-white" : "bg-white/90 text-gray-700 shadow-sm"}`}>
+                <span className={`block border-t-2 px-2 py-1.5 text-center text-sm font-semibold ${templateId === t.id ? "border-ink bg-ink text-white" : "border-gray-200 text-gray-800"}`}>
                   {t.name}
                 </span>
               </button>
@@ -406,7 +417,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
           <p className="mb-2 text-sm font-medium">Cor da página</p>
           <ColorPicker value={color} onChange={setColor} advanced={false} suggested={BASIC_COLORS.map((c) => c.hex)} />
         </div>
-        <p className="text-xs text-gray-500">A prévia mostra como a página fica para quem vai doar (no celular, toque em «Ver prévia da página» lá em cima).</p>
+        <p className="text-xs text-gray-500"><span className="lg:hidden">Para ver como a página fica, toque em «Ver prévia da página» lá em cima.</span></p>
       </section>
 
       {/* Passo 5 */}
@@ -415,17 +426,19 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
           <p className="text-lg font-semibold">{title || "Sem título"}</p>
           {summary && <p className="mt-1 text-gray-600">{summary}</p>}
           <dl className="mt-3 grid grid-cols-2 gap-2">
+            <dt className="text-gray-500">Para quem</dt>
+            <dd>{forWhom === "other" ? beneficiary || "Outra pessoa" : "Você ou seu grupo"}</dd>
             <dt className="text-gray-500">Meta</dt>
             <dd>{goalCents ? formatCentsBRL(goalCents) : "—"}</dd>
             <dt className="text-gray-500">Prazo</dt>
             <dd>{endsAt ? new Date(`${endsAt}T12:00:00`).toLocaleDateString("pt-BR") : "Sem data"}</dd>
             <dt className="text-gray-500">Orçamento</dt>
-            <dd>{budget.length ? `${budget.length} item(ns)` : "Não informado"}</dd>
+            <dd>{budget.length ? `${budget.length} item(ns), ${formatCentsBRL(budget.reduce((t, b) => t + b.amountCents, 0))}` : "Não informado"}</dd>
           </dl>
         </div>
         <p className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">
-          <strong>Como funciona o custo:</strong> o TenhaVoz fica com 4% de cada doação (
-          {goalCents ? `${formatCentsBRL(fee)} se você atingir a meta` : "sobre o valor doado"}), além da tarifa do Mercado Pago. O doador pode, se quiser, deixar uma contribuição voluntária ao TenhaVoz. Não há taxa para abrir a campanha.
+          <strong>Custo:</strong> o TenhaVoz fica com 4% de cada doação
+          {goalCents ? ` (${formatCentsBRL(fee)} se chegar à meta)` : ""}, além da tarifa do Mercado Pago. Abrir a campanha é grátis.
         </p>
         <p className="text-xs text-gray-500">Ao salvar, a campanha fica como rascunho. Na próxima tela você confere tudo e clica em publicar.</p>
         {state.error && <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">{state.error}</p>}
@@ -458,7 +471,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
     <aside className="hidden lg:sticky lg:top-6 lg:block lg:self-start">
       <p className="mb-2 text-sm font-medium text-gray-700">Prévia da sua página</p>
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <Scaled width={1000} scale={0.4} height={640}>
+        <Scaled width={1000} scale={0.416} height={640}>
           <FundraiserView {...viewProps} />
         </Scaled>
       </div>
