@@ -15,11 +15,11 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 /** Menu lateral do admin (vira uma barra rolável no celular). */
-export default function AdminNav({ items }: { items: AdminNavItem[] }) {
+export default function AdminNav({ items, vertical = false }: { items: AdminNavItem[]; vertical?: boolean }) {
   const pathname = usePathname() ?? "";
 
   return (
-    <nav aria-label="Menu do admin" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+    <nav aria-label="Menu do admin" className="flex flex-col gap-1">
       {items.map((item) => {
         const active = isActive(pathname, item.href);
         return (
@@ -27,7 +27,7 @@ export default function AdminNav({ items }: { items: AdminNavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex shrink-0 items-center justify-between gap-2 rounded-md px-3 py-2 text-sm ${
+            className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 ${vertical ? "text-base" : "text-sm"} ${
               active
                 ? "bg-ink font-bold text-paper"
                 : "font-semibold text-ink hover:bg-paper-deep"
@@ -35,7 +35,7 @@ export default function AdminNav({ items }: { items: AdminNavItem[] }) {
           >
             <span>
               {item.label}
-              <span className={`hidden text-xs md:block ${active ? "text-paper/70" : "text-ink-soft"}`}>
+              <span className={`block text-xs ${active ? "text-paper/70" : "text-ink-soft"}`}>
                 {item.hint}
               </span>
             </span>
