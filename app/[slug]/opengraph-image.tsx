@@ -1,4 +1,8 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
+
+const loadFont = (file: string) => readFile(join(process.cwd(), "assets", "fonts", file));
 import { createPublicClient } from "@/lib/supabase/public";
 import { getPublishedCampaignBySlug } from "@/lib/campaigns";
 import { deriveThemeShades, isValidHexColor } from "@/lib/color";
@@ -33,6 +37,11 @@ export default async function OpengraphImage({
   const ink = shades?.on ?? "#ffffff";
   const inkSoft = shades?.onSoft ?? "rgba(255,255,255,0.8)";
 
+  const [black, extra] = await Promise.all([
+    loadFont("archivo-latin-900-normal.woff"),
+    loadFont("archivo-latin-800-normal.woff"),
+  ]);
+
   return new ImageResponse(
     (
       <div
@@ -43,6 +52,7 @@ export default async function OpengraphImage({
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px 90px",
+          fontFamily: "Archivo",
           background: `linear-gradient(135deg, ${bgFrom} 0%, ${bgTo} 100%)`,
         }}
       >
@@ -65,13 +75,11 @@ export default async function OpengraphImage({
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path
-                d="M24 4C13 4 4 11.6 4 21c0 5.4 2.9 10.2 7.5 13.3-.3 2.4-1.4 4.7-3.3 6.5 3.4-.2 6.6-1.5 9.2-3.6 2.1.6 4.3.9 6.6.9 11 0 20-7.6 20-17S35 4 24 4z"
-                fill={ink}
-              />
-              <circle cx="16.5" cy="20" r="2.2" fill={bgFrom} />
-              <circle cx="24" cy="20" r="2.2" fill={bgFrom} />
-              <circle cx="31.5" cy="20" r="2.2" fill={bgFrom} />
+              <path d="M24 3C12.4 3 3 10.6 3 20.4c0 5.5 3 10.4 7.7 13.5-.4 3-1.6 5.6-3.8 7.7 4-.1 7.7-1.6 10.6-4.1 1.9.5 3.5.7 5.5.7C35.6 38.2 45 30.2 45 20.4 45 10.6 35.6 3 24 3z" fill={ink} />
+              <rect x="12.5" y="17" width="4" height="7" rx="2" fill={bgFrom} />
+              <rect x="19" y="11" width="4" height="19" rx="2" fill={bgFrom} />
+              <rect x="25.5" y="14" width="4" height="13" rx="2" fill={bgFrom} />
+              <rect x="32" y="18.5" width="4" height="4" rx="2" fill={bgFrom} />
             </svg>
           </div>
           <div
@@ -113,6 +121,12 @@ export default async function OpengraphImage({
         </div>
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      fonts: [
+        { name: "Archivo", data: extra, weight: 800, style: "normal" },
+        { name: "Archivo", data: black, weight: 900, style: "normal" },
+      ],
+    }
   );
 }

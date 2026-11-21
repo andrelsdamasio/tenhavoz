@@ -24,6 +24,9 @@ export function getHealthChecks(env: NodeJS.ProcessEnv = process.env): HealthChe
     { key: "RESEND_API_KEY", label: "Envio de e-mails (Resend)", critical: false, ok: has("RESEND_API_KEY"), impact: "Sem alertas, sem e-mail de confirmação ao cliente e sem respostas da caixa de entrada." },
     { key: "EMAIL_FROM", label: "Remetente dos e-mails", critical: false, ok: has("EMAIL_FROM"), impact: "E-mails saem de um remetente de teste." },
     { key: "RESEND_WEBHOOK_SECRET", label: "Recebimento de e-mails (webhook)", critical: false, ok: has("RESEND_WEBHOOK_SECRET"), impact: "E-mails recebidos não chegam à caixa de entrada." },
+    { key: "MP_CLIENT_ID", label: "Arrecadações: app do Mercado Pago (ID)", critical: false, ok: has("MP_CLIENT_ID"), impact: "Quem cria arrecadação não consegue conectar a conta do Mercado Pago." },
+    { key: "MP_CLIENT_SECRET", label: "Arrecadações: app do Mercado Pago (chave)", critical: false, ok: has("MP_CLIENT_SECRET"), impact: "A conexão da conta do Mercado Pago falha." },
+    { key: "MP_DONATIONS_WEBHOOK_SECRET", label: "Arrecadações: chave do aviso de doação", critical: false, ok: has("MP_DONATIONS_WEBHOOK_SECRET"), impact: "Doações pagas não são confirmadas sozinhas." },
     { key: "STRIPE_WEBHOOK_SECRET", label: "Stripe (chave do webhook)", critical: false, ok: has("STRIPE_WEBHOOK_SECRET"), impact: "Pagamentos por cartão via Stripe não liberam sozinhos." },
   ];
 }

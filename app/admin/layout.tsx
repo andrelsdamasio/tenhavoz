@@ -43,13 +43,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const items: AdminNavItem[] = [
-    { href: "/admin", label: "Visão geral", hint: "Alertas e resumo do dia" },
-    { href: "/admin/reports", label: "Campanhas e vendas", hint: "Páginas, pagamentos e conciliação" },
-    { href: "/admin/inbox", label: "Caixa de entrada", hint: "Ler e responder e-mails", badge: unread },
-    { href: "/admin/comments", label: "Comentários", hint: "Denúncias nas campanhas", badge: reportedComments },
-    { href: "/admin/coupons", label: "Cupons", hint: "Descontos e compensações" },
-    { href: "/admin/settings", label: "Configurações", hint: "Preço e templates" },
+    { group: "Operação", href: "/admin", label: "Visão geral", hint: "Alertas e resumo do dia" },
+    { group: "Operação", href: "/admin/inbox", label: "Caixa de entrada", hint: "Ler e responder e-mails", badge: unread },
+    { group: "Operação", href: "/admin/comments", label: "Comentários", hint: "Denúncias nas campanhas", badge: reportedComments },
+    { group: "Dinheiro", href: "/admin/reports", label: "Campanhas e vendas", hint: "Páginas, pagamentos e conciliação" },
+    { group: "Dinheiro", href: "/admin/arrecadacoes", label: "Arrecadações", hint: "Doações, taxa e moderação" },
+    { group: "Dinheiro", href: "/admin/coupons", label: "Cupons", hint: "Descontos e compensações" },
+    { group: "Sistema", href: "/admin/settings", label: "Configurações", hint: "Preço e templates" },
   ];
+
 
   return (
     <div className="tv-app min-h-screen bg-paper">

@@ -8,6 +8,8 @@ export interface AdminNavItem {
   label: string;
   hint: string;
   badge?: number;
+  /** Título do grupo em que o item aparece. */
+  group?: string;
 }
 
 function isActive(pathname: string, href: string): boolean {
@@ -20,31 +22,32 @@ export default function AdminNav({ items, vertical = false }: { items: AdminNavI
 
   return (
     <nav aria-label="Menu do admin" className="flex flex-col gap-1">
-      {items.map((item) => {
+      {items.map((item, index) => {
         const active = isActive(pathname, item.href);
+        const showGroup = item.group && item.group !== items[index - 1]?.group;
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 ${vertical ? "text-base" : "text-sm"} ${
-              active
-                ? "bg-ink font-bold text-paper"
-                : "font-semibold text-ink hover:bg-paper-deep"
-            }`}
-          >
-            <span>
-              {item.label}
-              <span className={`block text-xs ${active ? "text-paper/70" : "text-ink-soft"}`}>
-                {item.hint}
+          <div key={item.href} className="flex flex-col gap-1">
+            {showGroup && (
+              <p className={`px-3 text-xs font-extrabold uppercase tracking-wide text-ink-soft ${index > 0 ? "mt-3" : ""}`}>
+                {item.group}
+              </p>
+            )}
+            <Link
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              className={`flex items-center justify-between gap-2 rounded-md px-3 py-2 ${vertical ? "text-base" : "text-sm"} ${
+                active ? "bg-ink font-bold text-paper" : "font-semibold text-ink hover:bg-paper-deep"
+              }`}
+            >
+              <span>
+                {item.label}
+                <span className={`block text-xs ${active ? "text-paper/70" : "text-ink-soft"}`}>{item.hint}</span>
               </span>
-            </span>
-            {item.badge ? (
-              <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-xs font-semibold text-white">
-                {item.badge}
-              </span>
-            ) : null}
-          </Link>
+              {item.badge ? (
+                <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-xs font-semibold text-white">{item.badge}</span>
+              ) : null}
+            </Link>
+          </div>
         );
       })}
     </nav>
