@@ -245,7 +245,7 @@ export default function FundraiserView(props: FundraiserViewProps) {
               <Budget items={props.budget} />
               <Donors donations={props.donations} count={props.donationCount} />
             </div>
-            <aside className="lg:sticky lg:top-4 lg:self-start">{donateBox}</aside>
+            <aside className="order-first lg:sticky lg:top-4 lg:order-none lg:self-start">{donateBox}</aside>
           </div>
         )}
       </div>

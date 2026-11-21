@@ -35,6 +35,28 @@ function PreviewDonate({ color }: { color: string }) {
   );
 }
 
+/** Miniatura que sempre cabe na largura do cartão (3/4 de proporção), em qualquer tela. */
+function Thumb({ width, children }: { width: number; children: React.ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const measure = () => setW(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={box} className="relative w-full overflow-hidden" style={{ height: Math.round(w * 0.75) || 120 }}>
+      <div className="pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width, transform: `scale(${w / width || 0.1})` }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /** Mostra a página da campanha reduzida. A altura acompanha o conteúdo, sem faixa em branco. */
 function Scaled({ width, scale, height, fixed, children }: { width: number; scale: number; height: number; fixed?: boolean; children: React.ReactNode }) {
   const inner = useRef<HTMLDivElement>(null);
@@ -192,7 +214,17 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
       </div>
     )}
     <form action={formAction} noValidate className="space-y-6">
-      <ol className="flex gap-2 text-xs sm:text-sm" aria-label="Passos">
+      <div className="sm:hidden" role="group" aria-label={`Passo ${step + 1} de ${STEPS.length}: ${STEPS[step]}`}>
+        <p className="mb-2 text-sm font-bold">
+          Passo {step + 1} de {STEPS.length}: {STEPS[step]}
+        </p>
+        <div className="flex gap-1" aria-hidden="true">
+          {STEPS.map((name, i) => (
+            <span key={name} className={`h-2 flex-1 rounded-full ${i <= step ? "bg-ink" : "bg-gray-200"}`} />
+          ))}
+        </div>
+      </div>
+      <ol className="hidden gap-2 text-sm sm:flex" aria-label="Passos">
         {STEPS.map((name, i) => (
           <li
             key={name}
@@ -403,9 +435,9 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
                 aria-pressed={templateId === t.id}
                 className={`block overflow-hidden rounded-lg border-2 bg-white text-left transition ${templateId === t.id ? "border-ink ring-2 ring-sol" : "border-gray-200 hover:border-gray-400"}`}
               >
-                <Scaled width={1000} scale={0.2} height={150} fixed>
+                <Thumb width={1000}>
                   <FundraiserView {...viewProps} templateId={t.id} />
-                </Scaled>
+                </Thumb>
                 <span className={`block border-t-2 px-2 py-1.5 text-center text-sm font-semibold ${templateId === t.id ? "border-ink bg-ink text-white" : "border-gray-200 text-gray-800"}`}>
                   {t.name}
                 </span>
