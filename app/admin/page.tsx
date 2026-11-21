@@ -6,6 +6,7 @@ import { isAdminEmail } from "@/lib/admin";
 import { getAdminDashboard } from "@/lib/admin-dashboard";
 import { auditMercadoPagoPayments } from "@/lib/payment-audit";
 import { countReportedComments } from "@/lib/comments";
+import { getAdminFundraisers } from "@/lib/admin-fundraisers";
 import { getHealthChecks, getOverviewExtras } from "@/lib/admin-overview";
 
 const TIME_ZONE = "America/Sao_Paulo";
@@ -46,6 +47,7 @@ export default async function AdminOverviewPage() {
   ]);
   const { overview } = dashboard;
   const reportedComments = await countReportedComments(admin).catch(() => 0);
+  const fundraisers = await getAdminFundraisers(admin).catch(() => null);
   // Ping real no banco: as variáveis podem existir e o banco estar fora.
   const dbStart = Date.now();
   let dbPing: { ok: boolean; ms: number };
@@ -113,6 +115,15 @@ export default async function AdminOverviewPage() {
       text: `${extras.unreadInbox} e-mail(s) não lido(s) na caixa de entrada`,
       href: "/admin/inbox",
       cta: "Abrir caixa de entrada",
+    });
+  }
+  if (fundraisers && fundraisers.stalePending > 0) {
+    attention.push({
+      key: "donations-stale",
+      tone: "amber",
+      text: `${fundraisers.stalePending} doação(ões) iniciada(s) há mais de 1 hora sem confirmação`,
+      href: "/admin/arrecadacoes",
+      cta: "Ver arrecadações",
     });
   }
   if (extras.awaiting.length > 0) {
