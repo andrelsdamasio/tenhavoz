@@ -6,7 +6,16 @@ export const FUNDRAISER_THEMES: { id: number; name: string }[] = [
   { id: 1, name: "Clássico" },
   { id: 2, name: "Destaque" },
   { id: 3, name: "Cartão" },
+  { id: 4, name: "Degradê" },
+  { id: 5, name: "Pôster" },
+  { id: 6, name: "Dividido" },
+  { id: 7, name: "Neon" },
+  { id: 8, name: "Faixa" },
+  { id: 9, name: "Confete" },
 ];
+
+/** Temas com cabeçalho próprio: o progresso aparece lá em cima, não na caixa de doação. */
+const HEADER_THEMES = [2, 4, 6];
 
 export interface ViewBudgetItem {
   id: string;
@@ -71,7 +80,7 @@ function Budget({ items }: { items: ViewBudgetItem[] }) {
   if (items.length === 0) return null;
   const total = items.reduce((s, b) => s + b.amount_cents, 0);
   return (
-    <section className="rounded-lg bg-white p-5 shadow-sm" aria-labelledby="orcamento">
+    <section className="fv-card rounded-lg bg-white p-5 shadow-sm" aria-labelledby="orcamento">
       <h2 id="orcamento" className="mb-1 text-lg font-semibold">Para que será usado</h2>
       <p className="mb-3 text-sm text-gray-600">Previsão de gastos informada por quem criou a campanha.</p>
       <ul className="divide-y divide-gray-100">
@@ -100,7 +109,7 @@ function Budget({ items }: { items: ViewBudgetItem[] }) {
 
 function Donors({ donations, count }: { donations: ViewDonation[]; count: number }) {
   return (
-    <section className="rounded-lg bg-white p-5 shadow-sm" aria-labelledby="doadores">
+    <section className="fv-card rounded-lg bg-white p-5 shadow-sm" aria-labelledby="doadores">
       <h2 id="doadores" className="mb-3 text-lg font-semibold">Quem já ajudou ({count})</h2>
       {donations.length === 0 ? (
         <p className="text-sm text-gray-600">Seja a primeira pessoa a ajudar.</p>
@@ -130,8 +139,8 @@ export default function FundraiserView(props: FundraiserViewProps) {
 
   const progress = <Progress p={p} raised={props.raisedCents} goal={props.goalCents} count={props.donationCount} left={props.daysLeft} />;
   const donateBox = (
-    <div className="space-y-4 rounded-lg bg-white p-5 shadow-sm">
-      {theme !== 2 && progress}
+    <div className="fv-card space-y-4 rounded-lg bg-white p-5 shadow-sm">
+      {!HEADER_THEMES.includes(theme) && progress}
       {props.donateSlot}
       <p className="text-xs text-gray-500">
         O dinheiro vai direto para a conta Mercado Pago de quem criou a campanha. O TenhaVoz não guarda o valor das doações.
@@ -145,21 +154,41 @@ export default function FundraiserView(props: FundraiserViewProps) {
     </div>
   );
   const story = (
-    <section className="rounded-lg bg-white p-5 shadow-sm">
+    <section className="fv-card rounded-lg bg-white p-5 shadow-sm">
       <h2 className="mb-3 text-lg font-semibold">A história</h2>
       <div className="space-y-3 whitespace-pre-line text-gray-800">{props.story}</div>
     </section>
   );
-  const summary = props.summary ? <p className="rounded-lg bg-white p-4 text-lg text-gray-800 shadow-sm">{props.summary}</p> : null;
+  const summary = props.summary ? <p className="fv-card rounded-lg bg-white p-4 text-lg text-gray-800 shadow-sm">{props.summary}</p> : null;
+
+  const pageBg: Record<number, string> = {
+    4: "var(--tc-lighter)",
+    5: "var(--tc-base)",
+    7: "#0b0b14",
+    8: "var(--tc-light)",
+    9: "radial-gradient(circle at 8% 4%, var(--tc-light) 0, transparent 38%), radial-gradient(circle at 95% 30%, var(--tc-light) 0, transparent 34%), var(--tc-lighter)",
+  };
+  const titleColor = theme === 5 ? "var(--tc-on)" : theme === 7 ? "#ffffff" : theme === 8 ? "var(--tc-on-text)" : undefined;
+  const subColor = theme === 5 ? "var(--tc-on-soft)" : theme === 7 ? "#c7c7d4" : undefined;
 
   return (
-    <div style={vars as React.CSSProperties} className="bg-gray-50 pb-10">
+    <div
+      data-fv={theme}
+      style={{ ...(vars as React.CSSProperties), background: pageBg[theme] }}
+      className={`${pageBg[theme] ? "" : "bg-gray-50"} pb-10`}
+    >
       {props.notice && (
         <p role="status" className="bg-amber-100 px-4 py-2 text-center text-sm text-amber-900">{props.notice}</p>
       )}
 
-      {theme === 2 && (
-        <header className="px-4 py-10 text-center" style={{ background: "var(--tc-base)", color: "var(--tc-on)" }}>
+      {(theme === 2 || theme === 4) && (
+        <header
+          className="px-4 py-10 text-center"
+          style={{
+            background: theme === 4 ? "linear-gradient(135deg, var(--tc-dark) 0%, var(--tc-base) 100%)" : "var(--tc-base)",
+            color: "var(--tc-on)",
+          }}
+        >
           <div className="mx-auto max-w-3xl">
             <h1 className="text-3xl font-extrabold sm:text-4xl">{props.title}</h1>
             {props.beneficiary && <p className="mt-2 text-sm opacity-90">Para: {props.beneficiary}</p>}
@@ -168,15 +197,39 @@ export default function FundraiserView(props: FundraiserViewProps) {
         </header>
       )}
 
-      <div className={`mx-auto px-4 py-8 ${theme === 3 ? "max-w-2xl" : "max-w-5xl"}`}>
-        {theme !== 2 && (
-          <div className={theme === 3 ? "text-center" : ""}>
-            <h1 className="text-2xl font-bold sm:text-3xl">{props.title}</h1>
-            {props.beneficiary && <p className="mt-1 text-sm text-gray-600">Para: {props.beneficiary}</p>}
+      {theme === 6 && (
+        <header className="grid md:grid-cols-2">
+          <div className="flex flex-col justify-center px-6 py-12 md:px-12" style={{ background: "var(--tc-base)", color: "var(--tc-on)" }}>
+            <h1 className="text-3xl font-extrabold leading-tight sm:text-4xl">{props.title}</h1>
+            {props.beneficiary && <p className="mt-3 text-sm opacity-90">Para: {props.beneficiary}</p>}
+          </div>
+          <div className="flex items-center px-6 py-10 md:px-12" style={{ background: "var(--tc-light)" }}>
+            <div className="w-full max-w-md rounded-lg bg-white p-4 text-gray-900 shadow">{progress}</div>
+          </div>
+        </header>
+      )}
+
+      <div className={`mx-auto px-4 py-8 ${theme === 3 || theme === 9 ? "max-w-2xl" : "max-w-5xl"}`}>
+        {!HEADER_THEMES.includes(theme) && (
+          <div className={theme === 3 || theme === 9 ? "text-center" : ""}>
+            {theme === 9 && (
+              <span className="mb-3 inline-block rounded-full px-4 py-1 text-xs font-bold" style={{ background: "var(--tc-base)", color: "var(--tc-on)" }}>
+                {props.beneficiary ? `Para ${props.beneficiary}` : "Campanha de arrecadação"}
+              </span>
+            )}
+            <h1
+              className={`font-bold ${theme === 5 ? "display text-4xl sm:text-6xl" : "text-2xl sm:text-3xl"} ${theme === 7 ? "fv-glow" : ""}`}
+              style={{ color: titleColor }}
+            >
+              {props.title}
+            </h1>
+            {props.beneficiary && theme !== 9 && (
+              <p className={`mt-1 text-sm ${subColor ? "" : "text-gray-600"}`} style={{ color: subColor }}>Para: {props.beneficiary}</p>
+            )}
           </div>
         )}
 
-        {theme === 3 ? (
+        {theme === 3 || theme === 9 ? (
           <div className="mt-6 space-y-6">
             {donateBox}
             {summary}
@@ -185,7 +238,7 @@ export default function FundraiserView(props: FundraiserViewProps) {
             <Donors donations={props.donations} count={props.donationCount} />
           </div>
         ) : (
-          <div className={`grid gap-6 lg:grid-cols-[1fr_340px] ${theme === 2 ? "" : "mt-6"}`}>
+          <div className={`grid gap-6 lg:grid-cols-[1fr_340px] ${HEADER_THEMES.includes(theme) ? "" : "mt-6"}`}>
             <div className="space-y-6">
               {summary}
               {story}

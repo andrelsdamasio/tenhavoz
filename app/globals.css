@@ -236,3 +236,11 @@ body {
     min-height: 44px;
   }
 }
+
+/* Temas da página de arrecadação: acabamento dos cartões por tema. */
+[data-fv="5"] .fv-card { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.18); border-radius: 0.5rem; }
+[data-fv="7"] .fv-card { box-shadow: 0 0 0 2px var(--tc-base), 0 0 28px color-mix(in srgb, var(--tc-base) 55%, transparent); }
+[data-fv="7"] .fv-glow { text-shadow: 0 0 22px color-mix(in srgb, var(--tc-base) 80%, transparent); }
+[data-fv="8"] .fv-card { border-left: 8px solid var(--tc-base); border-radius: 0.25rem; box-shadow: none; }
+[data-fv="9"] .fv-card { border-radius: 1.75rem; box-shadow: 0 10px 30px -12px color-mix(in srgb, var(--tc-base) 45%, transparent); }
+[data-fv="4"] .fv-card, [data-fv="6"] .fv-card { box-shadow: 0 8px 24px -14px color-mix(in srgb, var(--tc-base) 50%, transparent); }
