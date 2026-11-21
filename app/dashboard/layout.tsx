@@ -34,7 +34,7 @@ export default async function DashboardLayout({
     <div className="tv-app min-h-screen">
       <header className="border-b-2 border-ink bg-paper">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" aria-label="TenhaVoz, página inicial" className="flex items-center gap-2">
             <Logo className="h-7 w-7 text-ink" />
             <span className="display text-2xl">TenhaVoz</span>
           </Link>

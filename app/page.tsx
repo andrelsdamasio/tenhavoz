@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HomeAuthLinks from "@/components/HomeAuthLinks";
 import Logo from "@/components/Logo";
 import WhatsNew from "@/components/WhatsNew";
 import { entriesFor } from "@/lib/whats-new";
@@ -167,15 +168,7 @@ export default async function HomePage() {
             ))}
           </nav>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-semibold text-ink underline-offset-4 hover:underline">
-              Entrar
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-full bg-ink px-4 py-2 text-sm font-bold text-paper hover:bg-brand-600"
-            >
-              Criar campanha
-            </Link>
+            <HomeAuthLinks variant="header" />
           </div>
         </div>
       </header>
@@ -437,9 +430,7 @@ export default async function HomePage() {
             <Link href="/termos" className="underline-offset-4 hover:underline">
               Termos
             </Link>
-            <Link href="/login" className="underline-offset-4 hover:underline">
-              Entrar
-            </Link>
+            <HomeAuthLinks variant="footer" />
           </div>
         </div>
       </footer>
