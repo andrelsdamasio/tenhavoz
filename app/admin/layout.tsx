@@ -8,6 +8,8 @@ import WhatsNew from "@/components/WhatsNew";
 import { entriesFor } from "@/lib/whats-new";
 import Logo from "@/components/Logo";
 import AdminNav, { type AdminNavItem } from "@/components/AdminNav";
+import MobileMenu from "@/components/MobileMenu";
+import { MOBILE_ITEM } from "@/components/mobile-menu-styles";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -52,22 +54,31 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="tv-app min-h-screen bg-paper">
       <header className="border-b-2 border-ink bg-paper">
-        <div className="mx-auto flex max-w-7xl flex-col items-start gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
           <Link href="/admin" className="flex items-center gap-2">
             <Logo className="h-7 w-7 text-ink" />
             <span className="display text-2xl">TenhaVoz</span>
             <span className="rounded bg-sol px-1.5 py-0.5 text-xs font-extrabold uppercase tracking-wide text-ink">Admin</span>
           </Link>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold leading-6 text-ink">
+          <div className="hidden items-center gap-4 text-sm font-semibold leading-6 text-ink md:flex">
             <WhatsNew entries={entriesFor(true)} />
             <Link href="/dashboard" className="underline-offset-4 hover:underline">
               ← Voltar para minhas campanhas
             </Link>
           </div>
+          <MobileMenu title="Admin">
+            <AdminNav items={items} vertical />
+            <div className="mt-3 flex flex-col gap-1 border-t-2 border-ink pt-3">
+              <WhatsNew entries={entriesFor(true)} buttonClassName={`relative ${MOBILE_ITEM}`} />
+              <Link href="/dashboard" className={MOBILE_ITEM}>
+                ← Voltar para minhas campanhas
+              </Link>
+            </div>
+          </MobileMenu>
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[14rem_1fr]">
-        <aside className="md:sticky md:top-6 md:self-start">
+        <aside className="hidden md:sticky md:top-6 md:block md:self-start">
           <AdminNav items={items} />
         </aside>
         <main className="min-w-0">{children}</main>

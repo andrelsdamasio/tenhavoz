@@ -1,9 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { WhatsNewEntry } from "@/lib/whats-new";
 
 const STORAGE_KEY = "tenhavoz:whats-new-seen";
+const SEEN_EVENT = "tenhavoz:whats-new-seen-changed";
+
+/** O botão pode existir em dois lugares (menu do computador e menu do celular): só um abre o pop-up sozinho. */
+let autoOpenClaimed = false;
 
 function readSeen(): string[] | null {
   try {
@@ -29,8 +34,11 @@ function writeSeen(ids: string[]) {
 export default function WhatsNew({
   entries,
   popupOnly = false,
+  buttonClassName = "relative hover:underline",
 }: {
   entries: WhatsNewEntry[];
+  /** Estilo do botão (o menu do celular usa um botão maior). */
+  buttonClassName?: string;
   /** Página inicial: sem botão; o pop-up abre sozinho uma vez para cada novidade, para qualquer visitante. */
   popupOnly?: boolean;
 }) {
@@ -44,18 +52,23 @@ export default function WhatsNew({
     if (seen === null) return;
     const unseen = entries.some((e) => !seen.includes(e.id));
     if (!unseen) return;
-    if (!popupOnly) {
-      setHasUnseen(true);
-      setOpen(true);
-      return;
-    }
+    if (!popupOnly) setHasUnseen(true);
+    if (autoOpenClaimed) return;
+    autoOpenClaimed = true;
     setOpen(true);
   }, [entries, popupOnly]);
+
+  useEffect(() => {
+    const onSeen = () => setHasUnseen(false);
+    window.addEventListener(SEEN_EVENT, onSeen);
+    return () => window.removeEventListener(SEEN_EVENT, onSeen);
+  }, []);
 
   const close = useCallback(() => {
     setOpen(false);
     setHasUnseen(false);
     writeSeen(entries.map((e) => e.id));
+    window.dispatchEvent(new Event(SEEN_EVENT));
     openerRef.current?.focus();
   }, [entries]);
 
@@ -80,7 +93,7 @@ export default function WhatsNew({
           openerRef.current = e.currentTarget;
           setOpen(true);
         }}
-        className="relative hover:underline"
+        className={buttonClassName}
       >
         Novidades
         {hasUnseen && (
@@ -92,9 +105,10 @@ export default function WhatsNew({
       </button>
       )}
 
-      {open && (
+      {open &&
+        createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) close();
           }}
@@ -130,7 +144,8 @@ export default function WhatsNew({
               Entendi
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
