@@ -202,7 +202,7 @@ body {
 .tv-app .border-gray-200,
 .tv-app .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #cdc1aa; }
 .tv-app .border-gray-300 { border-color: #a89c86; }
-.tv-app .text-gray-400 { color: #7a6f62; }
+.tv-app .text-gray-400 { color: #6a5f53; }
 .tv-app .text-gray-500 { color: #5f564c; }
 .tv-app .text-gray-600 { color: #4a423a; }
 .tv-app .text-gray-700,
@@ -223,3 +223,16 @@ body {
 }
 .tv-app h2,
 .tv-app h3 { letter-spacing: -0.01em; }
+
+/* Contraste: o urucum puro não chega a 4,5:1 sobre o papel; em texto pequeno usa-se um tom mais fechado. */
+.tv-app .text-brand-600 { color: #b82d12; }
+.tv-app .text-brand-700 { color: #a82b10; }
+
+/* Toque: alvos de pelo menos 44px em telas de toque (botões e campos; ignora ícones redondos e amostras de cor). */
+@media (pointer: coarse) {
+  .tv-app button:not(.rounded-full):not([aria-label]),
+  .tv-app select,
+  .tv-app input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]) {
+    min-height: 44px;
+  }
+}

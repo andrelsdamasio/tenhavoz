@@ -317,7 +317,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                     {daily[campaign.id] && (
                       <div className="mt-2">
                         <StatsSparkline days={daily[campaign.id]!} />
-                        <p className="mt-0.5 text-[10px] text-gray-400">últimos 14 dias</p>
+                        <p className="mt-0.5 text-xs text-gray-500">últimos 14 dias</p>
                       </div>
                     )}
                   </>
