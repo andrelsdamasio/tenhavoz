@@ -57,7 +57,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="tv-app min-h-screen bg-paper">
       <header className="border-b-2 border-ink bg-paper">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
-          <Link href="/admin" className="flex items-center gap-2">
+          <Link href="/" aria-label="TenhaVoz, página inicial" className="flex items-center gap-2">
             <Logo className="h-7 w-7 text-ink" />
             <span className="display text-2xl">TenhaVoz</span>
             <span className="rounded bg-sol px-1.5 py-0.5 text-xs font-extrabold uppercase tracking-wide text-ink">Admin</span>
