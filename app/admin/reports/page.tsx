@@ -257,18 +257,18 @@ export default async function ReportsPage({ searchParams }: PageProps) {
             Tudo certo: {audit.rows.length} pagamento(s) do TenhaVoz aprovado(s) e todos com página no ar.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-red-200 bg-white">
+          <div tabIndex={0} role="region" aria-label="Pagamentos sem página no ar (rolar para o lado)" className="overflow-x-auto rounded-md border border-red-200 bg-white">
             <p className="border-b border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">
               {problems.length} pagamento(s) aprovado(s) sem página no ar — atender agora.
             </p>
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-gray-500">
                 <tr>
-                  <th className="p-2">Data</th>
-                  <th className="p-2">Valor</th>
-                  <th className="p-2">Conta / e-mail</th>
-                  <th className="p-2">Situação</th>
-                  <th className="p-2">Ação</th>
+                  <th scope="col" className="p-2">Data</th>
+                  <th scope="col" className="p-2">Valor</th>
+                  <th scope="col" className="p-2">Conta / e-mail</th>
+                  <th scope="col" className="p-2">Situação</th>
+                  <th scope="col" className="p-2">Ação</th>
                 </tr>
               </thead>
               <tbody>
@@ -445,18 +445,18 @@ export default async function ReportsPage({ searchParams }: PageProps) {
             {q ? `Nenhuma campanha encontrada para \"${q}\".` : "Nenhuma campanha nesse filtro."}
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+          <div tabIndex={0} role="region" aria-label="Lista de campanhas (rolar para o lado)" className="overflow-x-auto rounded-md border border-gray-200 bg-white">
             <table className="w-full text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 text-left text-xs uppercase text-gray-500">
                 <tr>
-                  <th className="px-4 py-2">Campanha</th>
-                  <th className="px-4 py-2">Dono</th>
-                  <th className="px-4 py-2">Situação</th>
-                  <th className="px-4 py-2">Cobrança</th>
-                  <th className="px-4 py-2">Criada em</th>
-                  <th className="px-4 py-2">Prazo</th>
-                  <th className="px-4 py-2">Visitas / cliques</th>
-                  <th className="px-4 py-2"><span className="sr-only">Ações</span></th>
+                  <th scope="col" className="px-4 py-2">Campanha</th>
+                  <th scope="col" className="px-4 py-2">Dono</th>
+                  <th scope="col" className="px-4 py-2">Situação</th>
+                  <th scope="col" className="px-4 py-2">Cobrança</th>
+                  <th scope="col" className="px-4 py-2">Criada em</th>
+                  <th scope="col" className="px-4 py-2">Prazo</th>
+                  <th scope="col" className="px-4 py-2">Visitas / cliques</th>
+                  <th scope="col" className="px-4 py-2"><span className="sr-only">Ações</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -607,15 +607,15 @@ export default async function ReportsPage({ searchParams }: PageProps) {
         {rows.length === 0 ? (
           <p className="text-gray-600">Nenhum pagamento confirmado ainda.</p>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+          <div tabIndex={0} role="region" aria-label="Receita por período (rolar para o lado)" className="overflow-x-auto rounded-md border border-gray-200 bg-white">
             <table className="w-full text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 text-left text-xs uppercase text-gray-500">
                 <tr>
-                  <th className="px-4 py-2">Período</th>
-                  <th className="px-4 py-2">Pagamentos</th>
-                  <th className="px-4 py-2">Receita</th>
-                  <th className="px-4 py-2">Reembolsos</th>
-                  <th className="px-4 py-2">Valor reembolsado</th>
+                  <th scope="col" className="px-4 py-2">Período</th>
+                  <th scope="col" className="px-4 py-2">Pagamentos</th>
+                  <th scope="col" className="px-4 py-2">Receita</th>
+                  <th scope="col" className="px-4 py-2">Reembolsos</th>
+                  <th scope="col" className="px-4 py-2">Valor reembolsado</th>
                 </tr>
               </thead>
               <tbody>

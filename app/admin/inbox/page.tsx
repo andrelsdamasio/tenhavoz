@@ -113,7 +113,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       <Banner enviado={enviado} erro={erro} />
 
       <div className="grid gap-4 md:grid-cols-[18rem_1fr]">
-        <ul className="divide-y divide-gray-100 overflow-hidden rounded-md border border-gray-200 bg-white text-sm">
+        <ul className={`divide-y divide-gray-100 overflow-hidden rounded-md border border-gray-200 bg-white text-sm ${selected || compose ? "hidden md:block" : ""}`}>
           {list.length === 0 && (
             <li className="p-4 text-gray-500">
               {box === "in" ? "Nenhum e-mail recebido ainda." : "Nada enviado ainda."}
@@ -137,7 +137,12 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
           ))}
         </ul>
 
-        <section className="min-w-0 rounded-md border border-gray-200 bg-white p-4 text-sm">
+        <section className={`min-w-0 rounded-md border border-gray-200 bg-white p-4 text-sm ${selected || compose ? "" : "hidden md:block"}`}>
+          {(selected || compose) && (
+            <Link href={`/admin/inbox?box=${box}`} className="mb-3 inline-block text-sm font-semibold text-brand-600 hover:underline md:hidden">
+              ← Voltar à lista
+            </Link>
+          )}
           {compose ? (
             <form action={sendInboxEmailAction} className="space-y-3">
               <h2 className="text-lg font-semibold">Nova mensagem</h2>

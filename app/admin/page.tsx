@@ -193,13 +193,13 @@ export default async function AdminOverviewPage() {
         {extras.awaiting.length === 0 ? (
           <p className="text-sm text-gray-500">Ninguém aguardando.</p>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+          <div tabIndex={0} role="region" aria-label="Campanhas aguardando página (rolar para o lado)" className="overflow-x-auto rounded-md border border-gray-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-gray-500">
                 <tr>
-                  <th className="p-2">Campanha</th>
-                  <th className="p-2">Conta</th>
-                  <th className="p-2">Criada em</th>
+                  <th scope="col" className="p-2">Campanha</th>
+                  <th scope="col" className="p-2">Conta</th>
+                  <th scope="col" className="p-2">Criada em</th>
                 </tr>
               </thead>
               <tbody>
@@ -226,15 +226,15 @@ export default async function AdminOverviewPage() {
         {extras.recentPayments.length === 0 ? (
           <p className="text-sm text-gray-500">Nenhum pagamento registrado ainda.</p>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+          <div tabIndex={0} role="region" aria-label="Últimos pagamentos (rolar para o lado)" className="overflow-x-auto rounded-md border border-gray-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-gray-500">
                 <tr>
-                  <th className="p-2">Data</th>
-                  <th className="p-2">Campanha</th>
-                  <th className="p-2">Valor</th>
-                  <th className="p-2">Meio</th>
-                  <th className="p-2">Situação</th>
+                  <th scope="col" className="p-2">Data</th>
+                  <th scope="col" className="p-2">Campanha</th>
+                  <th scope="col" className="p-2">Valor</th>
+                  <th scope="col" className="p-2">Meio</th>
+                  <th scope="col" className="p-2">Situação</th>
                 </tr>
               </thead>
               <tbody>
