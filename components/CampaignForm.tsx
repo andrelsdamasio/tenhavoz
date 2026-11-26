@@ -937,7 +937,6 @@ export default function CampaignForm({
           value={themeColor}
           onChange={setThemeColor}
           advanced={mode === "avancado"}
-          suggested={colorPalette}
         />
         <p className="mt-2 text-xs text-gray-500">
           Muda a cor de destaque (botão, acentos) do tema escolhido acima.

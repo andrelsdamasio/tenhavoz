@@ -32,24 +32,11 @@ export default function AdminSettingsForm({
   const [enabledTemplates, setEnabledTemplates] = useState<TemplateId[]>(
     settings.enabled_templates
   );
-  const [palette, setPalette] = useState<string[]>(settings.template_color_palette);
 
   function toggleTemplate(id: TemplateId) {
     setEnabledTemplates((current) =>
       current.includes(id) ? current.filter((t) => t !== id) : [...current, id]
     );
-  }
-
-  function updatePaletteColor(index: number, value: string) {
-    setPalette((current) => current.map((color, i) => (i === index ? value : color)));
-  }
-
-  function removePaletteColor(index: number) {
-    setPalette((current) => current.filter((_, i) => i !== index));
-  }
-
-  function addPaletteColor() {
-    setPalette((current) => [...current, "#4338ca"]);
   }
 
   const reais = (cents: number) => (cents / 100).toFixed(2);
@@ -75,7 +62,7 @@ export default function AdminSettingsForm({
       <SettingsSection
         id="criacao"
         title="Criação de campanhas"
-        description="Limite do texto, temas oferecidos e cores disponíveis no formulário."
+        description="Limite do texto e temas oferecidos no formulário. As cores são livres: o modo básico traz as comuns e o avançado aceita qualquer cor."
       >
         <div>
           <label className="flex items-center gap-2 text-sm font-semibold" htmlFor="manifestCharLimitEnabled">
@@ -106,21 +93,6 @@ export default function AdminSettingsForm({
           </div>
         </fieldset>
 
-        <fieldset>
-          <legend className="mb-1 text-sm font-semibold">Cores para quem cria a campanha</legend>
-          <p className="mb-2 text-xs text-ink-soft">No modo avançado a pessoa escolhe uma destas cores (ou mantém a padrão).</p>
-          <div className="flex flex-wrap items-center gap-2">
-            {palette.map((color, index) => (
-              <div key={index} className="flex items-center gap-1 rounded-md border-2 border-ink/25 p-1">
-                <input type="color" name="paletteColor" value={color} onChange={(e) => updatePaletteColor(index, e.target.value)} className="h-8 w-8 cursor-pointer rounded border border-ink/30 p-0.5" aria-label={`Cor ${index + 1}`} />
-                <button type="button" onClick={() => removePaletteColor(index)} className="px-1 text-xs text-ink-soft hover:text-red-600" aria-label="Remover cor">✕</button>
-              </div>
-            ))}
-            <button type="button" onClick={addPaletteColor} className="h-10 rounded-md border-2 border-dashed border-ink/40 px-3 text-xs font-bold hover:bg-paper-deep">
-              + Adicionar cor
-            </button>
-          </div>
-        </fieldset>
       </SettingsSection>
 
       <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-3 rounded-md border-2 border-ink bg-paper p-3 shadow-md">

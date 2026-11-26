@@ -6,9 +6,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
-import { updateAppSettings } from "@/lib/settings";
+import { getAppSettings, updateAppSettings } from "@/lib/settings";
 import { parseAdInput } from "@/lib/ad";
-import { isValidHexColor } from "@/lib/color";
 import { syncMercadoPagoPaymentById } from "@/lib/payment-sync";
 import type { TemplateId } from "@/lib/types";
 
@@ -41,7 +40,6 @@ export async function updateSettingsAction(
     .map((value) => Number(value)) as TemplateId[];
   const manifestCharLimit = Number(formData.get("manifestCharLimit"));
   const manifestCharLimitEnabled = formData.get("manifestCharLimitEnabled") === "on";
-  const templateColorPalette = formData.getAll("paletteColor").map((value) => String(value));
 
   if (!Number.isFinite(price72hReais) || price72hReais <= 0) {
     return { error: "Preço do plano de 72h inválido.", success: false };
@@ -59,14 +57,6 @@ export async function updateSettingsAction(
     return { error: "Limite de caracteres inválido.", success: false };
   }
 
-  if (templateColorPalette.length === 0) {
-    return { error: "Adicione ao menos uma cor na paleta.", success: false };
-  }
-
-  if (!templateColorPalette.every(isValidHexColor)) {
-    return { error: "Uma das cores da paleta é inválida.", success: false };
-  }
-
   const admin = createAdminClient();
 
   await updateAppSettings(admin, {
@@ -75,7 +65,8 @@ export async function updateSettingsAction(
     enabledTemplates,
     manifestCharLimit: Math.round(manifestCharLimit),
     manifestCharLimitEnabled,
-    templateColorPalette,
+    // A paleta deixou de ser configurável: o modo básico já traz as cores comuns e o avançado aceita qualquer cor.
+    templateColorPalette: (await getAppSettings(admin)).template_color_palette,
   });
 
   revalidatePath("/admin/settings");

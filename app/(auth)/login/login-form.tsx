@@ -70,6 +70,9 @@ export default function LoginForm() {
           </div>
         )}
         <SubmitButton />
+        <Link href="/esqueci-senha" className="text-center text-sm text-brand-600 hover:underline">
+          Esqueci minha senha
+        </Link>
       </form>
       <p className="mt-4 text-sm text-gray-600">
         Não tem conta?{" "}
