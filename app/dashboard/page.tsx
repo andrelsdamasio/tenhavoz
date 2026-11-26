@@ -2,37 +2,19 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { listCampaignsForUser, isCampaignEditable } from "@/lib/campaigns";
+import { listCampaignsForUser } from "@/lib/campaigns";
 import { getCampaignStats, getDailyStats } from "@/lib/events";
-import { clickRate, describeExpiry, nextStepFor, sumDaily } from "@/lib/campaign-stats";
-import { duplicateCampaignAction } from "./actions";
+import { clickRate, sumDaily } from "@/lib/campaign-stats";
 import { getReferralSummary, REFERRAL_DISCOUNT_PERCENT } from "@/lib/referral";
-import StatsSparkline from "@/components/StatsSparkline";
+import CampaignCard from "@/components/CampaignCard";
 import ActivityChart from "@/components/ActivityChart";
-import QrCodeDetails from "@/components/QrCodeDetails";
 import {
   reconcileCampaignPayment,
   syncMercadoPagoPaymentById,
   syncStripeSessionById,
 } from "@/lib/payment-sync";
-import ShareButtons from "@/components/ShareButtons";
-import DeleteCampaignButton from "@/components/DeleteCampaignButton";
 import AutoRefresh from "@/components/AutoRefresh";
 import FlashMessage from "@/components/FlashMessage";
-import VerifyPaymentButton from "@/components/VerifyPaymentButton";
-import type { CampaignStatus } from "@/lib/types";
-
-const STATUS_LABEL: Record<CampaignStatus, string> = {
-  draft: "Rascunho — pagamento pendente",
-  paid: "Pagamento confirmado — publicando...",
-  published: "Publicada",
-};
-
-const STATUS_CLASS: Record<CampaignStatus, string> = {
-  draft: "bg-yellow-100 text-yellow-800",
-  paid: "bg-blue-100 text-blue-800",
-  published: "bg-green-100 text-green-800",
-};
 
 /** Só confere pagamento de campanhas criadas há menos que isto... */
 const AUTO_CHECK_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -40,7 +22,6 @@ const AUTO_CHECK_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const AUTO_CHECK_MAX_CAMPAIGNS = 3;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tenhavoz.com.br";
-const SITE_HOST = SITE_URL.replace(/^https?:\/\//, "");
 
 interface PageProps {
   searchParams: Promise<{
@@ -296,140 +277,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       ) : (
         <ul className="flex flex-col gap-3">
           {campaigns.map((campaign) => (
-            <li
+            <CampaignCard
               key={campaign.id}
-              className="flex flex-col gap-4 rounded-md border-2 border-ink/80 bg-white p-4 md:flex-row md:items-start md:justify-between"
-            >
-              <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
-                <p className="text-base font-extrabold leading-snug">{campaign.title}</p>
-                <span
-                  className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[campaign.status]}`}
-                >
-                  {STATUS_LABEL[campaign.status]}
-                </span>
-                {campaign.slug && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    {SITE_HOST}/{campaign.slug}
-                  </p>
-                )}
-                {campaign.status === "published" && (
-                  <>
-                    {(() => {
-                      const expiry = describeExpiry(campaign.expires_at);
-                      return expiry ? (
-                        <p
-                          className={`mt-1 text-xs font-medium ${
-                            expiry.expired ? "text-red-600" : expiry.urgent ? "text-amber-600" : "text-gray-500"
-                          }`}
-                        >
-                          {expiry.label}
-                        </p>
-                      ) : null;
-                    })()}
-                    <p className="mt-1 text-xs text-gray-500">
-                      {stats[campaign.id]?.views ?? 0} visualizações ·{" "}
-                      {stats[campaign.id]?.clicks ?? 0} cliques no botão de envio ·{" "}
-                      {clickRate(stats[campaign.id]?.views ?? 0, stats[campaign.id]?.clicks ?? 0).toLocaleString("pt-BR")}%
-                    </p>
-                    {daily[campaign.id] && (
-                      <div className="mt-2">
-                        <StatsSparkline days={daily[campaign.id]!} />
-                        <p className="mt-0.5 text-xs text-gray-500">últimos 14 dias</p>
-                      </div>
-                    )}
-                  </>
-                )}
-                {(() => {
-                  const expiry = describeExpiry(campaign.expires_at);
-                  const step = nextStepFor({
-                    published: campaign.status === "published",
-                    checkoutStarted: campaign.duration_hours !== null,
-                    expired: !!expiry?.expired,
-                    views: stats[campaign.id]?.views ?? 0,
-                    clicks: stats[campaign.id]?.clicks ?? 0,
-                  });
-                  if (!step) return null;
-                  const tone =
-                    step.tone === "action"
-                      ? "bg-brand-50 text-brand-700"
-                      : step.tone === "warn"
-                        ? "bg-amber-50 text-amber-800"
-                        : "bg-blue-50 text-blue-800";
-                  return <p className={`mt-3 rounded-md px-3 py-2 text-xs font-medium ${tone}`}>{step.text}</p>;
-                })()}
-              </div>
-              <div className="flex flex-col items-start gap-2 md:max-w-[16rem] md:shrink-0 md:items-end md:text-right">
-                {campaign.status === "published" && campaign.slug ? (
-                  <>
-                    <Link
-                      href={`/${campaign.slug}`}
-                      target="_blank"
-                      className="text-sm text-brand-600 hover:underline"
-                    >
-                      Ver página pública ↗
-                    </Link>
-                    <ShareButtons
-                      url={`${SITE_URL}/${campaign.slug}`}
-                      title={campaign.title}
-                      className="md:text-right"
-                    />
-                    <QrCodeDetails url={`${SITE_URL}/${campaign.slug}`} name={campaign.slug} />
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href={`/dashboard/checkout?campaignId=${campaign.id}`}
-                      className="text-sm text-brand-600 hover:underline"
-                    >
-                      Pagar e publicar
-                    </Link>
-                    <VerifyPaymentButton campaignId={campaign.id} />
-                    {campaign.duration_hours !== null && (
-                      <Link
-                        href={`/dashboard/pagamento/${campaign.id}`}
-                        className="text-sm text-gray-600 hover:underline"
-                      >
-                        Acompanhar pagamento
-                      </Link>
-                    )}
-                  </>
-                )}
-                {isCampaignEditable(campaign) && (
-                  <Link
-                    href={`/dashboard/edit/${campaign.id}`}
-                    className="text-sm text-brand-600 hover:underline"
-                  >
-                    Editar
-                  </Link>
-                )}
-                <form action={duplicateCampaignAction}>
-                  <input type="hidden" name="campaignId" value={campaign.id} />
-                  {describeExpiry(campaign.expires_at)?.expired ? (
-                    <button
-                      type="submit"
-                      name="mode"
-                      value="renew"
-                      className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600"
-                    >
-                      Renovar campanha
-                    </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      name="mode"
-                      value="duplicate"
-                      className="text-sm text-gray-600 hover:underline"
-                    >
-                      Duplicar
-                    </button>
-                  )}
-                </form>
-                <DeleteCampaignButton
-                  campaignId={campaign.id}
-                  published={campaign.status === "published"}
-                />
-              </div>
-            </li>
+              campaign={campaign}
+              views={stats[campaign.id]?.views ?? 0}
+              clicks={stats[campaign.id]?.clicks ?? 0}
+              daily={daily[campaign.id]}
+              siteUrl={SITE_URL}
+            />
           ))}
         </ul>
       )}
