@@ -88,3 +88,17 @@ export function nextStepFor(input: {
   }
   return null;
 }
+
+/** Soma as séries diárias de várias campanhas (todas com os mesmos dias) numa só. */
+export function sumDaily(series: DayStat[][]): DayStat[] {
+  const byDate = new Map<string, DayStat>();
+  for (const days of series) {
+    for (const d of days) {
+      const cur = byDate.get(d.date) ?? { date: d.date, views: 0, clicks: 0 };
+      cur.views += d.views;
+      cur.clicks += d.clicks;
+      byDate.set(d.date, cur);
+    }
+  }
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+}

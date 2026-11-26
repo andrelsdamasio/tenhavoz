@@ -7,6 +7,7 @@ import { getAdminDashboard } from "@/lib/admin-dashboard";
 import { auditMercadoPagoPayments } from "@/lib/payment-audit";
 import { countReportedComments } from "@/lib/comments";
 import { getAdminFundraisers } from "@/lib/admin-fundraisers";
+import ActivityChart from "@/components/ActivityChart";
 import { getHealthChecks, getOverviewExtras } from "@/lib/admin-overview";
 
 const TIME_ZONE = "America/Sao_Paulo";
@@ -174,6 +175,16 @@ export default async function AdminOverviewPage() {
         <h2 id="numeros" className="mb-3 text-sm font-semibold uppercase text-gray-500">
           Números
         </h2>
+        <div className="mb-3 rounded-md border-2 border-ink bg-white p-4">
+          <p className="mb-2 text-xs font-extrabold uppercase text-ink-soft">Receita por dia — últimos 30 dias</p>
+          <ActivityChart
+            data={extras.revenueDaily.map((d) => ({ date: d.date, revenue: d.revenue, payments: d.payments }))}
+            series={[{ key: "revenue", label: "Receita", color: "#0e5a39" }]}
+            format={(n) => brl(n)}
+            summary={`Receita confirmada por dia nos últimos 30 dias: ${brl(extras.revenue30d)} no total.`}
+            height={200}
+          />
+        </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Receita (7 dias)" value={brl(extras.revenue7d)} />
           <Stat label="Receita (30 dias)" value={brl(extras.revenue30d)} />

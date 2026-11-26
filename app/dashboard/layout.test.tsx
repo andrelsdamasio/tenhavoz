@@ -9,6 +9,7 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/fundraisers", () => ({ isFundraisingEnabled: async () => false }));
 vi.mock("../(auth)/actions", () => ({ signOut: async () => {} }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => {} }), usePathname: () => "/dashboard" }));
 
 import DashboardLayout from "./layout";
 

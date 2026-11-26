@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types";
+import { dayKey } from "@/lib/campaign-stats";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -47,7 +48,31 @@ export interface AwaitingPayment {
   ownerEmail: string | null;
 }
 
+export interface RevenuePoint {
+  date: string;
+  revenue: number;
+  payments: number;
+}
+
+/** Receita confirmada por dia (horário de Brasília), com os dias sem venda zerados. */
+export function revenueByDay(rows: { amount: number; created_at: string }[], days: number, now = Date.now()): RevenuePoint[] {
+  const byDay = new Map<string, RevenuePoint>();
+  for (let i = days - 1; i >= 0; i--) {
+    const date = dayKey(now - i * DAY);
+    byDay.set(date, { date, revenue: 0, payments: 0 });
+  }
+  for (const r of rows) {
+    const hit = byDay.get(dayKey(new Date(r.created_at).getTime()));
+    if (hit) {
+      hit.revenue += Number(r.amount);
+      hit.payments += 1;
+    }
+  }
+  return [...byDay.values()];
+}
+
 export interface OverviewExtras {
+  revenueDaily: RevenuePoint[];
   unreadInbox: number;
   revenue7d: number;
   revenue30d: number;
@@ -115,6 +140,7 @@ export async function getOverviewExtras(
 
   return {
     unreadInbox: unread.count ?? 0,
+    revenueDaily: revenueByDay(rows, 30, now),
     revenue7d: sum(rows.filter((r) => new Date(r.created_at).getTime() >= since7)),
     revenue30d: sum(rows),
     paymentsPending: pending.count ?? 0,
