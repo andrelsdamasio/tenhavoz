@@ -1,3 +1,4 @@
+import CommandPalette from "@/components/CommandPalette";
 import Link from "next/link";
 import { signOut } from "../(auth)/actions";
 import { createClient } from "@/lib/supabase/server";
@@ -55,6 +56,16 @@ export default async function DashboardLayout({
                 Admin
               </Link>
             )}
+            <CommandPalette
+              items={[
+                { label: "Minhas campanhas", href: "/dashboard", hint: "Visualizações e cliques", group: "Campanhas" },
+                { label: "Nova campanha", href: "/dashboard/new", hint: "Criar uma página de e-mail", group: "Campanhas" },
+                ...(showDonations ? [{ label: "Arrecadações", href: "/dashboard/doacoes", hint: "Doações recebidas", group: "Campanhas" }] : []),
+                ...(showAdminLink ? [{ label: "Admin", href: "/admin", hint: "Painel do proprietário", group: "Conta" }] : []),
+                { label: "Segurança e confiança", href: "/seguranca", group: "Ajuda" },
+                { label: "Página inicial", href: "/", group: "Ajuda" },
+              ]}
+            />
             <WhatsNew entries={entriesFor(showAdminLink)} />
             <a href={buildSupportMailto(user?.email)} className="underline-offset-4 hover:underline">
               Suporte

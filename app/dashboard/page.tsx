@@ -4,10 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listCampaignsForUser, isCampaignEditable } from "@/lib/campaigns";
 import { getCampaignStats, getDailyStats } from "@/lib/events";
-import { clickRate, describeExpiry, nextStepFor } from "@/lib/campaign-stats";
+import { clickRate, describeExpiry, nextStepFor, sumDaily } from "@/lib/campaign-stats";
 import { duplicateCampaignAction } from "./actions";
 import { getReferralSummary, REFERRAL_DISCOUNT_PERCENT } from "@/lib/referral";
 import StatsSparkline from "@/components/StatsSparkline";
+import ActivityChart from "@/components/ActivityChart";
 import QrCodeDetails from "@/components/QrCodeDetails";
 import {
   reconcileCampaignPayment,
@@ -194,6 +195,22 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             </div>
           ))}
         </div>
+      )}
+      {publishedIds.length > 0 && (
+        <section aria-labelledby="atividade" className="mb-6 rounded-md border-2 border-ink bg-white p-4">
+          <h2 id="atividade" className="mb-3 text-sm font-extrabold uppercase text-ink-soft">
+            Atividade dos últimos 14 dias
+          </h2>
+          <ActivityChart
+            data={sumDaily(publishedIds.map((id) => daily[id] ?? []))}
+            series={[
+              { key: "views", label: "Visualizações", color: "#e8431f" },
+              { key: "clicks", label: "Cliques no botão", color: "#0e5a39" },
+            ]}
+            summary={`Visualizações e cliques por dia nos últimos 14 dias: ${totals.views} visualizações e ${totals.clicks} cliques no total.`}
+            height={200}
+          />
+        </section>
       )}
       {referral && referral.availableCoupons.length > 0 && (
         <p className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">

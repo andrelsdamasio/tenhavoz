@@ -1,3 +1,4 @@
+import CommandPalette from "@/components/CommandPalette";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -63,6 +64,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="rounded bg-sol px-1.5 py-0.5 text-xs font-extrabold uppercase tracking-wide text-ink">Admin</span>
           </Link>
           <div className="hidden items-center gap-4 text-sm font-semibold leading-6 text-ink md:flex">
+            <CommandPalette
+              items={[
+                ...items.map((i) => ({ label: i.label, href: i.href, hint: i.hint, group: i.group ?? "Admin" })),
+                { label: "Minhas campanhas", href: "/dashboard", hint: "Voltar à sua conta", group: "Conta" },
+                { label: "Página inicial", href: "/", group: "Conta" },
+              ]}
+            />
             <WhatsNew entries={entriesFor(true)} />
             <Link href="/dashboard" className="underline-offset-4 hover:underline">
               ← Voltar para minhas campanhas
