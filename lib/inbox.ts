@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types";
 import { sendEmail } from "@/lib/email";
 import { adminEmails } from "@/lib/notifications";
+import { buildFromAddress, senderDomain } from "@/lib/mailboxes";
 
 /**
  * Verifica a assinatura de um webhook do Resend (esquema Svix):
@@ -151,6 +152,8 @@ export interface OutgoingInput {
   subject: string;
   body: string;
   replyToId?: string | null;
+  /** Nome da caixa de envio (ex.: "suporte"); vazio usa EMAIL_FROM. */
+  fromBox?: string;
 }
 
 /**
@@ -171,12 +174,18 @@ export async function sendFromInbox(
   if (!body) return { ok: false, error: "Escreva a mensagem." };
   if (body.length > 20000) return { ok: false, error: "Mensagem longa demais." };
 
-  const sent = await sendEmail({ to, subject, text: body });
+  let from: string | undefined;
+  if (input.fromBox?.trim()) {
+    from = buildFromAddress(input.fromBox, senderDomain(process.env.EMAIL_FROM)) ?? undefined;
+    if (!from) return { ok: false, error: "Caixa de envio inválida (use só letras, números, ponto ou hífen)." };
+  }
+
+  const sent = await sendEmail({ to, subject, text: body, from, ...(from ? { replyTo: extractAddress(from) } : {}) });
   if (!sent) return { ok: false, error: "Não foi possível enviar agora. Confira o Resend e tente de novo." };
 
   const { error } = await admin.from("inbox_messages").insert({
     resend_email_id: `out-${randomUUID()}`,
-    from_address: process.env.EMAIL_FROM ?? "TenhaVoz",
+    from_address: from ?? process.env.EMAIL_FROM ?? "TenhaVoz",
     to_addresses: [to],
     subject,
     text_body: body,

@@ -127,16 +127,15 @@ export async function getOverviewExtras(
     for (const c of data ?? []) titles.set(c.id, c.title);
   }
 
-  const awaiting: AwaitingPayment[] = [];
-  for (const d of drafts.data ?? []) {
-    const { data } = await admin.auth.admin.getUserById(d.user_id);
-    awaiting.push({
-      id: d.id,
-      title: d.title,
-      created_at: d.created_at,
-      ownerEmail: data.user?.email ?? null,
-    });
-  }
+  const awaiting: AwaitingPayment[] = await Promise.all(
+    (drafts.data ?? []).map(async (d) => {
+      const owner = await admin.auth.admin
+        .getUserById(d.user_id)
+        .then((r) => r.data.user?.email ?? null)
+        .catch(() => null);
+      return { id: d.id, title: d.title, created_at: d.created_at, ownerEmail: owner };
+    })
+  );
 
   return {
     unreadInbox: unread.count ?? 0,

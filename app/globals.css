@@ -253,3 +253,20 @@ body {
 .tv-app .bg-white.border-gray-200 > .bg-gray-50:first-child {
   border-bottom: 2px solid rgb(22 18 15 / 0.8);
 }
+
+/* Admin: cartões, tabelas e campos no mesmo traço de tinta da identidade. */
+.admin-skin .rounded-md.border.border-gray-200.bg-white,
+.admin-skin .rounded-lg.border.border-gray-200.bg-white {
+  border-width: 2px;
+  border-color: #16120f;
+}
+.admin-skin table thead { background-color: #e9e0cf; }
+.admin-skin table th { font-weight: 800; color: #16120f; }
+.admin-skin input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+.admin-skin textarea,
+.admin-skin select {
+  border-width: 2px;
+  border-color: rgb(22 18 15 / 0.7);
+  background-color: #fff;
+}
+.admin-skin h2 { font-family: inherit; }
