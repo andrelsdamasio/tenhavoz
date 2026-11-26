@@ -10,6 +10,8 @@ export async function sendEmail(input: {
   /** Versão bonita do e-mail; o texto continua indo junto para quem não abre HTML. */
   html?: string;
   replyTo?: string;
+  /** Remetente completo ("Nome <caixa@dominio>"); sem isso usa EMAIL_FROM. */
+  from?: string;
 }): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -22,7 +24,7 @@ export async function sendEmail(input: {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM ?? "TenhaVoz <onboarding@resend.dev>",
+        from: input.from ?? process.env.EMAIL_FROM ?? "TenhaVoz <onboarding@resend.dev>",
         to: input.to,
         subject: input.subject,
         text: input.text,

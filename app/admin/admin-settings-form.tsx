@@ -4,6 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useState } from "react";
 import { updateSettingsAction, type UpdateSettingsState } from "./actions";
 import type { AppSettings, TemplateId } from "@/lib/types";
+import SettingsSection, { settingsInput } from "@/components/SettingsSection";
 import { ALL_TEMPLATE_IDS, TEMPLATE_NAMES } from "@/lib/template-names";
 
 
@@ -17,7 +18,7 @@ function SubmitButton() {
       disabled={pending}
       className="rounded-md bg-ink px-5 py-2.5 font-medium text-white hover:bg-brand-600 disabled:opacity-60"
     >
-      {pending ? "Salvando..." : "Salvar configurações"}
+      {pending ? "Salvando..." : "Salvar preços e criação"}
     </button>
   );
 }
@@ -51,147 +52,82 @@ export default function AdminSettingsForm({
     setPalette((current) => [...current, "#4338ca"]);
   }
 
+  const reais = (cents: number) => (cents / 100).toFixed(2);
   return (
     <form action={formAction} className="flex flex-col gap-6">
-      <div>
-        <span className="mb-1 block text-sm font-medium">
-          Preço por prazo de campanha (R$)
-        </span>
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="mb-1 block text-xs text-gray-500" htmlFor="price72hReais">
-              72 horas
-            </label>
-            <input
-              id="price72hReais"
-              name="price72hReais"
-              type="number"
-              min="0"
-              step="0.01"
-              required
-              defaultValue={(settings.price_72h_brl_cents / 100).toFixed(2)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
-            />
+      <SettingsSection
+        id="precos"
+        title="Preços"
+        description="Quem cria a campanha escolhe um dos dois prazos no pagamento. A página fica no ar até o prazo acabar. Vale só para novas campanhas."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm font-semibold" htmlFor="price72hReais">
+            72 horas (R$)
+            <input id="price72hReais" name="price72hReais" type="number" min="0" step="0.01" required defaultValue={reais(settings.price_72h_brl_cents)} className={settingsInput} />
+          </label>
+          <label className="block text-sm font-semibold" htmlFor="price7dReais">
+            7 dias (R$)
+            <input id="price7dReais" name="price7dReais" type="number" min="0" step="0.01" required defaultValue={reais(settings.price_7d_brl_cents)} className={settingsInput} />
+          </label>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        id="criacao"
+        title="Criação de campanhas"
+        description="Limite do texto, temas oferecidos e cores disponíveis no formulário."
+      >
+        <div>
+          <label className="flex items-center gap-2 text-sm font-semibold" htmlFor="manifestCharLimitEnabled">
+            <input id="manifestCharLimitEnabled" name="manifestCharLimitEnabled" type="checkbox" defaultChecked={settings.manifest_char_limit_enabled} />
+            Bloquear criação acima do limite de caracteres
+          </label>
+          <div className="mt-2 flex items-center gap-2">
+            <input id="manifestCharLimit" name="manifestCharLimit" type="number" min="1" step="1" required defaultValue={settings.manifest_char_limit} className="w-32 rounded-md border-2 border-ink/70 bg-white px-3 py-2 text-sm" />
+            <span className="text-sm text-ink-soft">caracteres no texto do manifesto</span>
           </div>
-          <div className="flex-1">
-            <label className="mb-1 block text-xs text-gray-500" htmlFor="price7dReais">
-              7 dias
-            </label>
-            <input
-              id="price7dReais"
-              name="price7dReais"
-              type="number"
-              min="0"
-              step="0.01"
-              required
-              defaultValue={(settings.price_7d_brl_cents / 100).toFixed(2)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2"
-            />
+          <p className="mt-1 text-xs text-ink-soft">
+            Desligado, qualquer tamanho é aceito (o aviso de risco de corte no e-mail continua aparecendo).
+          </p>
+        </div>
+
+        <fieldset>
+          <legend className="mb-2 text-sm font-semibold">Temas disponíveis ({enabledTemplates.length} de {ALL_TEMPLATE_IDS.length})</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {ALL_TEMPLATE_IDS.map((id) => {
+              const on = enabledTemplates.includes(id);
+              return (
+                <label key={id} className={`flex cursor-pointer items-center gap-2 rounded-md border-2 px-3 py-2 text-sm ${on ? "border-ink bg-sol/20" : "border-ink/25"}`}>
+                  <input type="checkbox" name="enabledTemplates" value={id} checked={on} onChange={() => toggleTemplate(id)} />
+                  <span className="font-semibold">Tema {id}</span> · {TEMPLATE_NAMES[id]}
+                </label>
+              );
+            })}
           </div>
-        </div>
-        <p className="mt-1 text-xs text-gray-500">
-          Quem cria a campanha escolhe um dos dois prazos no pagamento. A
-          página fica no ar até o prazo acabar.
-        </p>
-      </div>
+        </fieldset>
 
-      <div>
-        <label className="mb-1 flex items-center gap-2 text-sm font-medium" htmlFor="manifestCharLimitEnabled">
-          <input
-            id="manifestCharLimitEnabled"
-            name="manifestCharLimitEnabled"
-            type="checkbox"
-            defaultChecked={settings.manifest_char_limit_enabled}
-          />
-          Bloquear criação de campanha acima do limite de caracteres
-        </label>
-        <div className="mt-2 flex items-center gap-2">
-          <input
-            id="manifestCharLimit"
-            name="manifestCharLimit"
-            type="number"
-            min="1"
-            step="1"
-            required
-            defaultValue={settings.manifest_char_limit}
-            className="w-32 rounded-md border border-gray-300 px-3 py-2"
-          />
-          <span className="text-sm text-gray-600">caracteres no texto do manifesto</span>
-        </div>
-        <p className="mt-1 text-xs text-gray-500">
-          Com o bloqueio ativado, quem tentar criar uma campanha acima desse
-          valor não consegue avançar para o pagamento. Desative para permitir
-          qualquer tamanho (o aviso de risco de corte no e-mail continua
-          aparecendo, mas sem impedir o envio).
-        </p>
-      </div>
+        <fieldset>
+          <legend className="mb-1 text-sm font-semibold">Cores para quem cria a campanha</legend>
+          <p className="mb-2 text-xs text-ink-soft">No modo avançado a pessoa escolhe uma destas cores (ou mantém a padrão).</p>
+          <div className="flex flex-wrap items-center gap-2">
+            {palette.map((color, index) => (
+              <div key={index} className="flex items-center gap-1 rounded-md border-2 border-ink/25 p-1">
+                <input type="color" name="paletteColor" value={color} onChange={(e) => updatePaletteColor(index, e.target.value)} className="h-8 w-8 cursor-pointer rounded border border-ink/30 p-0.5" aria-label={`Cor ${index + 1}`} />
+                <button type="button" onClick={() => removePaletteColor(index)} className="px-1 text-xs text-ink-soft hover:text-red-600" aria-label="Remover cor">✕</button>
+              </div>
+            ))}
+            <button type="button" onClick={addPaletteColor} className="h-10 rounded-md border-2 border-dashed border-ink/40 px-3 text-xs font-bold hover:bg-paper-deep">
+              + Adicionar cor
+            </button>
+          </div>
+        </fieldset>
+      </SettingsSection>
 
-      <div>
-        <span className="mb-1 block text-sm font-medium">
-          Temas disponíveis na criação de campanha
-        </span>
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {ALL_TEMPLATE_IDS.map((id) => (
-            <label key={id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="enabledTemplates"
-                value={id}
-                checked={enabledTemplates.includes(id)}
-                onChange={() => toggleTemplate(id)}
-              />
-              Tema {id} · {TEMPLATE_NAMES[id]}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <span className="mb-1 block text-sm font-medium">
-          Cores disponíveis para quem cria a campanha
-        </span>
-        <p className="mb-2 text-xs text-gray-500">
-          No modo avançado, a pessoa que cria a campanha escolhe uma dessas
-          cores pro tema que selecionar (ou mantém a cor padrão). Adicione ou
-          remova opções aqui.
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          {palette.map((color, index) => (
-            <div key={index} className="flex items-center gap-1">
-              <input
-                type="color"
-                name="paletteColor"
-                value={color}
-                onChange={(e) => updatePaletteColor(index, e.target.value)}
-                className="h-9 w-9 cursor-pointer rounded border border-gray-300 p-0.5"
-              />
-              <button
-                type="button"
-                onClick={() => removePaletteColor(index)}
-                className="text-xs text-gray-400 hover:text-red-600"
-                aria-label="Remover cor"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addPaletteColor}
-            className="h-9 rounded-md border border-dashed border-gray-300 px-3 text-xs font-medium text-gray-600 hover:bg-gray-50"
-          >
-            + Adicionar cor
-          </button>
-        </div>
-      </div>
-
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-      {state.success && (
-        <p className="text-sm text-green-700">Configurações salvas.</p>
-      )}
-
-      <div>
+      <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-3 rounded-md border-2 border-ink bg-paper p-3 shadow-md">
         <SubmitButton />
+        {state.error && <p role="alert" className="text-sm font-semibold text-red-700">{state.error}</p>}
+        {state.success && <p role="status" className="text-sm font-semibold text-folha">Configurações salvas.</p>}
+        <span className="text-xs text-ink-soft">Salva preços e criação.</span>
       </div>
     </form>
   );

@@ -8,7 +8,7 @@ import { auditMercadoPagoPayments } from "@/lib/payment-audit";
 import { countReportedComments } from "@/lib/comments";
 import { getAdminFundraisers } from "@/lib/admin-fundraisers";
 import ActivityChart from "@/components/ActivityChart";
-import { getHealthChecks, getOverviewExtras } from "@/lib/admin-overview";
+import { getHealthChecks, getOverviewExtras, type OverviewExtras } from "@/lib/admin-overview";
 
 const TIME_ZONE = "America/Sao_Paulo";
 
@@ -41,11 +41,24 @@ export default async function AdminOverviewPage() {
   if (!user || !isAdminEmail(user.email)) redirect("/dashboard");
 
   const admin = createAdminClient();
-  const [dashboard, extras, audit] = await Promise.all([
+  const [dashboard, extrasRaw, audit] = await Promise.all([
     getAdminDashboard(admin),
-    getOverviewExtras(admin),
+    getOverviewExtras(admin).catch((err) => {
+      console.error("[admin] falha ao carregar os números da visão geral", err);
+      return null;
+    }),
     auditMercadoPagoPayments(admin, 7),
   ]);
+  const extrasFailed = extrasRaw === null;
+  const extras: OverviewExtras = extrasRaw ?? {
+    unreadInbox: 0,
+    revenueDaily: [],
+    revenue7d: 0,
+    revenue30d: 0,
+    paymentsPending: 0,
+    recentPayments: [],
+    awaiting: [],
+  };
   const { overview } = dashboard;
   const reportedComments = await countReportedComments(admin).catch(() => 0);
   const fundraisers = await getAdminFundraisers(admin).catch(() => null);
@@ -71,6 +84,15 @@ export default async function AdminOverviewPage() {
       text: `${unpaid.length} pagamento(s) aprovado(s) no Mercado Pago sem página no ar`,
       href: "/admin/reports",
       cta: "Atender agora",
+    });
+  }
+  if (extrasFailed) {
+    attention.push({
+      key: "extras-error",
+      tone: "amber",
+      text: "Não foi possível carregar receita, pagamentos recentes e caixa de entrada agora. Recarregue a página.",
+      href: "/admin",
+      cta: "Recarregar",
     });
   }
   if (audit.error) {

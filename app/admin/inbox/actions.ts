@@ -43,6 +43,7 @@ export async function sendInboxEmailAction(formData: FormData) {
     subject: String(formData.get("subject") ?? ""),
     body: String(formData.get("body") ?? ""),
     replyToId: UUID.test(replyToId) ? replyToId : null,
+    fromBox: String(formData.get("fromBox") ?? ""),
   });
 
   revalidatePath("/admin/inbox");

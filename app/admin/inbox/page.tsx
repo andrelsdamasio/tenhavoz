@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { extractAddress } from "@/lib/inbox";
+import { matchesQuery, senderDomain, summarizeMailboxes, SUGGESTED_BOXES } from "@/lib/mailboxes";
 import MarkInboxRead from "@/components/MarkInboxRead";
 import { markInboxReadAction, sendInboxEmailAction } from "./actions";
 
@@ -19,6 +20,8 @@ interface SearchParams {
   compose?: string;
   enviado?: string;
   erro?: string;
+  para?: string;
+  q?: string;
 }
 
 function Banner({ enviado, erro }: { enviado?: string; erro?: string }) {
@@ -46,7 +49,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   } = await supabase.auth.getUser();
   if (!user || !isAdminEmail(user.email)) redirect("/dashboard");
 
-  const { id, box: boxRaw, compose, enviado, erro } = await searchParams;
+  const { id, box: boxRaw, compose, enviado, erro, para, q } = await searchParams;
   const box: "in" | "out" = boxRaw === "out" ? "out" : "in";
   const admin = createAdminClient();
 
@@ -56,7 +59,21 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     .eq("direction", box)
     .order("received_at", { ascending: false })
     .limit(LIMIT);
-  const list = messages ?? [];
+  const domain = senderDomain(process.env.EMAIL_FROM);
+  const { data: inRows } = await admin
+    .from("inbox_messages")
+    .select("to_addresses, read_at")
+    .eq("direction", "in")
+    .order("received_at", { ascending: false })
+    .limit(500);
+  const boxes = summarizeMailboxes(inRows ?? []);
+  const paraAddr = (para ?? "").toLowerCase().slice(0, 254);
+  const query = (q ?? "").slice(0, 100);
+  const list = (messages ?? []).filter(
+    (m) =>
+      matchesQuery(m, query) &&
+      (!paraAddr || box !== "in" || m.to_addresses.some((a: string) => extractAddress(a).toLowerCase() === paraAddr))
+  );
 
   const selected = id && UUID.test(id)
     ? (await admin.from("inbox_messages").select("*").eq("id", id).maybeSingle()).data
@@ -93,7 +110,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         <div>
           <h1 className="display text-4xl sm:text-5xl">Caixa de entrada</h1>
           <p className="text-sm text-gray-600">
-            E-mails de @tenhavoz.com.br. Cada recebido também é encaminhado aos e-mails de administrador.
+            E-mails de {domain ? `@${domain}` : "seu domínio"}. Qualquer endereço novo (ex.: contato@, suporte@) já recebe aqui, sem cPanel. Cada recebido também é encaminhado aos e-mails de administrador.
             {box === "in" && (unread > 0 ? ` ${unread} não lido(s).` : " Tudo lido.")}
           </p>
         </div>
@@ -109,6 +126,44 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         {tab("in", "Recebidos")}
         {tab("out", "Enviados")}
       </div>
+
+      <form action="/admin/inbox" className="mb-3 flex gap-2">
+        <input type="hidden" name="box" value={box} />
+        {paraAddr && <input type="hidden" name="para" value={paraAddr} />}
+        <input
+          name="q"
+          defaultValue={query}
+          type="search"
+          maxLength={100}
+          placeholder="Buscar por assunto, remetente ou endereço…"
+          aria-label="Buscar e-mails"
+          className="min-w-0 flex-1 rounded-md border-2 border-ink/70 bg-white px-3 py-2 text-sm"
+        />
+        <button type="submit" className="rounded-md border-2 border-ink px-3 py-2 text-sm font-semibold hover:bg-paper-deep">
+          Buscar
+        </button>
+      </form>
+
+      {box === "in" && boxes.length > 0 && (
+        <nav aria-label="Caixas de e-mail" className="mb-4 flex flex-wrap gap-2">
+          <Link
+            href={`/admin/inbox?box=in${query ? `&q=${encodeURIComponent(query)}` : ""}`}
+            className={`rounded-full border-2 px-3 py-1 text-xs font-bold ${!paraAddr ? "border-ink bg-ink text-white" : "border-ink/40 hover:bg-paper-deep"}`}
+          >
+            Todas
+          </Link>
+          {boxes.slice(0, 12).map((b) => (
+            <Link
+              key={b.address}
+              href={`/admin/inbox?box=in&para=${encodeURIComponent(b.address)}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
+              className={`rounded-full border-2 px-3 py-1 text-xs font-bold ${paraAddr === b.address ? "border-ink bg-ink text-white" : "border-ink/40 hover:bg-paper-deep"}`}
+            >
+              {b.address}
+              {b.unread > 0 && <span className="ml-1.5 rounded-full bg-sol px-1.5 text-ink">{b.unread}</span>}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <Banner enviado={enviado} erro={erro} />
 
@@ -146,6 +201,14 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
           {compose ? (
             <form action={sendInboxEmailAction} className="space-y-3">
               <h2 className="text-lg font-semibold">Nova mensagem</h2>
+              <label className="block">
+                <span className="text-xs text-gray-500">Enviar de</span>
+                <input name="fromBox" list="caixas" placeholder="padrão" maxLength={40} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2" />
+                <datalist id="caixas">
+                  {SUGGESTED_BOXES.map((b) => <option key={b} value={b} />)}
+                </datalist>
+                <span className="text-xs text-gray-500">{domain ? `Escolha ou digite um nome: vira nome@${domain}.` : "Configure EMAIL_FROM com seu domínio para escolher a caixa."}</span>
+              </label>
               <label className="block">
                 <span className="text-xs text-gray-500">Para</span>
                 <input name="to" type="email" required maxLength={254} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2" />
@@ -197,6 +260,11 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                 <form action={sendInboxEmailAction} className="mt-5 space-y-3 border-t border-gray-100 pt-4">
                   <h3 className="font-medium">Responder</h3>
                   <input type="hidden" name="replyToId" value={original.id} />
+                  <input
+                    type="hidden"
+                    name="fromBox"
+                    value={domain ? (original.to_addresses.map((a: string) => extractAddress(a).toLowerCase()).find((a: string) => a.endsWith(`@${domain}`))?.split("@")[0] ?? "") : ""}
+                  />
                   <input type="hidden" name="to" value={extractAddress(original.from_address)} />
                   <input
                     type="hidden"
