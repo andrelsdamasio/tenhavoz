@@ -244,3 +244,12 @@ body {
 [data-fv="8"] .fv-card { border-left: 8px solid var(--tc-base); border-radius: 0.25rem; box-shadow: none; }
 [data-fv="9"] .fv-card { border-radius: 1.75rem; box-shadow: 0 10px 30px -12px color-mix(in srgb, var(--tc-base) 45%, transparent); }
 [data-fv="4"] .fv-card, [data-fv="6"] .fv-card { box-shadow: 0 8px 24px -14px color-mix(in srgb, var(--tc-base) 50%, transparent); }
+
+/* Áreas logadas: cartões brancos ganham o contorno de tinta do cartaz. */
+.tv-app .bg-white.border-gray-200:not(.shadow-sm) {
+  border-width: 2px;
+  border-color: rgb(22 18 15 / 0.8);
+}
+.tv-app .bg-white.border-gray-200 > .bg-gray-50:first-child {
+  border-bottom: 2px solid rgb(22 18 15 / 0.8);
+}

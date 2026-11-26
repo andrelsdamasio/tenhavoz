@@ -1,5 +1,6 @@
 "use client";
 
+import TrustNote from "@/components/TrustNote";
 import { useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createFundraiserAction, type FundraiserFormState } from "@/app/dashboard/doacoes/new/actions";
@@ -238,15 +239,17 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
 
       {/* Passo 0: receber o dinheiro */}
       <section hidden={step !== 0} className="space-y-4">
+        <TrustNote kind="fundraiser" />
         <div className="rounded-lg border border-gray-200 bg-white p-5">
           <h2 className="text-lg font-semibold">Onde você vai receber o dinheiro?</h2>
           <p className="mt-1 text-sm text-gray-600">
-            As doações caem <strong>direto na sua conta do Mercado Pago</strong>. O dinheiro nunca passa pelo TenhaVoz. Você só precisa autorizar uma vez.
+            Conecte a conta do Mercado Pago que vai receber as doações. Você só precisa autorizar uma vez.
           </p>
           {connected ? (
             <p className="mt-4 rounded-md bg-green-50 p-3 text-sm font-medium text-green-800">✓ Sua conta do Mercado Pago está conectada. Pode continuar.</p>
           ) : (
             <>
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- rota de API: precisa de navegação completa */}
               <a href="/api/mp/oauth/start?next=nova" className="mt-4 inline-block rounded-md bg-[#009ee3] px-5 py-2.5 font-medium text-white hover:opacity-90">
                 Conectar com Mercado Pago
               </a>

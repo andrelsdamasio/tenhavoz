@@ -1,3 +1,4 @@
+import TrustBox from "@/components/TrustBox";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -30,8 +31,9 @@ async function load(slug: string) {
   return { view, preview: false };
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const loaded = await load(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const loaded = await load(slug);
   if (!loaded) return { title: "Campanha não encontrada", robots: { index: false } };
   const { fundraiser: f } = loaded.view;
   const description = f.summary || f.story.slice(0, 160);
@@ -49,8 +51,10 @@ const STATUS_NOTE: Record<string, string> = {
   ended: "Esta campanha foi encerrada.",
 };
 
-export default async function FundraiserPage({ params, searchParams }: { params: { slug: string }; searchParams?: { obrigado?: string } }) {
-  const loaded = await load(params.slug);
+export default async function FundraiserPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams?: Promise<{ obrigado?: string }> }) {
+  const { slug } = await params;
+  const sp = (await searchParams) ?? {};
+  const loaded = await load(slug);
   if (!loaded) notFound();
   const { view, preview } = loaded;
   const { fundraiser: f, budget, donations, raisedCents, donationCount } = view;
@@ -61,7 +65,7 @@ export default async function FundraiserPage({ params, searchParams }: { params:
 
   return (
     <main className="min-h-screen">
-      {searchParams?.obrigado === "1" && (
+      {sp.obrigado === "1" && (
         <p role="status" className="bg-green-100 px-4 py-3 text-center text-sm font-medium text-green-900">
           Obrigado pela sua doação! Se o pagamento foi aprovado, ele aparece na lista em instantes e você recebe um recibo por e-mail.
         </p>
@@ -91,6 +95,7 @@ export default async function FundraiserPage({ params, searchParams }: { params:
         }
         shareSlot={<ShareButtons url={url} title={f.title} message={`Ajude esta campanha: "${f.title}".`} />}
       />
+      {!preview && <TrustBox url={url} title={f.title} publishedAt={f.published_at} hasBudget={budget.length > 0} />}
     </main>
   );
 }

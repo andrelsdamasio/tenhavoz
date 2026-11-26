@@ -33,6 +33,6 @@ describe("CampaignForm em passos", () => {
   });
 
   it("o formulário não depende da validação nativa do navegador", () => {
-    expect(html).toContain("novalidate");
+    expect(html.toLowerCase()).toContain("novalidate");
   });
 });

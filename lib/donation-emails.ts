@@ -39,14 +39,27 @@ export function creatorNoticeEmail(
 }
 
 /** Recibo para quem doou. */
-export function donorReceiptEmail(input: Base & { donorName: string; tipCents: number }) {
+export function donorReceiptEmail(
+  input: Base & { donorName: string; tipCents: number; receiptCode?: string; paymentId?: string; paidAt?: Date }
+) {
   const total = input.amountCents + input.tipCents;
+  const when = (input.paidAt ?? new Date()).toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
   const lines = [
     `Olá, ${input.donorName}! Obrigado por ajudar a campanha "${input.title}".`,
     "",
+    ...(input.receiptCode ? [`Comprovante nº ${input.receiptCode}`] : []),
+    `Data: ${when}`,
     `Doação para a campanha: ${formatCentsBRL(input.amountCents)}`,
     ...(input.tipCents > 0 ? [`Contribuição voluntária ao TenhaVoz: ${formatCentsBRL(input.tipCents)}`] : []),
     `Total pago: ${formatCentsBRL(total)}`,
+    ...(input.paymentId ? [`Pagamento no Mercado Pago: ${input.paymentId}`] : []),
     "",
     "O valor da doação foi direto para a conta do responsável pela campanha.",
     `Acompanhe e compartilhe: ${input.siteUrl}/d/${input.slug}`,
@@ -57,14 +70,19 @@ export function donorReceiptEmail(input: Base & { donorName: string; tipCents: n
     intro: `Olá, ${input.donorName}! Obrigado por ajudar a campanha "${input.title}". Sua doação faz diferença.`,
     highlight: { label: "Total pago", value: formatCentsBRL(total) },
     rows: [
+      ...(input.receiptCode ? [{ label: "Comprovante nº", value: input.receiptCode, strong: true }] : []),
+      { label: "Data", value: when },
+      { label: "Campanha", value: input.title },
       { label: "Doação para a campanha", value: formatCentsBRL(input.amountCents) },
       ...(input.tipCents > 0 ? [{ label: "Contribuição voluntária ao TenhaVoz", value: formatCentsBRL(input.tipCents) }] : []),
       { label: "Total", value: formatCentsBRL(total), strong: true },
+      { label: "Pago por", value: "Mercado Pago" },
+      ...(input.paymentId ? [{ label: "Nº do pagamento", value: input.paymentId }] : []),
     ],
-    note: "O valor da doação foi direto para a conta de quem criou a campanha. Guarde este e-mail como comprovante. Quando a campanha terminar, avisaremos quanto foi arrecadado.",
+    note: "O valor da doação foi direto para a conta de quem criou a campanha, sem passar pelo TenhaVoz. Guarde este e-mail como comprovante. Quando a campanha terminar, avisaremos quanto foi arrecadado.",
     cta: { label: "Ver e compartilhar a campanha", url: `${input.siteUrl}/d/${input.slug}` },
   });
-  return { subject: `Recebemos sua doação para "${input.title}"`, text: lines.join("\n"), html };
+  return { subject: `Comprovante: sua doação para "${input.title}"`, text: lines.join("\n"), html };
 }
 
 /** Aviso final ao doador: a campanha terminou e quanto foi arrecadado. */

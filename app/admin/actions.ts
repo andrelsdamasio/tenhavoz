@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { updateAppSettings } from "@/lib/settings";
+import { parseAdInput } from "@/lib/ad";
 import { isValidHexColor } from "@/lib/color";
 import { syncMercadoPagoPaymentById } from "@/lib/payment-sync";
 import type { TemplateId } from "@/lib/types";
@@ -159,4 +160,33 @@ export async function setFundraisingEnabledAction(formData: FormData): Promise<v
   if (error) console.error("[admin] falha ao alternar doações", error);
   revalidatePath("/admin/settings");
   revalidatePath("/dashboard");
+}
+
+/** Liga/desliga e atualiza o anúncio das telas de criar campanha. */
+export async function setAdAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const enabled = formData.get("enabled") === "on";
+  const parsed = parseAdInput({
+    advertiser: String(formData.get("advertiser") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    text: String(formData.get("text") ?? ""),
+    url: String(formData.get("url") ?? ""),
+  });
+  if (enabled && !parsed.ok) redirect(`/admin/settings?anuncio=${encodeURIComponent(parsed.error)}`);
+
+  const fields = parsed.ok
+    ? { ad_advertiser: parsed.ad.advertiser, ad_title: parsed.ad.title, ad_text: parsed.ad.text, ad_url: parsed.ad.url }
+    : {};
+  const { error } = await createAdminClient()
+    .from("app_settings")
+    .update({ ad_enabled: enabled, ...fields } as never)
+    .eq("id", true);
+  if (error) {
+    console.error("[admin] falha ao salvar o anúncio", error);
+    redirect("/admin/settings?anuncio=Não+foi+possível+salvar.");
+  }
+  revalidatePath("/admin/settings");
+  revalidatePath("/dashboard/new");
+  revalidatePath("/dashboard/doacoes/new");
+  redirect("/admin/settings?anuncio=ok");
 }

@@ -17,6 +17,8 @@ type Admin = ReturnType<typeof createAdminClient>;
 async function notifyApproved(
   admin: Admin,
   donation: {
+    id?: string;
+    payment_id?: string | null;
     fundraiser_id: string;
     amount_cents: number;
     tip_cents: number;
@@ -46,7 +48,14 @@ async function notifyApproved(
       await sendEmail({ to: creatorEmail, ...n });
     }
     if (donation.donor_email) {
-      const r = donorReceiptEmail({ ...base, donorName: donation.donor_name?.trim() || "doador(a)", tipCents: donation.tip_cents });
+      const r = donorReceiptEmail({
+        ...base,
+        donorName: donation.donor_name?.trim() || "doador(a)",
+        tipCents: donation.tip_cents,
+        receiptCode: donation.id ? donation.id.slice(0, 8).toUpperCase() : undefined,
+        paymentId: donation.payment_id ?? undefined,
+        paidAt: new Date(),
+      });
       await sendEmail({ to: donation.donor_email, ...r });
     }
   } catch (err) {
@@ -117,7 +126,7 @@ export async function POST(request: Request) {
       .neq("status", "approved")
       .select("id");
     // e-mails só na primeira aprovação (avisos repetidos não reenviam)
-    if (changed && changed.length > 0) await notifyApproved(admin, { ...donation, donor_email: donation.donor_email ?? payerEmail(payment) }, fundraiser.user_id);
+    if (changed && changed.length > 0) await notifyApproved(admin, { ...donation, payment_id: paymentId, donor_email: donation.donor_email ?? payerEmail(payment) }, fundraiser.user_id);
   } else {
     await admin
       .from("fundraiser_donations")

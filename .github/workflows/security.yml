@@ -1,0 +1,44 @@
+name: Segurança
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 9 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  segredos:
+    name: Procura segredos vazados (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codigo:
+    name: Análise de código (Semgrep)
+    runs-on: ubuntu-latest
+    container: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep scan --config p/typescript --config p/react --config p/nextjs --config p/secrets --error --metrics=off app lib components middleware.ts
+
+  dependencias:
+    name: Dependências com falha grave (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      # Só barra falhas críticas; as demais aparecem no relatório semanal.
+      - run: npm audit --omit=dev --audit-level=critical

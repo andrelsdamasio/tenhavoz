@@ -9,6 +9,7 @@ describe("MobileMenu", () => {
   it("começa fechado, com o botão acessível e os links dentro da gaveta", () => {
     const html = renderToStaticMarkup(
       <MobileMenu>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/dashboard">Minhas campanhas</a>
       </MobileMenu>
     );
