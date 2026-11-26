@@ -243,7 +243,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
         <div className="rounded-lg border border-gray-200 bg-white p-5">
           <h2 className="text-lg font-semibold">Onde você vai receber o dinheiro?</h2>
           <p className="mt-1 text-sm text-gray-600">
-            As doações caem <strong>direto na sua conta do Mercado Pago</strong>. O dinheiro nunca passa pelo TenhaVoz. Você só precisa autorizar uma vez.
+            Conecte a conta do Mercado Pago que vai receber as doações. Você só precisa autorizar uma vez.
           </p>
           {connected ? (
             <p className="mt-4 rounded-md bg-green-50 p-3 text-sm font-medium text-green-800">✓ Sua conta do Mercado Pago está conectada. Pode continuar.</p>
