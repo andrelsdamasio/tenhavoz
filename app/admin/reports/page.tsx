@@ -1,3 +1,4 @@
+import PageHeader from "@/components/admin/PageHeader";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -231,7 +232,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="mb-6 display text-4xl sm:text-5xl">Campanhas e vendas</h1>
+      <PageHeader title="Campanhas e vendas" description="Conciliação com o Mercado Pago, páginas criadas e pagamentos." />
 
       <section aria-labelledby="conciliacao" className="mb-8">
         <h2 id="conciliacao" className="mb-3 text-sm font-semibold uppercase text-gray-500">

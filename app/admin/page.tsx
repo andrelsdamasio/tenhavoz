@@ -7,6 +7,8 @@ import { getAdminDashboard } from "@/lib/admin-dashboard";
 import { auditMercadoPagoPayments } from "@/lib/payment-audit";
 import { countReportedComments } from "@/lib/comments";
 import { getAdminFundraisers } from "@/lib/admin-fundraisers";
+import KpiCard from "@/components/admin/KpiCard";
+import { BadgeDollarSign, CalendarClock, Clock, FileText, Percent, Radio, Wallet } from "lucide-react";
 import ActivityChart from "@/components/ActivityChart";
 import { getHealthChecks, getOverviewExtras, type OverviewExtras } from "@/lib/admin-overview";
 
@@ -22,16 +24,6 @@ const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   failed: { label: "Falhou", className: "bg-red-100 text-red-800" },
   refunded: { label: "Reembolsado", className: "bg-gray-200 text-gray-700" },
 };
-
-function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <div className="rounded-md border-2 border-ink/80 bg-white p-4">
-      <p className="text-xs font-semibold text-gray-500">{label}</p>
-      <p className="display mt-0.5 text-2xl text-gray-900 sm:text-3xl">{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-gray-500">{hint}</p>}
-    </div>
-  );
-}
 
 export default async function AdminOverviewPage() {
   const supabase = await createClient();
@@ -208,18 +200,18 @@ export default async function AdminOverviewPage() {
           />
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="Receita (7 dias)" value={brl(extras.revenue7d)} />
-          <Stat label="Receita (30 dias)" value={brl(extras.revenue30d)} />
-          <Stat label="Páginas no ar" value={overview.active} hint={`${overview.expiringSoon} encerrando em 48h`} />
-          <Stat label="Pagamentos aguardando" value={extras.paymentsPending} hint="Pix/boleto ainda não compensados" />
-          <Stat label="Páginas criadas" value={overview.total} hint={`${overview.drafts} rascunhos`} />
-          <Stat label="Vencidas" value={overview.expired} />
-          <Stat
-            label="Conversão"
+          <KpiCard label="Receita (7 dias)" icon={BadgeDollarSign} tone="folha" value={brl(extras.revenue7d)} />
+          <KpiCard label="Receita (30 dias)" icon={Wallet} tone="folha" value={brl(extras.revenue30d)} />
+          <KpiCard label="Páginas no ar" icon={Radio} tone="brand" value={overview.active} hint={`${overview.expiringSoon} encerrando em 48h`} />
+          <KpiCard label="Pagamentos aguardando" icon={Clock} tone="sol" value={extras.paymentsPending} hint="Pix/boleto ainda não compensados" />
+          <KpiCard label="Páginas criadas" icon={FileText} value={overview.total} hint={`${overview.drafts} rascunhos`} />
+          <KpiCard label="Vencidas" icon={CalendarClock} value={overview.expired} />
+          <KpiCard
+            label="Conversão" icon={Percent} tip="Parte das páginas criadas que chegou a ser paga."
             value={overview.conversionRate === null ? "—" : `${Math.round(overview.conversionRate * 100)}%`}
             hint="Criadas que foram publicadas"
           />
-          <Stat label="Receita total líquida" value={brl(overview.revenue.net)} />
+          <KpiCard label="Receita total líquida" value={brl(overview.revenue.net)} />
         </div>
         <p className="mt-2 text-xs text-gray-500">
           Mais detalhes (por campanha, período e conciliação) em{" "}

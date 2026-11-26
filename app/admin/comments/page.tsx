@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin";
 import { listReportedComments } from "@/lib/comments";
+import PageHeader from "@/components/admin/PageHeader";
+import ConfirmButton from "@/components/admin/ConfirmButton";
 import { deleteReportedCommentAction, dismissReportAction } from "./actions";
 
 const when = (iso: string) =>
@@ -20,10 +22,7 @@ export default async function AdminCommentsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-1 display text-4xl sm:text-5xl">Comentários denunciados</h1>
-      <p className="mb-6 text-sm text-gray-600">
-        Comentários que alguém denunciou. Apague os que forem abusivos ou mantenha os que estiverem certos.
-      </p>
+      <PageHeader title="Comentários denunciados" description="Comentários que alguém denunciou. Apague os que forem abusivos ou mantenha os que estiverem certos." />
 
       {reported.length === 0 ? (
         <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
@@ -54,12 +53,14 @@ export default async function AdminCommentsPage() {
               <div className="mt-3 flex gap-2">
                 <form action={deleteReportedCommentAction}>
                   <input type="hidden" name="commentId" value={c.id} />
-                  <button
-                    type="submit"
-                    className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
-                  >
-                    Apagar comentário
-                  </button>
+                  <ConfirmButton
+                    label="Apagar comentário"
+                    title="Apagar este comentário?"
+                    description="Ele some da página da campanha e não dá para recuperar."
+                    confirmLabel="Apagar"
+                    danger
+                    className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-bold text-white hover:bg-red-700"
+                  />
                 </form>
                 <form action={dismissReportAction}>
                   <input type="hidden" name="commentId" value={c.id} />
