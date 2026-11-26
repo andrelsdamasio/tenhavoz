@@ -1,3 +1,4 @@
+import TrustBox from "@/components/TrustBox";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -94,6 +95,7 @@ export default async function FundraiserPage({ params, searchParams }: { params:
         }
         shareSlot={<ShareButtons url={url} title={f.title} message={`Ajude esta campanha: "${f.title}".`} />}
       />
+      {!preview && <TrustBox url={url} title={f.title} publishedAt={f.published_at} hasBudget={budget.length > 0} />}
     </main>
   );
 }

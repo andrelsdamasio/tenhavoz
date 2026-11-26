@@ -1,5 +1,6 @@
 "use client";
 
+import TrustNote from "@/components/TrustNote";
 import { useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createFundraiserAction, type FundraiserFormState } from "@/app/dashboard/doacoes/new/actions";
@@ -238,6 +239,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
 
       {/* Passo 0: receber o dinheiro */}
       <section hidden={step !== 0} className="space-y-4">
+        <TrustNote kind="fundraiser" />
         <div className="rounded-lg border border-gray-200 bg-white p-5">
           <h2 className="text-lg font-semibold">Onde você vai receber o dinheiro?</h2>
           <p className="mt-1 text-sm text-gray-600">

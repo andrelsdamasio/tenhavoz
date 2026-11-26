@@ -17,3 +17,9 @@ export function buildWhatsAppSupportUrl(userEmail?: string | null): string {
 
   return `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;
 }
+
+/** Link do WhatsApp para denunciar uma campanha, com o endereço dela já na mensagem. */
+export function buildReportUrl(campaignUrl: string, title: string): string {
+  const text = `Quero denunciar uma campanha no TenhaVoz.\nCampanha: "${title}"\nEndereço: ${campaignUrl}\n\nMotivo:`;
+  return `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+}

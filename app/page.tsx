@@ -424,6 +424,9 @@ export default async function HomePage() {
             <span className="display text-xl">TenhaVoz</span>
           </div>
           <div className="flex gap-5 text-sm font-medium">
+            <Link href="/seguranca" className="underline-offset-4 hover:underline">
+              Segurança
+            </Link>
             <Link href="/privacidade" className="underline-offset-4 hover:underline">
               Privacidade
             </Link>
