@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BadgePercent, CreditCard, HandCoins, LayoutDashboard, type LucideIcon, Mail, MessageSquareWarning, Settings } from "lucide-react";
 
 export interface AdminNavItem {
   href: string;
@@ -11,6 +12,16 @@ export interface AdminNavItem {
   /** Título do grupo em que o item aparece. */
   group?: string;
 }
+
+const ICONS: Record<string, LucideIcon> = {
+  "/admin": LayoutDashboard,
+  "/admin/inbox": Mail,
+  "/admin/comments": MessageSquareWarning,
+  "/admin/reports": CreditCard,
+  "/admin/arrecadacoes": HandCoins,
+  "/admin/coupons": BadgePercent,
+  "/admin/settings": Settings,
+};
 
 function isActive(pathname: string, href: string): boolean {
   return href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
@@ -39,9 +50,15 @@ export default function AdminNav({ items, vertical = false }: { items: AdminNavI
                 active ? "bg-ink font-bold text-paper" : "font-semibold text-ink hover:bg-paper-deep"
               }`}
             >
-              <span>
+              <span className="flex items-center gap-2.5">
+                {(() => {
+                  const Icon = ICONS[item.href];
+                  return Icon ? <Icon aria-hidden="true" className="h-5 w-5 shrink-0" /> : null;
+                })()}
+                <span>
                 {item.label}
                 <span className={`block text-xs ${active ? "text-paper/70" : "text-ink-soft"}`}>{item.hint}</span>
+                </span>
               </span>
               {item.badge ? (
                 <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-xs font-semibold text-white">{item.badge}</span>

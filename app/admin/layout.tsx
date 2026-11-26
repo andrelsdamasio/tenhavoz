@@ -1,3 +1,4 @@
+import ParamToaster from "@/components/admin/ParamToaster";
 import CommandPalette from "@/components/CommandPalette";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -56,6 +57,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="tv-app admin-skin min-h-screen bg-paper">
+      <ParamToaster />
       <header className="border-b-2 border-ink bg-paper">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
           <Link href="/" aria-label="TenhaVoz, página inicial" className="flex items-center gap-2">
