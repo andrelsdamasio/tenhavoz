@@ -22,7 +22,8 @@ const MP_MESSAGES: Record<string, string> = {
   conecte: "Conecte sua conta Mercado Pago antes de publicar.",
 };
 
-export default async function FundraisersPage({ searchParams }: { searchParams: { criada?: string; mp?: string; publicada?: string } }) {
+export default async function FundraisersPage({ searchParams: searchParamsPromise }: { searchParams: Promise<{ criada?: string; mp?: string; publicada?: string }> }) {
+  const searchParams = await searchParamsPromise;
   const supabase = await createClient();
   const {
     data: { user },
@@ -62,6 +63,7 @@ export default async function FundraisersPage({ searchParams }: { searchParams: 
             <p className="mt-1 text-sm text-gray-600">
               Para receber doações, conecte sua conta. O dinheiro cai direto nela e o TenhaVoz nunca vê a sua senha.
             </p>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- rota de API: precisa de navegação completa */}
             <a href="/api/mp/oauth/start" className="mt-3 inline-block rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-brand-600">
               Conectar com Mercado Pago
             </a>

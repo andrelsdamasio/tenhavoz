@@ -247,6 +247,7 @@ export default function FundraiserForm({ connected }: { connected: boolean }) {
             <p className="mt-4 rounded-md bg-green-50 p-3 text-sm font-medium text-green-800">✓ Sua conta do Mercado Pago está conectada. Pode continuar.</p>
           ) : (
             <>
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- rota de API: precisa de navegação completa */}
               <a href="/api/mp/oauth/start?next=nova" className="mt-4 inline-block rounded-md bg-[#009ee3] px-5 py-2.5 font-medium text-white hover:opacity-90">
                 Conectar com Mercado Pago
               </a>

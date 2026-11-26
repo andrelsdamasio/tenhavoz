@@ -15,6 +15,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         <button onClick={reset} className="rounded-lg bg-gray-900 px-4 py-2 text-white">
           Tentar de novo
         </button>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- recarrega a aplicação inteira de propósito */}
         <a href="/" className="rounded-lg border px-4 py-2">
           Ir para o início
         </a>

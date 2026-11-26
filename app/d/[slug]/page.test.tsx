@@ -42,7 +42,7 @@ beforeEach(() => {
 
 describe("página pública da doação", () => {
   it("mostra meta, progresso, orçamento e doadores", async () => {
-    const html = renderToStaticMarkup(await FundraiserPage({ params: { slug: "brasilia" } }));
+    const html = renderToStaticMarkup(await FundraiserPage({ params: Promise.resolve({ slug: "brasilia" }) }));
     expect(html).toContain("Levar o time a Brasília");
     expect(html).toContain("25% da meta");
     expect(html).toContain("Ônibus");
@@ -52,11 +52,11 @@ describe("página pública da doação", () => {
 
   it("com o recurso desligado, a página não existe", async () => {
     enabled = false;
-    await expect(FundraiserPage({ params: { slug: "brasilia" } })).rejects.toThrow("NOT_FOUND");
+    await expect(FundraiserPage({ params: Promise.resolve({ slug: "brasilia" }) })).rejects.toThrow("NOT_FOUND");
   });
 
   it("rascunho: visitante não vê", async () => {
     view = { ...(view as object), fundraiser: { ...base, status: "draft" } };
-    await expect(FundraiserPage({ params: { slug: "brasilia" } })).rejects.toThrow("NOT_FOUND");
+    await expect(FundraiserPage({ params: Promise.resolve({ slug: "brasilia" }) })).rejects.toThrow("NOT_FOUND");
   });
 });
