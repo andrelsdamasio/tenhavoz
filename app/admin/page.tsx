@@ -194,7 +194,7 @@ export default async function AdminOverviewPage() {
           <ActivityChart
             data={extras.revenueDaily.map((d) => ({ date: d.date, revenue: d.revenue, payments: d.payments }))}
             series={[{ key: "revenue", label: "Receita", color: "#0e5a39" }]}
-            format={(n) => brl(n)}
+            valueFormat="brl"
             summary={`Receita confirmada por dia nos últimos 30 dias: ${brl(extras.revenue30d)} no total.`}
             height={200}
           />
