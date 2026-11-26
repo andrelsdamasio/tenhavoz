@@ -19,17 +19,20 @@ const dm = (iso: string) => iso.split("-").reverse().slice(0, 2).join("/");
 export default function ActivityChart({
   data,
   series,
-  format = (n) => n.toLocaleString("pt-BR"),
+  valueFormat = "number",
   summary,
   height = 220,
 }: {
   data: ChartPoint[];
   series: ChartSeries[];
-  format?: (n: number) => string;
+  /** Como mostrar os valores. (Texto, não função: este componente é chamado por páginas de servidor.) */
+  valueFormat?: "number" | "brl";
   /** Texto para leitores de tela e para quem não vê o gráfico. */
   summary: string;
   height?: number;
 }) {
+  const format = (n: number) =>
+    valueFormat === "brl" ? n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : n.toLocaleString("pt-BR");
   return (
     <figure className="m-0" aria-label={summary}>
       <div style={{ width: "100%", height }} role="img" aria-label={summary}>
