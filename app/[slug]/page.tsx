@@ -117,6 +117,11 @@ export default async function PublicCampaignPage({ params }: PageProps) {
     <>
       <ViewTracker campaignId={campaign.id} />
       <Template campaign={safeCampaign} mailtoUrl={mailtoUrl} />
+      <div className="bg-paper px-4 py-6">
+        <div className="mx-auto max-w-3xl">
+          <AdSlot ad={ad} showEmpty />
+        </div>
+      </div>
       <CommentsSection
         campaignId={campaign.id}
         campaignTitle={campaign.title}
@@ -125,9 +130,6 @@ export default async function PublicCampaignPage({ params }: PageProps) {
         templateId={campaign.template_id}
         themeColor={campaign.theme_color}
       />
-      <div className="mx-auto max-w-3xl px-4 pb-6">
-        <AdSlot ad={ad} showEmpty />
-      </div>
       <CreateYourOwnLink refSlug={campaign.slug} />
     </>
   );
