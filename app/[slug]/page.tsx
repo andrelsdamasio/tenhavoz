@@ -1,4 +1,6 @@
 import { findInvalidEmails, isValidEmailAddress } from "@/lib/email-address";
+import AdSlot from "@/components/AdSlot";
+import { getAdToShow } from "@/lib/ad-display";
 import CreateYourOwnLink from "@/components/CreateYourOwnLink";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -109,6 +111,8 @@ export default async function PublicCampaignPage({ params }: PageProps) {
     console.error("[campanha] falha ao carregar os comentários", { slug, err });
   }
 
+  const ad = await getAdToShow(supabase);
+
   return (
     <>
       <ViewTracker campaignId={campaign.id} />
@@ -121,6 +125,9 @@ export default async function PublicCampaignPage({ params }: PageProps) {
         templateId={campaign.template_id}
         themeColor={campaign.theme_color}
       />
+      <div className="mx-auto max-w-3xl px-4 pb-6">
+        <AdSlot ad={ad} showEmpty />
+      </div>
       <CreateYourOwnLink refSlug={campaign.slug} />
     </>
   );

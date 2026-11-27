@@ -8,6 +8,7 @@ import { getStripe } from "@/lib/stripe";
 import { getMercadoPagoPaymentClient } from "@/lib/mercadopago";
 import { notifyCustomerPaymentConfirmed } from "@/lib/notifications";
 import { rewardReferrerIfAny } from "@/lib/referral";
+import { adIdFromRef, processAdPayment } from "@/lib/ad-payments";
 
 /**
  * Confirmação de pagamento, num lugar só.
@@ -136,6 +137,12 @@ export async function processMercadoPagoPayment(
   admin: Admin,
   payment: MercadoPagoPaymentLike
 ): Promise<SyncResult> {
+  // Pagamentos de anúncio (external_reference "ad:<id>") têm outro destino.
+  if (adIdFromRef(payment.external_reference)) {
+    await processAdPayment(admin, payment);
+    return NOTHING;
+  }
+
   const campaignId = payment.external_reference;
   if (!campaignId || payment.id === undefined) {
     console.warn("[payment-sync] pagamento Mercado Pago sem external_reference", {

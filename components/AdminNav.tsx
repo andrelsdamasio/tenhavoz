@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BadgePercent, CreditCard, HandCoins, LayoutDashboard, type LucideIcon, Mail, MessageSquareWarning, Settings } from "lucide-react";
+import { BadgePercent, CreditCard, HandCoins, LayoutDashboard, type LucideIcon, Megaphone, Mail, MessageSquareWarning, Settings } from "lucide-react";
 
 export interface AdminNavItem {
   href: string;
@@ -19,6 +19,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/admin/comments": MessageSquareWarning,
   "/admin/reports": CreditCard,
   "/admin/arrecadacoes": HandCoins,
+  "/admin/anuncios": Megaphone,
   "/admin/coupons": BadgePercent,
   "/admin/settings": Settings,
 };

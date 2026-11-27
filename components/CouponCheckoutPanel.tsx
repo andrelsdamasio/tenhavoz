@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { formatBRL } from "@/lib/pricing";
+import CheckoutShell from "@/components/checkout/CheckoutShell";
+import PixPanel from "@/components/checkout/PixPanel";
+import type { PixView } from "@/lib/checkout-pix";
 import {
   startStripeCheckout,
   startMercadoPagoCheckout,
-  startPixCheckout,
+  startCampaignPixAction,
   claimFreeCampaign,
   publishFreeAsAdmin,
   validateCouponAction,
@@ -50,7 +53,13 @@ export default function CouponCheckoutPanel({
   price72hCents,
   price7dCents,
   isAdmin,
+  campaignTitle,
+  siteLabel,
+  userEmail,
 }: {
+  campaignTitle: string;
+  siteLabel: string | null;
+  userEmail: string | null;
   campaignId: string;
   price72hCents: number;
   price7dCents: number;
@@ -64,7 +73,37 @@ export default function CouponCheckoutPanel({
   const hasDiscount = state.appliedCode !== null;
   const isFree = hasDiscount && finalPriceCents === 0;
 
+  const [pix, setPix] = useState<PixView | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [pixError, setPixError] = useState<string | null>(null);
+  const [pixPending, startPix] = useTransition();
+
+  function generatePix(next: number) {
+    setPixError(null);
+    startPix(async () => {
+      const r = await startCampaignPixAction(campaignId, duration, state.appliedCode ?? "", next);
+      setAttempt(next);
+      if (r.pix) setPix(r.pix);
+      else setPixError(r.error);
+    });
+  }
+
+  const totalLabel = isFree ? "Grátis" : formatBRL(finalPriceCents);
+
   return (
+    <CheckoutShell
+      step={2}
+      title="Pagamento"
+      userEmail={userEmail}
+      lines={[
+        { label: "Campanha", value: campaignTitle },
+        ...(siteLabel ? [{ label: "Endereço", value: siteLabel }] : []),
+        { label: "Prazo no ar", value: duration === "72" ? "72 horas" : "7 dias" },
+        ...(hasDiscount ? [{ label: "Cupom", value: state.appliedCode ?? "" }] : []),
+      ]}
+      totalValue={totalLabel}
+      perks={["Página pública com link próprio", "Liberada sozinha quando o pagamento cair", "Botão de envio de e-mail e estatísticas", "Você pode renovar ou duplicar depois"]}
+    >
     <div className="flex flex-col gap-4">
       <div>
         <span className="mb-1 block text-sm font-medium text-gray-700">
@@ -146,23 +185,37 @@ export default function CouponCheckoutPanel({
           </form>
         ) : (
           <>
-            <form action={startPixCheckout}>
-              <input type="hidden" name="campaignId" value={campaignId} />
-              <input type="hidden" name="duration" value={duration} />
-              <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
-              <PayButton label="Pagar com Pix" variant="primary" />
-            </form>
+            {pix ? (
+              <PixPanel
+                kind="campaign"
+                refId={campaignId}
+                pix={pix}
+                amountLabel={totalLabel}
+                success={{ title: "Pagamento confirmado!", text: "Sua página já está no ar. Compartilhe o link e acompanhe as visitas no painel.", href: "/dashboard?checkout=success", cta: "Ir para minhas campanhas" }}
+                onRetry={() => {
+                  setPix(null);
+                  generatePix(attempt + 1);
+                }}
+              />
+            ) : (
+              <>
+                <button type="button" disabled={pixPending} onClick={() => generatePix(attempt)} className="w-full rounded-md bg-ink px-4 py-2.5 font-medium text-white hover:bg-brand-600 disabled:opacity-60">
+                  {pixPending ? "Gerando o Pix…" : `Pagar ${totalLabel} com Pix`}
+                </button>
+                {pixError && <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">{pixError}</p>}
+              </>
+            )}
             <form action={startStripeCheckout}>
               <input type="hidden" name="campaignId" value={campaignId} />
               <input type="hidden" name="duration" value={duration} />
               <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
-              <PayButton label="Pagar com Stripe" variant="secondary" />
+              <PayButton label="Cartão (Stripe)" variant="secondary" />
             </form>
             <form action={startMercadoPagoCheckout}>
               <input type="hidden" name="campaignId" value={campaignId} />
               <input type="hidden" name="duration" value={duration} />
               <input type="hidden" name="couponCode" value={state.appliedCode ?? ""} />
-              <PayButton label="Pagar com Mercado Pago" variant="secondary" />
+              <PayButton label="Cartão ou saldo Mercado Pago" variant="secondary" />
             </form>
           </>
         )}
@@ -180,5 +233,6 @@ export default function CouponCheckoutPanel({
         )}
       </div>
     </div>
+    </CheckoutShell>
   );
 }
