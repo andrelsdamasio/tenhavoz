@@ -50,6 +50,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { group: "Operação", href: "/admin/comments", label: "Comentários", hint: "Denúncias nas campanhas", badge: reportedComments },
     { group: "Dinheiro", href: "/admin/reports", label: "Campanhas e vendas", hint: "Páginas, pagamentos e conciliação" },
     { group: "Dinheiro", href: "/admin/arrecadacoes", label: "Arrecadações", hint: "Doações, taxa e moderação" },
+    { group: "Dinheiro", href: "/admin/anuncios", label: "Anúncios", hint: "Aprovar e vender espaço" },
     { group: "Dinheiro", href: "/admin/coupons", label: "Cupons", hint: "Descontos e compensações" },
     { group: "Sistema", href: "/admin/settings", label: "Configurações", hint: "Preço e templates" },
   ];

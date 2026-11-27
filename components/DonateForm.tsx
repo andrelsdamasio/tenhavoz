@@ -2,22 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { donateAction, type DonateState } from "@/app/d/[slug]/donate-actions";
+import { donateAction, donatePixAction, type DonatePixState, type DonateState } from "@/app/d/[slug]/donate-actions";
 import { formatCentsBRL, parseBRLToCents } from "@/lib/fundraisers";
+import PixPanel from "@/components/checkout/PixPanel";
 import { computeCharge, DONATION_MIN_CENTS } from "@/lib/donations";
 
 const QUICK = [2000, 5000, 10000, 20000];
 const TIPS = [0, 3, 5, 10];
 const initial: DonateState = { error: null, checkoutUrl: null };
+const initialPix: DonatePixState = { error: null, pix: null, donationId: null };
 
-function Submit({ label }: { label: string }) {
+function Submit({ label, pixAction, card = false }: { label: string; pixAction?: (fd: FormData) => void; card?: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
+      formAction={pixAction}
       disabled={pending}
-      className="w-full rounded-md px-4 py-3 font-semibold disabled:opacity-60"
-      style={{ background: "var(--tc-base)", color: "var(--tc-on)" }}
+      className={`w-full rounded-md px-4 py-3 font-semibold disabled:opacity-60 ${card ? "border-2 border-gray-300 bg-white text-gray-800" : ""}`}
+      style={card ? undefined : { background: "var(--tc-base)", color: "var(--tc-on)" }}
     >
       {pending ? "Abrindo o pagamento…" : label}
     </button>
@@ -26,6 +29,7 @@ function Submit({ label }: { label: string }) {
 
 export default function DonateForm({ slug }: { slug: string }) {
   const [state, action] = useFormState(donateAction.bind(null, slug), initial);
+  const [pixState, pixAction] = useFormState(donatePixAction.bind(null, slug), initialPix);
   const [amount, setAmount] = useState("50,00");
   const [tipPct, setTipPct] = useState(0);
 
@@ -40,6 +44,19 @@ export default function DonateForm({ slug }: { slug: string }) {
   const tipStr = (tipCents / 100).toFixed(2).replace(".", ",");
 
   const inputCls = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm";
+
+  if (pixState.pix && pixState.donationId) {
+    return (
+      <PixPanel
+        kind="donation"
+        refId={pixState.donationId}
+        pix={pixState.pix}
+        amountLabel={charge ? formatCentsBRL(charge.totalCents) : ""}
+        success={{ title: "Doação confirmada. Obrigado!", text: "Sua doação já foi contabilizada e o recibo vai para o seu e-mail.", href: `/d/${slug}?obrigado=1`, cta: "Voltar para a campanha" }}
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
 
   return (
     <form action={action} noValidate className="space-y-3">
@@ -101,8 +118,10 @@ export default function DonateForm({ slug }: { slug: string }) {
           </p>
         </div>
       )}
-      {state.error && <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-700">{state.error}</p>}
-      <Submit label={charge ? `Doar ${formatCentsBRL(charge.totalCents)}` : "Doar agora"} />
+      {(pixState.error || state.error) && <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-700">{pixState.error ?? state.error}</p>}
+      <Submit pixAction={pixAction} label={charge ? `Doar ${formatCentsBRL(charge.totalCents)} com Pix` : "Doar com Pix"} />
+      <Submit card label="Doar com cartão (tela segura do Mercado Pago)" />
+      <p className="text-center text-xs text-gray-500">Pagamento processado pelo Mercado Pago. O TenhaVoz não guarda dados de cartão.</p>
     </form>
   );
 }

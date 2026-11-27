@@ -49,19 +49,7 @@ export default async function CheckoutPage({
   );
 
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="mb-2 display text-4xl sm:text-5xl">Pagamento</h1>
-      <p className="mb-1 text-sm text-gray-500">
-        Campanha <strong className="text-gray-700">{campaign.title}</strong>
-      </p>
-      {campaign.slug && (
-        <p className="mb-6 text-sm text-gray-500">
-          Sua página vai ficar em{" "}
-          <span className="font-medium text-gray-700">
-            {siteHost}/{campaign.slug}
-          </span>
-        </p>
-      )}
+    <div className="mx-auto max-w-4xl">
 
       {canceled && (
         <p className="mb-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
@@ -77,8 +65,8 @@ export default async function CheckoutPage({
       )}
 
       <p className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-        Pagando por Pix: depois de pagar no app do seu banco, sua página é
-        liberada sozinha em alguns minutos. Volte ao painel para acompanhar e{" "}
+        Pagando por Pix, a página é liberada em segundos, direto aqui. Se
+        fechar esta tela, a liberação continua sozinha: acompanhe no painel e{" "}
         <strong>não apague a campanha</strong> enquanto o pagamento é confirmado.
       </p>
 
@@ -96,6 +84,9 @@ export default async function CheckoutPage({
       )}
 
       <CouponCheckoutPanel
+        campaignTitle={campaign.title}
+        siteLabel={campaign.slug ? `${siteHost}/${campaign.slug}` : null}
+        userEmail={user.email ?? null}
         campaignId={campaign.id}
         price72hCents={price72hCents}
         price7dCents={price7dCents}

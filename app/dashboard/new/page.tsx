@@ -1,5 +1,5 @@
 import AdSlot from "@/components/AdSlot";
-import { getActiveAd } from "@/lib/ad";
+import { getAdToShow } from "@/lib/ad-display";
 import TrustNote from "@/components/TrustNote";
 import CampaignForm from "@/components/CampaignForm";
 import { createClient } from "@/lib/supabase/server";
@@ -19,7 +19,7 @@ export default async function NewCampaignPage() {
       <h1 className="mb-6 display text-4xl sm:text-5xl">Nova campanha</h1>
       <div className="mb-6 space-y-3">
         <TrustNote kind="email" />
-        <AdSlot ad={await getActiveAd(supabase)} />
+        <AdSlot ad={await getAdToShow(supabase)} showEmpty />
       </div>
       <CampaignForm
         enabledTemplates={enabledTemplates}

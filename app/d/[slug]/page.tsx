@@ -6,6 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isFundraisingEnabled } from "@/lib/fundraisers";
 import { daysLeft, loadFundraiserView } from "@/lib/fundraiser-public";
 import { relativeTime } from "@/lib/relative-time";
+import AdSlot from "@/components/AdSlot";
+import { getAdToShow } from "@/lib/ad-display";
 import ShareButtons from "@/components/ShareButtons";
 import DonateForm from "@/components/DonateForm";
 import FundraiserView from "@/components/FundraiserView";
@@ -62,6 +64,7 @@ export default async function FundraiserPage({ params, searchParams }: { params:
   const left = daysLeft(f.ends_at);
   const canDonate = f.status === "active" && !preview && (left === null || left > 0);
   const url = `${SITE_URL}/d/${f.slug}`;
+  const ad = preview ? null : await getAdToShow(createAdminClient());
 
   return (
     <main className="min-h-screen">
@@ -95,6 +98,11 @@ export default async function FundraiserPage({ params, searchParams }: { params:
         }
         shareSlot={<ShareButtons url={url} title={f.title} message={`Ajude esta campanha: "${f.title}".`} />}
       />
+      {!preview && (
+        <div className="mx-auto max-w-3xl px-4 pb-6">
+          <AdSlot ad={ad} showEmpty />
+        </div>
+      )}
       {!preview && <TrustBox url={url} title={f.title} publishedAt={f.published_at} hasBudget={budget.length > 0} />}
     </main>
   );

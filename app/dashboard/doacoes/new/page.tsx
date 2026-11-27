@@ -1,5 +1,5 @@
 import AdSlot from "@/components/AdSlot";
-import { getActiveAd } from "@/lib/ad";
+import { getAdToShow } from "@/lib/ad-display";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -22,7 +22,7 @@ export default async function NewFundraiserPage() {
       <h1 className="mb-1 display text-4xl sm:text-5xl">Nova campanha de arrecadação</h1>
       <p className="mb-6 text-sm text-gray-600">Em 6 passos, com prévia ao vivo. Você pode usar a IA para escrever o texto e ajustar tudo depois.</p>
       <div className="mb-6">
-        <AdSlot ad={await getActiveAd(supabase)} />
+        <AdSlot ad={await getAdToShow(supabase)} showEmpty />
       </div>
       <FundraiserForm connected={await hasConnection(createAdminClient(), user.id)} />
     </div>

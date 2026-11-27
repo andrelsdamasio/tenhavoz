@@ -11,6 +11,7 @@ import {
 import { getStripe } from "@/lib/stripe";
 import { getMercadoPagoPreferenceClient } from "@/lib/mercadopago";
 import { getAppSettings } from "@/lib/settings";
+import { createPixCharge, toPixView, type PixView } from "@/lib/checkout-pix";
 import { isAdminEmail } from "@/lib/admin";
 import type { CampaignDuration } from "@/lib/types";
 import {
@@ -311,4 +312,51 @@ export async function publishFreeAsAdmin(formData: FormData) {
   await publishCampaignAfterConfirmedPayment(createAdminClient(), campaign.id);
 
   redirect("/dashboard");
+}
+
+export interface CampaignPixState {
+  error: string | null;
+  pix: PixView | null;
+}
+
+/**
+ * Pix dentro da página de pagamento: cria a cobrança na API de Pagamentos do
+ * Mercado Pago e devolve QR code + copia-e-cola. O preço e o cupom são
+ * recalculados aqui no servidor; a liberação da página continua vindo do
+ * mesmo processamento de pagamento (webhook / consulta ao Mercado Pago).
+ */
+export async function startCampaignPixAction(
+  campaignId: string,
+  duration: string,
+  couponCodeRaw: string,
+  attempt: number
+): Promise<CampaignPixState> {
+  const { user, supabase, campaign, settings } = await getOwnedCampaignOrRedirect(campaignId);
+  const form = new FormData();
+  form.set("duration", duration);
+  const { duration: d, basePriceCents } = resolveDuration(form, settings, campaignId);
+  const { priceCents, couponCode } = await resolvePriceWithCoupon(basePriceCents, couponCodeRaw);
+  if (priceCents <= 0) return { error: "Este cupom zera o valor: use o botão de publicar gratuitamente.", pix: null };
+
+  const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
+  if (!token) return { error: "Pagamento indisponível no momento.", pix: null };
+
+  await setCampaignDuration(supabase, campaign.id, user.id, d);
+
+  try {
+    const charge = await createPixCharge({
+      accessToken: token,
+      amountCents: priceCents,
+      description: "Publicação de campanha — TenhaVoz",
+      externalReference: campaign.id,
+      payerEmail: user.email ?? "pagamento@tenhavoz.com.br",
+      notificationUrl: `${getSiteUrl()}/api/webhooks/mercadopago`,
+      metadata: { coupon_code: couponCode ?? "", user_id: user.id, user_email: user.email ?? "" },
+      idempotencyKey: `camp-${campaign.id}-${d}-${priceCents}-${attempt}`,
+    });
+    return { error: null, pix: toPixView(charge) };
+  } catch (err) {
+    console.error("[checkout:pix] falha ao gerar o Pix", { campaignId: campaign.id, err });
+    return { error: "Não conseguimos gerar o Pix agora. Nada foi cobrado. Tente de novo.", pix: null };
+  }
 }

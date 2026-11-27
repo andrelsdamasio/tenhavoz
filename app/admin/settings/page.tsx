@@ -90,7 +90,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           <SettingsSection
             id="anuncio"
             title="Anúncio"
-            description="Um anúncio simples, sempre marcado como “Publicidade”, que aparece só para quem está criando campanha (e-mail e arrecadação). Não aparece nas páginas públicas."
+            description="Anúncio manual (seu, de parceiro ou cortesia): aparece quando não há anúncio pago no ar. Os anúncios vendidos em /anuncie, os preços e a aprovação ficam em Anúncios, no menu."
             badge={<StatusPill on={!!ad.ad_enabled} onLabel="No ar" />}
           >
             <form action={setAdAction} className="space-y-3">
